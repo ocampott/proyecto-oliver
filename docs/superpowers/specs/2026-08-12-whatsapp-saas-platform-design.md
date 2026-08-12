@@ -1,17 +1,16 @@
-# Rediseño a plataforma multi-tenant — Agente WhatsApp + Asistencia
+# Rediseño a plataforma multi-tenant — Agente WhatsApp + Asistencia + RRHH
 
 Fecha: 2026-08-12
-Estado: en revisión
+Estado: aprobado, pendiente de plan de implementación
 
 ## 1. Contexto
 
 El proyecto actual es un bot de WhatsApp con IA (Baileys + OpenRouter) más un
 módulo de control de asistencia (marcado de entrada/salida por QR con
-validación de geolocalización), construido a medida para un único cliente
-(Panadería San Cayetano II): nómina de empleados hardcodeada, prompt de
-sistema con el nombre y reglas de ese negocio específico, cookie de sesión
-`sanca_session`, y un flujo de RRHH (ausencias/licencias/urgencias) atado a
-los menúes conversacionales de ese cliente.
+validación de geolocalización) y un módulo de RRHH (ausencias/licencias/
+urgencias vía chat), construido a medida para un único cliente (Panadería
+San Cayetano II): nómina de empleados hardcodeada, prompt de sistema con el
+nombre y reglas de ese negocio específico, cookie de sesión `sanca_session`.
 
 El objetivo de este rediseño es convertir esto en un **producto multi-tenant
 que se pueda vender como servicio a distintos clientes**, cada uno con su
@@ -26,29 +25,28 @@ plantea en un plan aparte (`writing-plans`) una vez aprobado este spec.
 ### Dentro de alcance (v1)
 
 1. **Multi-tenancy real**: organizaciones, cuentas de usuario propias por
-   organización, aislamiento de datos por Postgres RLS.
-2. **Agente conversacional de WhatsApp con IA**, por organización:
-   conexión de WhatsApp Business (Cloud API oficial), prompt de sistema
-   configurable por organización, dashboard de conversaciones, modo IA /
-   Humano.
+   organización (1 login = 1 organización en v1 — ver §7), aislamiento de
+   datos por Postgres RLS.
+2. **Agente conversacional de WhatsApp con IA**, por organización: un
+   número de WhatsApp Business por organización (Cloud API oficial,
+   cubre todas sus sucursales), prompt de sistema configurable por
+   organización, dashboard de conversaciones, modo IA / Humano.
 3. **Módulo de asistencia multi-sucursal**, generalizado por organización:
    alta de sucursales (con geocerca) y empleados, marcado de entrada/salida
    vía QR propio (no ligado a WhatsApp), validación de que quien marca es
    quien dice ser (vínculo dispositivo↔empleado verificado por WhatsApp),
    validación de que está físicamente en la sucursal (geocerca), reporte de
    horas trabajadas, y auditoría de intentos rechazados/pendientes.
-4. **Panel de superadmin básico**: listar y gestionar organizaciones (para
+4. **Módulo de RRHH multi-sucursal** (ausencias, licencias, urgencias),
+   generalizado por organización: mismo concepto que hoy, pero reutilizando
+   la nómina/sucursales/vínculo de identidad del módulo de asistencia, y
+   guardando las solicitudes como datos estructurados en vez de texto libre
+   parseado por regex.
+5. **Panel de superadmin básico**: listar y gestionar organizaciones (para
    que vos des de alta clientes manualmente al principio).
 
-### Fuera de alcance (v1) — se elimina del código actual
+### Fuera de alcance (v1)
 
-- El flujo conversacional de RRHH (`rrhh-flow.ts`, rutas y página `/rrhh`):
-  notificación de ausencias/licencias/urgencias a Administración vía menú de
-  chat. Es un proceso de negocio específico de un cliente, no una feature
-  genérica pedida para el producto. **Supuesto a confirmar**: si en
-  realidad querés esto también como feature genérica (igual que pasó con
-  asistencia), avisame antes de implementar y lo generalizamos del mismo
-  modo.
 - Billing / cobros — se deja el modelo de datos abierto para sumarlo después
   (tabla `organizations` con campo `plan`), pero no se implementa lógica de
   cobro en v1.
@@ -56,6 +54,13 @@ plantea en un plan aparte (`writing-plans`) una vez aprobado este spec.
   decide en una etapa aparte. Este diseño es agnóstico de hosting: un solo
   proceso Next.js sin estado propio (toda la persistencia vive en
   Supabase), así que queda "listo" para esa decisión sin bloquearla.
+- Categorías de RRHH configurables por organización — v1 usa un set fijo
+  genérico (Enfermedad, Motivo Personal, Licencia, Urgencia, igual que
+  hoy). Si un cliente necesita categorías propias, queda para una
+  iteración posterior (el modelo de datos ya lo soporta sin migrar
+  estructura — ver §7).
+- Selector de organización activa por usuario y WhatsApp por sucursal — ver
+  §7, quedaron descartados para v1 tras la revisión de este spec.
 
 ## 3. Arquitectura general
 
@@ -78,7 +83,7 @@ Cliente WhatsApp ──► Meta Cloud API ──► POST /api/webhooks/whatsapp 
                                                           resuelve org por │
                                                           phone_number_id  │
                                                                            ▼
-                                                  LLM (OpenRouter) o cola humana
+                                            LLM (chat) / flujo RRHH / cola humana
                                                                            │
                                                                            ▼
                                                         Postgres (Supabase, RLS)
@@ -96,6 +101,10 @@ QR de sucursal ──► navegador del empleado ──► /marcar/[org]/[sucursa
                                                 Postgres (Supabase, RLS)
 ```
 
+Un solo número de WhatsApp por organización atiende a todas sus sucursales
+(igual que hoy) — la sucursal se resuelve **dentro** de la conversación
+(asistencia web) o del flujo (RRHH), no por número de teléfono distinto.
+
 ## 4. Modelo de datos (Postgres / Supabase)
 
 Todas las tablas de negocio llevan `org_id` y quedan protegidas por RLS
@@ -105,30 +114,37 @@ servidor (webhooks, envío de OTP) usa la service role key, que no está
 sujeta a RLS, y aplica el filtro de `org_id` explícitamente en cada query.
 
 - **organizations**: `id`, `name`, `slug`, `plan`, `created_at`.
-- **org_members**: `user_id` (uid de Supabase Auth), `org_id`, `role`
-  (`owner` | `admin` | `agent`, enum pensado para sumar roles después sin
-  migrar estructura).
-- **org_settings**: `org_id`, `system_prompt`, `llm_model`, `bot_name`, etc.
-  Reemplaza el `system-prompt.ts` hardcodeado — editable desde el
-  dashboard.
-- **whatsapp_connections**: `org_id`, `phone_number_id`, `waba_id`,
+- **org_members**: `user_id` (uid de Supabase Auth, único por organización
+  en v1 — ver §7), `org_id`, `role` (`owner` | `admin` | `agent`, enum
+  pensado para sumar roles después sin migrar estructura).
+- **org_settings**: `org_id`, `system_prompt`, `llm_model`, `bot_name`,
+  `rrhh_categorias` (jsonb, default con las 4 categorías fijas — abierto a
+  personalizar por org sin migrar esquema). Reemplaza el
+  `system-prompt.ts` hardcodeado — editable desde el dashboard.
+- **whatsapp_connections**: `org_id` (único), `phone_number_id`, `waba_id`,
   `access_token` (cifrado), `display_phone_number`, `status`.
 - **conversations**: `org_id`, `contact_phone`, `mode` (`ai`/`human`),
   `created_at`, `updated_at`.
 - **messages**: `conversation_id`, `role`, `content`, `whatsapp_message_id`
   (para dedupe de reintentos de webhook), `created_at`.
 - **sucursales**: `org_id`, `nombre`, `lat`, `lon`, `radio_metros`.
+  Compartida por Asistencia y RRHH.
 - **empleados**: `org_id`, `nombre`, `celular`, `device_token` (vínculo
   dispositivo↔empleado, reemplaza el `jid` de Baileys), `activo`.
+  Compartida por Asistencia y RRHH — un solo vínculo de identidad por
+  empleado, sea cual sea el módulo que lo estableció primero (ver §7).
 - **asistencia**: `org_id`, `empleado_id`, `sucursal_id`, `tipo`
-  (`entrada`/`salida`), `lat`, `lon`, `created_at`. (equivalente directo a
-  la tabla actual, con `org_id` y `empleado_id` como FK en vez de nombre
-  suelto).
-- **asistencia_rechazada**: igual que hoy — auditoría de intentos
-  fallidos, con `motivo` (`fuera_de_rango`, `sucursal_sin_gps`,
-  `dispositivo_no_vinculado`, etc.).
-- **otp_codes**: `empleado_id`, `code_hash`, `expires_at`, `used_at` — para
-  el paso de vinculación de dispositivo (ver §6).
+  (`entrada`/`salida`), `lat`, `lon`, `created_at`.
+- **asistencia_rechazada**: auditoría de intentos fallidos, con `motivo`
+  (`fuera_de_rango`, `sucursal_sin_gps`, `dispositivo_no_vinculado`, etc.).
+- **otp_codes**: `empleado_id`, `canal` (`asistencia_web` | `rrhh_chat`),
+  `code_hash`, `expires_at`, `used_at` — vinculación de identidad,
+  reutilizada por ambos módulos.
+- **rrhh_solicitudes**: `org_id`, `empleado_id`, `sucursal_id`,
+  `categoria`, `fecha_inicio`, `fecha_fin`, `detalle`, `certificado_url`
+  (Supabase Storage, nullable), `certificado_pendiente` (bool), `estado`
+  (`pendiente` | `revisado`), `created_at`. Reemplaza el parseo por regex
+  de bloques `<ADMIN>` en texto libre que hace hoy `/api/rrhh`.
 
 ## 5. Módulo 1 — Agente conversacional de WhatsApp con IA
 
@@ -139,11 +155,12 @@ sujeta a RLS, y aplica el filtro de `org_id` explícitamente en cada query.
   sumar otro canal el día de mañana es agregar una implementación, no
   reescribir el core.
 - `POST /api/webhooks/whatsapp`: recibe el mensaje, resuelve la
-  organización por `phone_number_id`, guarda el mensaje, y si el modo de la
-  conversación es `ai`, genera respuesta vía `src/lib/openrouter.ts`
-  (adaptado para leer el prompt desde `org_settings` en vez de un archivo
-  TS) y la envía de vuelta. `GET` del mismo endpoint atiende el handshake
-  de verificación de Meta (`hub.challenge`).
+  organización por `phone_number_id`, guarda el mensaje, y enruta:
+  si hay un flujo de asistencia/RRHH pendiente para ese teléfono continúa
+  ahí; si no, y el modo de la conversación es `ai`, genera respuesta vía
+  `src/lib/openrouter.ts` (adaptado para leer el prompt desde
+  `org_settings`) y la envía de vuelta. `GET` del mismo endpoint atiende
+  el handshake de verificación de Meta (`hub.challenge`).
 - Onboarding: pantalla en el dashboard que dispara el **Embedded Signup**
   de Meta — el cliente conecta su número de WhatsApp Business sin que
   manipules tokens a mano; el resultado (phone_number_id, token) se guarda
@@ -188,7 +205,9 @@ identidad, sin probar que es esa persona.
    empleado lo tipea en la web; si coincide y no expiró, se emite un
    `device_token` (cookie firmada de larga duración) atado a ese
    `empleado_id` — vinculación permanente, igual de fuerte que el `jid` de
-   hoy pero con prueba real de posesión del teléfono.
+   hoy pero con prueba real de posesión del teléfono. Este vínculo es el
+   mismo que usa el módulo de RRHH (§7) — quien lo establece primero, lo
+   deja hecho para ambos.
 5. Visitas siguientes desde el mismo dispositivo: se reconoce por el
    `device_token`, no vuelve a pedir nombre ni OTP — solo pide permiso de
    geolocalización del navegador.
@@ -205,14 +224,71 @@ identidad, sin probar que es esa persona.
    **pendientes** (intentos que arrancaron pero no llegaron a completar
    ubicación) como parte del mismo módulo, generalizadas por `org_id`.
 
-## 7. Auth y multi-tenancy
+## 7. Módulo 3 — RRHH multi-sucursal (ausencias, licencias, urgencias)
+
+Se mantiene como feature core (no se elimina) y se generaliza igual que
+Asistencia: cada organización tiene su propio módulo de RRHH, reutilizando
+la nómina y sucursales ya cargadas para Asistencia — no se duplica alta de
+empleados por módulo.
+
+**Identidad**: a diferencia de Asistencia (que ocurre en una web fuera de
+WhatsApp), RRHH ocurre **dentro** de una conversación de WhatsApp — el
+número ya está verificado por el canal en sí. Se reutiliza el mismo vínculo
+`empleados.device_token`/`celular` del módulo de Asistencia:
+- Si el empleado ya tiene vínculo establecido (por Asistencia o por un RRHH
+  previo), se reconoce directo por su número de WhatsApp, sin pedir nombre.
+- Si es la primera vez que ese empleado interactúa con el bot por
+  cualquiera de los dos módulos, se establece el vínculo ahí mismo (nombre
+  válido en la nómina + ese número → vínculo permanente), sin necesidad de
+  un OTP adicional porque el canal WhatsApp ya prueba la posesión del
+  teléfono.
+- Un número que intenta usar un nombre ya vinculado a otro número se
+  rechaza, igual que hoy.
+
+**Flujo** (reutiliza el patrón de máquina de estados persistente en
+`flow_state`, ya genérico por teléfono+flow, solo se agrega `org_id`):
+
+1. Identificación (ver arriba) → selección de sucursal (de la lista de
+   sucursales de esa organización).
+2. Menú de categorías — v1 usa el set fijo: Enfermedad, Motivo Personal,
+   Licencia, Urgencia (configurable por organización a futuro vía
+   `org_settings.rrhh_categorias`, no bloqueante para v1).
+3. Sub-flujo pidiendo fecha de inicio, fecha de fin y detalle. Se reutiliza
+   `parseDetalle` de `openrouter.ts` para extraer estos campos de texto
+   libre — el LLM se usa para **parsear**, no para decidir el flujo (igual
+   que hoy).
+4. Si la categoría es Enfermedad, se pregunta por certificado médico; si
+   corresponde, se espera el adjunto (imagen/PDF vía mensaje de WhatsApp) y
+   se sube a Supabase Storage, guardando la URL en `rrhh_solicitudes`.
+5. Al completar el flujo, se inserta un registro estructurado en
+   `rrhh_solicitudes` (§4) — **no** se genera un bloque de texto
+   `<ADMIN>...</ADMIN>` para parsear después con regex (como hoy), que es
+   fràgil y depende de la redacción exacta del prompt de un cliente
+   puntual.
+
+**Notificación a Administración**: por default en v1, las solicitudes
+aparecen en una bandeja del dashboard (`/rrhh`, leyendo `rrhh_solicitudes`
+directo, sin parseo de texto) — no se reenvían automáticamente por
+WhatsApp. Motivo: WhatsApp Business API restringe los mensajes salientes
+iniciados por el negocio fuera de una conversación activa a plantillas
+pre-aprobadas por Meta; depender de eso para cada aviso suma fricción
+operativa (aprobación de templates) que no hace falta para v1, ya que el
+dashboard cumple la misma función de forma inmediata y confiable. Un aviso
+proactivo por WhatsApp queda como mejora posible más adelante, si algún
+cliente lo pide.
+
+## 8. Auth y multi-tenancy
 
 - Se reemplaza `src/lib/auth.ts` (HMAC casero) y `src/middleware.ts` por
   **Supabase Auth** (email + contraseña para arrancar).
-- El middleware valida la sesión de Supabase y resuelve a qué
-  organización(es) pertenece el usuario vía `org_members`. Si pertenece a
-  más de una organización, se agrega selector de organización activa (no
-  bloqueante para v1 si arrancamos con 1 organización por usuario).
+- El middleware valida la sesión de Supabase y resuelve la organización del
+  usuario vía `org_members`.
+- **Decisión confirmada**: un usuario (login) pertenece a una sola
+  organización en v1 — no hay selector de organización activa. El modelo
+  de datos (`org_members`) ya soporta muchos-a-muchos, así que sumar
+  multi-organización por usuario más adelante es agregar UI, no migrar
+  esquema. Para administrar múltiples clientes como dueño del producto, se
+  usa el panel de superadmin (§9), no un login "como" cada cliente.
 - El aislamiento fuerte entre clientes lo garantiza **RLS de Postgres**, no
   checks manuales en cada endpoint — así un bug de lógica en un endpoint no
   puede filtrar datos de otro cliente.
@@ -220,7 +296,7 @@ identidad, sin probar que es esa persona.
   `agent`) aunque en v1 todos los roles tengan los mismos permisos —
   preparado para diferenciar permisos por rol sin migrar el esquema.
 
-## 8. Panel de superadmin (v1 básico)
+## 9. Panel de superadmin (v1 básico)
 
 - Flag `platform_admin` en el usuario (no una tabla nueva).
 - Ruta `/admin` (fuera del layout normal de organización): lista de
@@ -228,11 +304,10 @@ identidad, sin probar que es esa persona.
   Alcance v1: ver y crear organizaciones manualmente. Sin métricas de uso
   ni billing todavía.
 
-## 9. Qué se elimina del código actual
+## 10. Qué se elimina del código actual
 
 - `src/lib/baileys/*`, `scripts/start-bot.ts`, `scripts/env-loader.ts`
 - `ecosystem.config.js`, `Procfile`, `nixpacks.toml`
-- `src/lib/rrhh-flow.ts`, rutas `/api/rrhh/*`, página `/rrhh`
 - `src/lib/nomina.ts` (nómina hardcodeada — reemplazada por tabla
   `empleados` por organización)
 - `src/lib/system-prompt.ts` (prompt hardcodeado — reemplazado por
@@ -243,59 +318,59 @@ identidad, sin probar que es esa persona.
 - `src/components/QRScreen.tsx`, `src/components/ConnectionGate.tsx`
   (flujo de login QR de Baileys) — reemplazados por la pantalla de
   conexión de Cloud API (Embedded Signup)
+- El parseo por regex de bloques `<ADMIN>` en `/api/rrhh/route.ts` — se
+  reemplaza por lectura directa de `rrhh_solicitudes` (§7)
 - Archivos sueltos sin relación con el producto: `Informe_Sanca_
   SanCayetano.docx`, `CLAUDE PROYECTO.code-workspace`
 
-## 10. Qué se reutiliza / adapta (no se reescribe de cero)
+## 11. Qué se reutiliza / adapta (no se reescribe de cero)
 
 - `src/lib/openrouter.ts` — se adapta para leer el prompt desde
-  `org_settings` en vez de un import estático.
+  `org_settings` en vez de un import estático; `parseDetalle` se reutiliza
+  tal cual para el sub-flujo de RRHH.
 - Fórmula Haversine y lógica de geocerca (`handler.ts`) — se traslada tal
   cual a la validación de la nueva página `/marcar`.
 - Matching de nombres (exacto + aproximado por Levenshtein) de
-  `validarEmpleadoDB`/`buscarEmpleadoParecido` — se traslada a la
-  validación de nombre en `/marcar`, ahora scopeado por `org_id`.
+  `validarEmpleadoDB`/`buscarEmpleadoParecido` — se traslada a Asistencia y
+  RRHH, ahora scopeado por `org_id`.
+- La máquina de estados persistente en `flow_state` (ya genérica por
+  teléfono+nombre de flow) — se reutiliza para RRHH, se suma `org_id`.
 - Componentes del dashboard de conversaciones (`ConversationList`,
   `ConversationPanel`, `MessageBubble`, `ModeToggle`, `PageHeader`,
   `DashboardHeader`) — se adaptan para multi-tenant, no se reescriben.
 - El patrón de generación de QR con la librería `qrcode` — mismo enfoque,
   cambia el contenido codificado (URL propia en vez de `wa.me`).
 
-## 11. Manejo de errores / casos borde
+## 12. Manejo de errores / casos borde
 
 - **Reintentos de webhook de Meta**: Meta puede reenviar el mismo evento;
   se deduplica por `whatsapp_message_id` antes de procesar.
 - **Token de WhatsApp vencido/revocado por el cliente**: se marca
   `whatsapp_connections.status = 'error'` y se muestra alerta en el
   dashboard de esa organización para reconectar.
-- **OTP vencido o mal tipeado**: mensaje claro en la web, botón de
-  reenviar código (con límite de reintentos para evitar abuso).
+- **OTP vencido o mal tipeado**: mensaje claro, botón de reenviar código
+  (con límite de reintentos para evitar abuso).
 - **Sucursal sin geocerca configurada**: se rechaza el marcado con motivo
   `sucursal_sin_gps` (igual que hoy), no se bloquea todo el flujo.
 - **Geolocalización denegada por el navegador**: mensaje explicando que es
   obligatoria para marcar asistencia, con instrucciones para habilitarla.
 - **Usuario sin organización** (login válido pero sin `org_members`):
   pantalla de "contactá a soporte", no un 500.
+- **Adjunto de certificado médico que falla al subir**: la solicitud de
+  RRHH queda igual con `certificado_pendiente = true`, no se pierde el
+  resto de los datos ya cargados.
 
-## 12. Estrategia de testing
+## 13. Estrategia de testing
 
 - Unit: fórmula Haversine, matching de nombres (exacto/aproximado), lógica
-  de expiración/validación de OTP.
+  de expiración/validación de OTP, parseo de fechas/detalle en RRHH.
 - Integración: políticas RLS (confirmar que un usuario de la organización A
   no puede leer/escribir datos de la organización B ni por la API ni
   directo contra Supabase).
 - Integración: verificación de firma del webhook de Meta, dedupe de
   mensajes repetidos.
-- E2E manual (mínimo v1): flujo completo de marcado (alta empleado → primer
-  marcado con OTP → marcado siguiente sin OTP → rechazo por geocerca).
-
-## 13. Supuestos a confirmar antes de implementar
-
-1. El módulo de RRHH (ausencias/licencias/urgencias vía chat) se elimina en
-   v1 y no se generaliza — confirmar que es correcto, o pedirlo como
-   feature genérica igual que se hizo con asistencia.
-2. Autenticación de dashboard v1: email + contraseña vía Supabase Auth
-   (sin SSO/OAuth todavía).
-3. Un usuario pertenece a una sola organización en v1 (simplifica el
-   selector de organización activa); multi-org por usuario queda abierto
-   para después si hace falta.
+- E2E manual (mínimo v1):
+  - Asistencia: alta empleado → primer marcado con OTP → marcado siguiente
+    sin OTP → rechazo por geocerca.
+  - RRHH: primer contacto vincula identidad → solicitud completa con
+    certificado → aparece en la bandeja del dashboard.
