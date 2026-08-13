@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sanca — Panadería San Cayetano II",
-  description: "Dashboard de gestión de conversaciones — Panadería San Cayetano II",
+  title: "Dashboard",
+  description: "Panel de gestión de conversaciones de WhatsApp",
 };
 
 export default function RootLayout({
