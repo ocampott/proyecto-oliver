@@ -7,6 +7,17 @@ export interface Organization {
   plan: string;
 }
 
+export async function getOrgBySlug(slug: string): Promise<Organization | null> {
+  const service = createServiceClient();
+  const { data, error } = await service
+    .from("organizations")
+    .select("id, name, slug, plan")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function getCurrentOrg(userId: string): Promise<Organization | null> {
   const service = createServiceClient();
 

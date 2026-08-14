@@ -28,10 +28,13 @@ npx supabase start
 cp .env.example .env.local
 # Editá .env.local con los valores del paso anterior
 
-# 4. Aplicar las migraciones
+# 4. Aplicar las migraciones (esto también borra todo dato existente)
 npx supabase db reset
 
-# 5. Levantar el frontend
+# 5. Crear el usuario/org/sucursal/empleado de prueba (idempotente)
+node scripts/seed-demo.js
+
+# 6. Levantar el frontend
 npm run dev
 ```
 
@@ -56,8 +59,27 @@ verifican el aislamiento por organización vía RLS.
 | `NEXT_PUBLIC_SUPABASE_URL` | URL de la API de Supabase (`http://127.0.0.1:54321` en local) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Key pública (anon) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Key de service role (solo servidor, salta RLS) |
-| `OPENROUTER_API_KEY` | API key de OpenRouter (la usa el módulo del agente IA, Plan 2) |
+| `NEXT_PUBLIC_BASE_URL` | Base pública de la app (default `http://localhost:3000`) — se usa para armar la URL de cada QR de sucursal |
+| `OPENROUTER_API_KEY` | API key de OpenRouter (la usa el futuro módulo del canal de WhatsApp) |
 | `OPENROUTER_MODEL` | Modelo a usar (default `openai/gpt-4o-mini`) |
+
+## Probar el marcado de asistencia localmente
+
+1. Entrá con un usuario que tenga una organización (`demo@test.local` en el
+   seed de pruebas, o creá la tuya).
+2. En `/sucursales`, dale **Ver QR** a una sucursal con lat/lon cargados —
+   la URL que apunta el QR es `/marcar/{orgSlug}/{sucursalId}`.
+3. Abrí esa URL (podés escanear el QR o pegarla en otra pestaña/incógnito).
+4. Escribí tu nombre y apellido tal como está cargado en `/empleados`. Si no
+   matchea exacto te va a sugerir el más parecido.
+5. Pedí el código de vinculación en `/empleados` (botón **Generar código**
+   en la fila del empleado) y cargalo en la página de marcado.
+6. Con el dispositivo ya vinculado, tocá **Marcar entrada** — el navegador
+   va a pedir geolocalización (obligatoria: sin ubicación no se puede
+   marcar). Si estás fuera del radio de la sucursal, el intento queda en
+   "Intentos rechazados" en `/asistencia` para aprobar o descartar a mano.
+7. Los turnos completos (entrada + salida) se ven en `/horas` con el total
+   de horas por empleado.
 
 ## Estado del refactor
 
@@ -65,9 +87,16 @@ verifican el aislamiento por organización vía RLS.
   `org_members`, `org_settings`, `platform_admins`) con RLS probado, login
   con Supabase Auth, panel de superadmin en `/admin`, y repositorio limpio
   del stack anterior (Baileys, SQLite, PM2, código específico de un cliente).
-- **Plan 2 — Canal de WhatsApp Cloud API + agente IA**: pendiente.
-- **Plan 3 — Módulo de Asistencia**: pendiente.
-- **Plan 4 — Módulo de RRHH**: pendiente.
+- **Plan 2 — Módulo de Asistencia multi-sucursal (hecho)**: alta de
+  sucursales y empleados con QR (`/sucursales`, `/empleados`), vínculo
+  dispositivo↔empleado por OTP, marcado público de entrada/salida con
+  geocerca (`/marcar/[org]/[sucursal]`), revisión de intentos rechazados y
+  cálculo de horas trabajadas (`/asistencia`, `/horas`). Detalle completo en
+  `docs/superpowers/plans/2026-08-13-asistencia-multi-sucursal.md`.
+- **Plan 3 — Canal de WhatsApp Cloud API + agente IA**: pendiente (Embedded
+  Signup + webhook + dashboard de conversaciones, sin IA al principio).
+- **Plan 4 — Módulo de RRHH**: pendiente (reutiliza `empleados`,
+  `sucursales` y el vínculo de identidad de Asistencia).
 
 ## Estructura
 
