@@ -135,8 +135,11 @@ Cada proyecto tiene su propio `.env.local`:
   link copiable de cada sucursal.
 - `server/.env.local`: mismas credenciales de Supabase, nombres de
   variable sin el prefijo `NEXT_PUBLIC_` (ver `server/.env.example`).
-- `web/.env.local`: opcional, solo si `server/` no corre en el puerto
-  default (ver `web/.env.example`).
+- `web/.env.local`: **requerido** (no opcional) — `web/src/lib/supabase.ts`
+  tira una excepción al cargar el módulo si faltan `VITE_SUPABASE_URL` /
+  `VITE_SUPABASE_ANON_KEY`, lo que rompe toda la SPA (incluido el flujo
+  público `/marcar`, que antes no necesitaba nada de Supabase). Ver
+  `web/.env.example` para las variables necesarias.
 
 ## Estructura
 

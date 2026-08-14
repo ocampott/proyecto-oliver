@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
-import { getOrgActual, type Organization } from "../lib/api";
+import { getOrgActual, ApiError, type Organization } from "../lib/api";
 import { TOOLTIP_DESHABILITADO } from "../components/PanelNav";
 
 const ACCESOS = [
@@ -13,14 +14,30 @@ const ACCESOS = [
 export default function HomePage() {
   const [org, setOrg] = useState<Organization | null>(null);
   const [sinOrg, setSinOrg] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const cargar = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setSinOrg(false);
     getOrgActual()
       .then(setOrg)
-      .catch(() => setSinOrg(true))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 404) {
+          setSinOrg(true);
+        } else {
+          setError(
+            err instanceof Error ? err.message : "No pudimos cargar tus datos. Probá de nuevo."
+          );
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
 
   if (loading) {
     return (
@@ -30,12 +47,23 @@ export default function HomePage() {
     );
   }
 
-  if (sinOrg || !org) {
+  if (sinOrg) {
     return (
       <main className="p-8">
         <p className="text-text">
           Tu cuenta todavía no está asociada a ninguna organización. Contactá a soporte.
         </p>
+      </main>
+    );
+  }
+
+  if (error || !org) {
+    return (
+      <main className="p-8">
+        <p className="text-text">{error ?? "No pudimos cargar tus datos. Probá de nuevo."}</p>
+        <Button onClick={cargar} variant="outline" className="mt-4">
+          Reintentar
+        </Button>
       </main>
     );
   }

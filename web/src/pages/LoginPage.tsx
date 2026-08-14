@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card } from "../components/ui/card";
@@ -7,6 +7,7 @@ import { supabase } from "../lib/supabase";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,8 @@ export default function LoginPage() {
       setError("Email o contraseña incorrectos.");
       return;
     }
-    navigate("/");
+    const from = (location.state as { from?: Location } | null)?.from?.pathname ?? "/";
+    navigate(from, { replace: true });
   }
 
   return (
@@ -38,6 +40,7 @@ export default function LoginPage() {
           <Input
             type="email"
             required
+            autoComplete="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -45,6 +48,7 @@ export default function LoginPage() {
           <Input
             type="password"
             required
+            autoComplete="current-password"
             placeholder="Contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

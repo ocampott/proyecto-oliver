@@ -2,6 +2,15 @@ import { supabase } from "./supabase";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const {
     data: { session },
@@ -18,7 +27,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error ?? "Algo salió mal. Probá de nuevo.");
+    throw new ApiError(body?.error ?? "Algo salió mal. Probá de nuevo.", res.status);
   }
   return body as T;
 }
