@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import { env } from "./env.js";
 import { meRoutes } from "./routes/me.js";
+import { orgRoutes } from "./routes/org.js";
 import { marcarRoutes } from "./routes/marcar.js";
 
 const app = Fastify({ logger: true });
@@ -13,6 +14,7 @@ await app.register(cookie);
 app.get("/api/health", async () => ({ ok: true }));
 
 await app.register(meRoutes);
+await app.register(orgRoutes);
 await app.register(marcarRoutes);
 
 app.setErrorHandler((error, request, reply) => {
