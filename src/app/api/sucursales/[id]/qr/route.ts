@@ -8,7 +8,7 @@ interface Ctx {
 }
 
 function qrUrl(orgSlug: string, sucursalId: string): string {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:5173";
   return `${base}/marcar/${orgSlug}/${sucursalId}`;
 }
 

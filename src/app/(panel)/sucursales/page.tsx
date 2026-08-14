@@ -19,7 +19,7 @@ export default async function SucursalesPage() {
   }
 
   const sucursales = await listSucursales(org.id);
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:5173";
 
   return (
     <main className="p-8">
