@@ -15,6 +15,11 @@ app.get("/api/health", async () => ({ ok: true }));
 await app.register(meRoutes);
 await app.register(marcarRoutes);
 
+app.setErrorHandler((error, request, reply) => {
+  request.log.error(error);
+  reply.status(500).send({ error: "Algo salió mal. Probá de nuevo." });
+});
+
 app.listen({ port: env.port, host: "0.0.0.0" }).catch((err) => {
   app.log.error(err);
   process.exit(1);

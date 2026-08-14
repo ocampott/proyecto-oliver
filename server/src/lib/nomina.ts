@@ -1,7 +1,11 @@
+// Matching de nombres contra la nómina de una organización.
+// Portado del sistema viejo (src/lib/db.ts, commit bf39781) a funciones
+// puras que reciben la nómina como parámetro.
+
 export function normalizeNombre(s: string): string[] {
   return s
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "") // tildes y diacríticos combinantes (U+0300–U+036F)
     .toLowerCase()
     .trim()
     .split(/\s+/)
@@ -13,6 +17,9 @@ function sameWords(a: string[], b: string[]): boolean {
   return a.length === b.length && a.every((w, i) => w === b[i]);
 }
 
+// Subset: todas las palabras del más corto están en el más largo (para nombres
+// escritos sin segundo nombre/apellido, ej. "Sol Ruiz Díaz" vs "Ruiz Diaz Sol
+// Evangelina" en la nómina).
 function subsetWords(a: string[], b: string[]): boolean {
   const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
   return shorter.length > 0 && shorter.every((w) => longer.includes(w));
@@ -24,12 +31,17 @@ export function validarEmpleado(nombres: string[], input: string): string | null
 
   const exactas = nombres.filter((n) => sameWords(normalizeNombre(n), target));
   if (exactas.length === 1) return exactas[0];
-  if (exactas.length > 1) return null;
+  if (exactas.length > 1) return null; // ambiguo, no debería pasar con nombres exactos iguales
 
   const parciales = nombres.filter((n) => subsetWords(normalizeNombre(n), target));
   if (parciales.length === 1) return parciales[0];
-  return null;
+  return null; // sin match o ambiguo entre varios candidatos parciales
 }
+
+// ── Matching aproximado (para nombres mal tipeados) ─────────────────────────
+// Se usa solo cuando validarEmpleado (exacto/subset) no encontró nada — para
+// sugerir "¿sos Fulano?" en vez de rechazar directo por una letra de más/menos
+// (ej. "Villaruel" vs "Villareal" en la nómina).
 
 function levenshtein(a: string, b: string): number {
   const dp: number[][] = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
@@ -46,6 +58,8 @@ function levenshtein(a: string, b: string): number {
   return dp[a.length][b.length];
 }
 
+// Tolerancia según largo de palabra: las cortas casi no toleran error (para no
+// confundir "Ana" con "Ale"), las largas sí (para tolerar 1-2 letras mal).
 function umbralPalabra(len: number): number {
   if (len <= 3) return 0;
   if (len <= 6) return 1;
@@ -73,5 +87,5 @@ export function buscarEmpleadoParecido(nombres: string[], input: string): string
   });
 
   if (candidatos.length === 1) return candidatos[0];
-  return null;
+  return null; // nada suficientemente parecido, o ambiguo entre varios candidatos
 }

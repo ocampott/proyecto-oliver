@@ -1,3 +1,6 @@
+// Geocerca: fórmula Haversine tal cual del sistema viejo
+// (src/lib/baileys/handler.ts, commit bf39781).
+
 export function haversineMetros(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;

@@ -52,6 +52,10 @@ export type RegistrarResult =
   | { ok: false; motivo: "sucursal_sin_gps" }
   | { ok: false; motivo: "fuera_de_rango"; distancia: number };
 
+/**
+ * Registra una marca de entrada/salida validando la geocerca de la sucursal.
+ * Los rechazos quedan en asistencia_rechazada (spec §12).
+ */
 export async function registrarMarca(
   orgId: string,
   empleadoId: string,
@@ -110,6 +114,10 @@ export async function registrarMarca(
   return { ok: true, asistencia: data };
 }
 
+// ── Listados y revisión (admin) ─────────────────────────────────────────────
+
+// Argentina no tiene DST: las fechas "del día" se calculan con offset fijo
+// -03:00, igual que el '-3 hours' del sistema viejo.
 const AR_OFFSET = "-03:00";
 
 function diaUtcInicio(isoDate: string): string {
@@ -178,6 +186,7 @@ export interface Rechazada {
   sucursal_nombre: string | null;
 }
 
+/** Intentos rechazados sin resolver (la vista "pendientes" de la v1). */
 export async function listRechazadas(orgId: string): Promise<Rechazada[]> {
   const service = createServiceClient();
   const { data, error } = await service
@@ -197,6 +206,13 @@ export async function listRechazadas(orgId: string): Promise<Rechazada[]> {
   }));
 }
 
+/**
+ * Aprueba el intento: lo inserta en `asistencia` con la fecha/hora ORIGINAL
+ * del intento (no la de ahora) y lo marca resuelto. Requiere que el intento
+ * tenga empleado, sucursal, tipo y coordenadas — si no, hay que resolver la
+ * causa de fondo y descartar la alerta (misma semántica del viejo
+ * aprobarAsistenciaRechazada).
+ */
 export async function aprobarRechazada(orgId: string, id: string): Promise<void> {
   const service = createServiceClient();
   const { data: row, error } = await service
@@ -239,6 +255,12 @@ export async function descartarRechazada(orgId: string, id: string): Promise<voi
   if (error) throw error;
 }
 
+// ── Horas trabajadas ────────────────────────────────────────────────────────
+// Empareja cada "entrada" con la siguiente "salida" cronológica del mismo
+// empleado+sucursal (port de calcularHorasTrabajadas del sistema viejo).
+// Salida sin entrada previa: dato huérfano, se ignora. Entrada sin salida:
+// turno en curso (horas: null).
+
 export interface Turno {
   empleado_id: string;
   nombre: string;
@@ -274,6 +296,8 @@ export async function calcularHoras(
     nombre: string;
     sucursal_nombre: string;
   }
+  // supabase-js tipa los joins como array; con FK many-to-one viene un solo
+  // elemento (o el objeto, según la versión).
   const nombreDe = (rel: { nombre: string } | { nombre: string }[] | null): string =>
     (Array.isArray(rel) ? rel[0]?.nombre : rel?.nombre) ?? "?";
 
@@ -318,6 +342,7 @@ export async function calcularHoras(
         turnos.push(aTurno(pendiente, r));
         pendiente = null;
       }
+      // salida sin entrada previa: dato huérfano, se ignora
     }
     if (pendiente) turnos.push(aTurno(pendiente, null));
   }

@@ -40,6 +40,12 @@ export async function marcarRoutes(app: FastifyInstance): Promise<void> {
     nombre?: string;
   }
 
+  /**
+   * Paso 1 del marcado público: identificar al empleado por nombre.
+   * - Match exacto/subset sin dispositivo vinculado → genera OTP (lo ve el admin).
+   * - Match aproximado → devuelve sugerencia para confirmar ("¿Sos Fulano?").
+   * - Ya vinculado / no encontrado → rechazo registrado en asistencia_rechazada.
+   */
   app.post<{ Body: IdentificarBody }>("/api/marcar/identificar", async (request, reply) => {
     const { orgSlug, sucursalId, nombre } = request.body ?? {};
     if (!orgSlug || !sucursalId || !nombre?.trim()) {
@@ -92,6 +98,10 @@ export async function marcarRoutes(app: FastifyInstance): Promise<void> {
     code?: string;
   }
 
+  /**
+   * Paso 2 del marcado público: verificar el código OTP y vincular el
+   * dispositivo (cookie httpOnly oliver_device).
+   */
   app.post<{ Body: VerificarBody }>("/api/marcar/verificar", async (request, reply) => {
     const { empleadoId, code } = request.body ?? {};
     if (!empleadoId || !code?.trim()) {
@@ -127,6 +137,10 @@ export async function marcarRoutes(app: FastifyInstance): Promise<void> {
     lon?: number;
   }
 
+  /**
+   * Paso 3 del marcado público: registrar entrada/salida con geocerca.
+   * Requiere la cookie de dispositivo (vínculo previo con OTP).
+   */
   app.post<{ Body: RegistrarBody }>("/api/marcar/registrar", async (request, reply) => {
     const token = getDeviceToken(request);
     if (!token) {

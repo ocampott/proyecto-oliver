@@ -125,7 +125,12 @@ panel), Fastify (`:3001`, la API de `web/`) y Vite (`:5173`, el flujo de
 `npm run dev --prefix server` y `npm run dev --prefix web`.
 
 Cada proyecto tiene su propio `.env.local`:
-- Raíz (`​.env.local`): igual que antes, lo usa Next.js.
+- Raíz (`.env.local`): igual que antes para las variables de Supabase.
+  Ojo con `NEXT_PUBLIC_BASE_URL`: ya NO apunta a la propia app de
+  Next.js — apunta a donde vive `/marcar` ahora (`web/`, puerto 5173
+  en dev). La usan `src/app/api/sucursales/[id]/qr/route.ts` y
+  `src/app/(panel)/sucursales/page.tsx` para armar la URL del QR y el
+  link copiable de cada sucursal.
 - `server/.env.local`: mismas credenciales de Supabase, nombres de
   variable sin el prefijo `NEXT_PUBLIC_` (ver `server/.env.example`).
 - `web/.env.local`: opcional, solo si `server/` no corre en el puerto

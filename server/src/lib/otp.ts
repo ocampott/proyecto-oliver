@@ -16,9 +16,17 @@ export interface OtpCode {
   created_at: string;
 }
 
+/**
+ * Genera un código de vinculación de 6 dígitos para el empleado.
+ * Invalida los códigos anteriores no usados del mismo empleado/canal.
+ * Devuelve el código en texto plano: en v1 lo ve el admin en el dashboard
+ * para entregárselo al empleado en persona (cuando exista el canal de
+ * WhatsApp, este mismo código se envía por ahí y el flujo no cambia).
+ */
 export async function generarOtp(orgId: string, empleadoId: string): Promise<string> {
   const service = createServiceClient();
 
+  // Sanity: el empleado tiene que ser de esa org.
   const { data: empleado, error: empErr } = await service
     .from("empleados")
     .select("id")
@@ -28,6 +36,7 @@ export async function generarOtp(orgId: string, empleadoId: string): Promise<str
   if (empErr) throw empErr;
   if (!empleado) throw new Error("Empleado no encontrado en la organización");
 
+  // Invalida códigos anteriores no usados del mismo empleado/canal.
   const { error: delErr } = await service
     .from("otp_codes")
     .delete()
@@ -93,6 +102,7 @@ export async function verificarOtp(
   return { ok: true };
 }
 
+/** OTP vigente (no usado, no expirado) del empleado, para mostrar al admin. */
 export async function getOtpVigente(empleadoId: string): Promise<OtpCode | null> {
   const service = createServiceClient();
   const { data, error } = await service

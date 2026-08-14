@@ -74,22 +74,6 @@ export async function getEmpleadoById(id: string): Promise<Empleado | null> {
   return data;
 }
 
-/**
- * Busca por device_token SIN filtro de org (el token es único global).
- * Lo usa el flujo público de marcado, que no conoce la org de antemano.
- */
-export async function getEmpleadoByToken(token: string): Promise<Empleado | null> {
-  const service = createServiceClient();
-  const { data, error } = await service
-    .from("empleados")
-    .select("*")
-    .eq("device_token", token)
-    .eq("activo", true)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
 export async function getEmpleadoByDeviceToken(
   orgId: string,
   token: string
