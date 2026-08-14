@@ -1,16 +1,37 @@
+import { supabase } from "./supabase";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (init?.headers) Object.assign(headers, init.headers);
+  if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
+
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers,
   });
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     throw new Error(body?.error ?? "Algo salió mal. Probá de nuevo.");
   }
   return body as T;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+}
+
+export function getOrgActual(): Promise<Organization> {
+  return request("/api/org/current");
 }
 
 export interface EstadoMarcado {
