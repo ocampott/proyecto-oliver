@@ -1,15 +1,19 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import cookie from "@fastify/cookie";
 import { env } from "./env.js";
 import { meRoutes } from "./routes/me.js";
+import { marcarRoutes } from "./routes/marcar.js";
 
 const app = Fastify({ logger: true });
 
 await app.register(cors, { origin: env.corsOrigin, credentials: true });
+await app.register(cookie);
 
 app.get("/api/health", async () => ({ ok: true }));
 
 await app.register(meRoutes);
+await app.register(marcarRoutes);
 
 app.listen({ port: env.port, host: "0.0.0.0" }).catch((err) => {
   app.log.error(err);
