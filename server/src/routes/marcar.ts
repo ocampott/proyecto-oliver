@@ -1,9 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { getOrgBySlug } from "../lib/org.js";
 import { getSucursal } from "../lib/sucursales.js";
-import { getEmpleadoByToken, buscarEnNomina } from "../lib/empleados.js";
-import { getDeviceToken } from "../lib/device-token.js";
-import { generarOtp } from "../lib/otp.js";
+import { getEmpleadoByToken, buscarEnNomina, getEmpleadoById, vincularDispositivo } from "../lib/empleados.js";
+import { getDeviceToken, nuevoDeviceToken, setDeviceCookie } from "../lib/device-token.js";
+import { generarOtp, verificarOtp } from "../lib/otp.js";
 import { registrarRechazo } from "../lib/asistencia.js";
 
 interface EstadoQuery {
@@ -84,5 +84,38 @@ export async function marcarRoutes(app: FastifyInstance): Promise<void> {
 
     await generarOtp(org.id, empleado.id);
     return { empleadoId: empleado.id };
+  });
+
+  interface VerificarBody {
+    empleadoId?: string;
+    code?: string;
+  }
+
+  app.post<{ Body: VerificarBody }>("/api/marcar/verificar", async (request, reply) => {
+    const { empleadoId, code } = request.body ?? {};
+    if (!empleadoId || !code?.trim()) {
+      return reply.code(400).send({ error: "Faltan datos" });
+    }
+
+    const empleado = await getEmpleadoById(empleadoId);
+    if (!empleado || !empleado.activo) {
+      return reply.code(404).send({ error: "Empleado no encontrado" });
+    }
+
+    const resultado = await verificarOtp(empleado.id, code);
+    if (!resultado.ok) {
+      if (resultado.motivo === "incorrecto") {
+        return reply.code(400).send({ error: "Código incorrecto. Revisalo y probá de nuevo." });
+      }
+      return reply.code(400).send({
+        error: "El código venció o quedó bloqueado. Pedile uno nuevo a tu encargado.",
+      });
+    }
+
+    const token = nuevoDeviceToken();
+    await vincularDispositivo(empleado.org_id, empleado.id, token);
+    setDeviceCookie(reply, token);
+
+    return { ok: true, nombre: empleado.nombre };
   });
 }
