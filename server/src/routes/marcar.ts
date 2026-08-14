@@ -4,6 +4,7 @@ import { getSucursal } from "../lib/sucursales.js";
 import { getEmpleadoByToken, buscarEnNomina, getEmpleadoById, vincularDispositivo } from "../lib/empleados.js";
 import { getDeviceToken, nuevoDeviceToken, setDeviceCookie } from "../lib/device-token.js";
 import { generarOtp, verificarOtp } from "../lib/otp.js";
+import { registrarMarca, type TipoMarca } from "../lib/asistencia.js";
 import { registrarRechazo } from "../lib/asistencia.js";
 
 interface EstadoQuery {
@@ -117,5 +118,61 @@ export async function marcarRoutes(app: FastifyInstance): Promise<void> {
     setDeviceCookie(reply, token);
 
     return { ok: true, nombre: empleado.nombre };
+  });
+
+  interface RegistrarBody {
+    sucursalId?: string;
+    tipo?: string;
+    lat?: number;
+    lon?: number;
+  }
+
+  app.post<{ Body: RegistrarBody }>("/api/marcar/registrar", async (request, reply) => {
+    const token = getDeviceToken(request);
+    if (!token) {
+      return reply.code(401).send({ error: "Dispositivo no vinculado" });
+    }
+
+    const { sucursalId, tipo, lat, lon } = request.body ?? {};
+    if (
+      !sucursalId ||
+      (tipo !== "entrada" && tipo !== "salida") ||
+      typeof lat !== "number" ||
+      typeof lon !== "number"
+    ) {
+      return reply.code(400).send({ error: "Faltan datos" });
+    }
+
+    const empleado = await getEmpleadoByToken(token);
+    if (!empleado) {
+      return reply.code(401).send({ error: "Dispositivo no vinculado" });
+    }
+
+    const sucursal = await getSucursal(empleado.org_id, sucursalId);
+    if (!sucursal || !sucursal.activa) {
+      return reply.code(404).send({ error: "Sucursal no encontrada" });
+    }
+
+    const resultado = await registrarMarca(
+      empleado.org_id,
+      empleado.id,
+      sucursal,
+      tipo as TipoMarca,
+      lat,
+      lon
+    );
+
+    if (!resultado.ok) {
+      if (resultado.motivo === "sucursal_sin_gps") {
+        return reply.code(422).send({
+          error: "Esta sucursal no tiene la ubicación configurada. Avisale a tu encargado.",
+        });
+      }
+      return reply.code(422).send({
+        error: `Estás a ${resultado.distancia} m de la sucursal (máximo ${sucursal.radio_metros} m).`,
+      });
+    }
+
+    return { ok: true, tipo, hora: resultado.asistencia.created_at };
   });
 }
