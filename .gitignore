@@ -25,3 +25,6 @@ npm-debug.log*
 .env.test.local
 supabase/.branches
 supabase/.temp
+
+# worktrees
+.worktrees/
