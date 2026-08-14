@@ -6,8 +6,8 @@ node_modules/
 out/
 
 # datos locales (runtime)
-data/
-auth/
+/data/
+/auth/
 
 # env
 .env.local
