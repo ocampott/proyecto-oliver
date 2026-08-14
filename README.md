@@ -108,9 +108,11 @@ pantalla se borra de Next.js en el momento en que su versión nueva queda
 lista, así que durante la migración el panel vive parcialmente en cada
 stack.
 
-**Estado actual:** el flujo público `/marcar` ya vive en `web/` + `server/`
-y fue borrado de Next.js. El resto del panel (login, home, sucursales,
-empleados, asistencia, horas) sigue en Next.js.
+**Estado actual:** el flujo público `/marcar` y el login + home del panel
+ya viven en `web/` + `server/`. El resto del panel (sucursales,
+empleados, asistencia, horas) sigue en Next.js — incluyendo su propio
+`/login`, que se mantiene con vida en paralelo (no se borra todavía)
+porque esas pantallas lo siguen necesitando hasta que también migren.
 
 ### Correr todo en dev
 
