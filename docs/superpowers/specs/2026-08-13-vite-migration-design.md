@@ -125,19 +125,30 @@ Familia **Archivo** (Google Fonts). Escala:
 
 ### 4.3 Sistema mono-acento
 
-El PDF es explícito: **un solo color de marca**. Los estados (Aprobado /
-Pendiente / Rechazado / Sin vincular) NO usan una paleta semántica nueva
-(nada de verde-éxito, amarillo-pendiente). Se resuelven con:
+El PDF es explícito: **un solo color de marca**. Corrección post-Etapa 1
+(el whole-branch review detectó que esta sección, tal como estaba escrita
+antes, contradecía el propio PDF y lo que terminamos construyendo — el
+usuario confirmó viendo las pantallas reales que el comportamiento correcto
+es el de abajo, no el que describía la versión anterior de este párrafo):
+
+**Badges de estado** (Aprobado / Pendiente / Rechazado / Sin vincular) NO
+usan una paleta semántica nueva (nada de verde-éxito, amarillo-pendiente).
+Se resuelven con:
 
 - **Tinta llena** → resuelto / activo.
 - **Contorno** (tinta, sin relleno) → pendiente.
-- **Accent (rojo)** → reservado exclusivamente para lo que pide atención
-  (rechazado, error, fuera de rango). No se usa el accent como color
-  decorativo ni como CTA por default — está descrito como "se reserva para
-  lo que necesita atención".
+- **Accent (rojo)** → rechazado / error / fuera de rango.
 
-Esto se modela como variantes del componente `Badge` (`filled` / `outline`
-/ `accent`), no como una paleta de colores nueva.
+**CTAs primarios** (botones de acción principal — "Continuar", "Marcar
+entrada", "Vincular", etc.) SÍ usan el accent como color por default,
+según el propio PDF (sección 03, mockups del marcado público). El accent
+no es exclusivo de "lo que pide atención" en toda la UI — es el único
+color de marca, y cumple dos roles distintos según el componente: en
+`Badge` marca rechazo/error: en `Button`, es el CTA principal.
+
+Esto se modela como variantes de `Badge` (`filled` / `outline` / `accent`)
+y de `Button` (`default` / `outline` / `accent` / `ghost`), no como una
+paleta de colores nueva.
 
 ### 4.4 Componentes base (del PDF, sección 02)
 
@@ -209,7 +220,14 @@ patrón que se usó para cerrar el Plan 2 de Asistencia).
 
 - Topología de deploy en producción (dominios/subdominios de `web` vs
   `server`, hosting) — se decide cuando el panel esté migrado por completo
-  o cuando haga falta deployar antes de eso.
+  o cuando haga falta deployar antes de eso. **Restricción a tener en
+  cuenta en esa decisión** (detectada en el whole-branch review de la
+  Etapa 1): la cookie `oliver_device` usa `SameSite=Lax`, que funciona
+  same-site (subdominios de un mismo dominio registrable, ej.
+  `app.oliver.com` + `api.oliver.com`) pero se cae silenciosamente si
+  `web` y `server` terminan en dominios registrables distintos (ej. un
+  proveedor para cada uno). O se deployan bajo el mismo dominio
+  registrable, o la cookie pasa a `SameSite=None; Secure`.
 - Theming multi-tenant real (organización eligiendo su propio accent) —
   el token queda preparado como CSS variable para esto, pero no se
   construye la feature ahora.
