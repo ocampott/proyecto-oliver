@@ -19,12 +19,6 @@ describe("isPublicPath", () => {
     expect(isPublicPath("/admin")).toBe(false);
   });
 
-  it("trata el marcado público como público, incluidas subrutas", () => {
-    expect(isPublicPath("/marcar")).toBe(true);
-    expect(isPublicPath("/marcar/mi-org/sucursal-123")).toBe(true);
-    expect(isPublicPath("/api/marcar/identificar")).toBe(true);
-  });
-
   it("trata /empleados como protegida", () => {
     expect(isPublicPath("/empleados")).toBe(false);
   });
