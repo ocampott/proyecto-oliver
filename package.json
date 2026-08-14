@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev:all": "concurrently -n next,server,web -c blue,green,magenta \"npm run dev\" \"npm run dev --prefix server\" \"npm run dev --prefix web\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
@@ -29,6 +30,7 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
+    "concurrently": "^10.0.4",
     "dotenv": "^17.4.2",
     "supabase": "^2.114.0",
     "tailwindcss": "^4.1.8",

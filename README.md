@@ -98,6 +98,39 @@ verifican el aislamiento por organización vía RLS.
 - **Plan 4 — Módulo de RRHH**: pendiente (reutiliza `empleados`,
   `sucursales` y el vínculo de identidad de Asistencia).
 
+## Migración a Vite (en curso)
+
+El panel se está migrando de Next.js a **Vite + React** (frontend, carpeta
+`web/`) y **Fastify** (backend, carpeta `server/`), con el sistema de
+diseño de `docs/superpowers/specs/2026-08-13-vite-migration-design.md`
+aplicado. La migración es **por etapas** y **por reemplazo directo**: cada
+pantalla se borra de Next.js en el momento en que su versión nueva queda
+lista, así que durante la migración el panel vive parcialmente en cada
+stack.
+
+**Estado actual:** el flujo público `/marcar` ya vive en `web/` + `server/`
+y fue borrado de Next.js. El resto del panel (login, home, sucursales,
+empleados, asistencia, horas) sigue en Next.js.
+
+### Correr todo en dev
+
+```bash
+# Con Supabase local corriendo (npx supabase start):
+npm run dev:all
+```
+
+Esto levanta los tres procesos a la vez: Next.js (`:3000`, el resto del
+panel), Fastify (`:3001`, la API de `web/`) y Vite (`:5173`, el flujo de
+`/marcar`). También se pueden levantar por separado con `npm run dev`,
+`npm run dev --prefix server` y `npm run dev --prefix web`.
+
+Cada proyecto tiene su propio `.env.local`:
+- Raíz (`​.env.local`): igual que antes, lo usa Next.js.
+- `server/.env.local`: mismas credenciales de Supabase, nombres de
+  variable sin el prefijo `NEXT_PUBLIC_` (ver `server/.env.example`).
+- `web/.env.local`: opcional, solo si `server/` no corre en el puerto
+  default (ver `web/.env.example`).
+
 ## Estructura
 
 - `src/app` — páginas y route handlers (App Router)
