@@ -6,8 +6,6 @@ import { getCurrentOrg } from "@/lib/org";
 const ACCESOS = [
   { href: "/asistencia", label: "Asistencia", detalle: "Registros de entrada/salida e intentos rechazados" },
   { href: "/horas", label: "Horas", detalle: "Turnos y horas trabajadas por empleado" },
-  { href: "/empleados", label: "Empleados", detalle: "Nómina, vínculo de dispositivos y códigos" },
-  { href: "/sucursales", label: "Sucursales", detalle: "Ubicaciones, geocercas y códigos QR" },
 ];
 
 export default async function Home() {

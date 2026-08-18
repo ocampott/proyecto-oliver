@@ -4,8 +4,6 @@ const LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/asistencia", label: "Asistencia" },
   { href: "/horas", label: "Horas" },
-  { href: "/empleados", label: "Empleados" },
-  { href: "/sucursales", label: "Sucursales" },
 ];
 
 export default function OrgNav() {
