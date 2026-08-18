@@ -10,8 +10,8 @@ const LINKS: NavItem[] = [
   { href: "/", label: "Inicio" },
   { href: "/asistencia", label: "Asistencia", disabled: true },
   { href: "/horas", label: "Horas", disabled: true },
-  { href: "/empleados", label: "Empleados", disabled: true },
-  { href: "/sucursales", label: "Sucursales", disabled: true },
+  { href: "/empleados", label: "Empleados" },
+  { href: "/sucursales", label: "Sucursales" },
 ];
 
 const TOOLTIP_DESHABILITADO = "Todavía en el panel viejo (localhost:3000)";

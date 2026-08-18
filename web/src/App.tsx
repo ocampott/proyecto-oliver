@@ -6,6 +6,8 @@ import { PanelLayout } from "./components/PanelLayout";
 import MarcarPage from "./pages/MarcarPage";
 import LoginPage from "./pages/LoginPage";
 import HomePage from "./pages/HomePage";
+import SucursalesPage from "./pages/sucursales/SucursalesPage";
+import EmpleadosPage from "./pages/empleados/EmpleadosPage";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +24,26 @@ export default function App() {
                 <ProtectedRoute>
                   <PanelLayout>
                     <HomePage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sucursales"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <SucursalesPage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/empleados"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <EmpleadosPage />
                   </PanelLayout>
                 </ProtectedRoute>
               }
