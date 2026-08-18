@@ -38,7 +38,10 @@ node scripts/seed-demo.js
 npm run dev
 ```
 
-Después abrí http://localhost:3000 — te redirige a `/login`.
+Después: si tenés rol de platform admin, entrás directo a `/admin`. El
+panel de organización ahora vive en `web/` — para verlo necesitás los tres
+procesos corriendo (`npm run dev:all`, ver la sección "Correr todo en dev"
+más abajo) y entrar por `http://localhost:5173`.
 
 Studio de Supabase (UI de la base local): http://127.0.0.1:54323
 
@@ -108,11 +111,13 @@ pantalla se borra de Next.js en el momento en que su versión nueva queda
 lista, así que durante la migración el panel vive parcialmente en cada
 stack.
 
-**Estado actual:** el flujo público `/marcar` y el login + home del panel
-ya viven en `web/` + `server/`. El resto del panel (sucursales,
-empleados, asistencia, horas) sigue en Next.js — incluyendo su propio
-`/login`, que se mantiene con vida en paralelo (no se borra todavía)
-porque esas pantallas lo siguen necesitando hasta que también migren.
+**Estado actual:** todo el panel de organización (`/`, `/sucursales`,
+`/empleados`, `/asistencia`, `/horas`) y el flujo público `/marcar` ya
+viven en `web/` + `server/`. En Next.js solo queda `/admin` (panel de
+superadmin, fuera del alcance de esta migración) y su propio `/login`,
+necesario únicamente para acceder a `/admin` — cualquier otro usuario
+autenticado que caiga en `/` de Next.js es redirigido a `web/` (ver
+`NEXT_PUBLIC_BASE_URL` más abajo).
 
 ### Correr todo en dev
 
@@ -130,9 +135,9 @@ Cada proyecto tiene su propio `.env.local`:
 - Raíz (`.env.local`): igual que antes para las variables de Supabase.
   Ojo con `NEXT_PUBLIC_BASE_URL`: ya NO apunta a la propia app de
   Next.js — apunta a donde vive `/marcar` ahora (`web/`, puerto 5173
-  en dev). La usan `src/app/api/sucursales/[id]/qr/route.ts` y
-  `src/app/(panel)/sucursales/page.tsx` para armar la URL del QR y el
-  link copiable de cada sucursal.
+  en dev). La usa `server/src/routes/sucursales.ts`
+  (`GET /api/sucursales/:id/qr`) y `web/src/pages/sucursales/SucursalesPage.tsx`
+  para armar la URL del QR y el link copiable de cada sucursal.
 - `server/.env.local`: mismas credenciales de Supabase, nombres de
   variable sin el prefijo `NEXT_PUBLIC_` (ver `server/.env.example`).
 - `web/.env.local`: **requerido** (no opcional) — `web/src/lib/supabase.ts`

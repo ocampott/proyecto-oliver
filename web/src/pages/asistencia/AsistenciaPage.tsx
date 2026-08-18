@@ -34,7 +34,7 @@ export default function AsistenciaPage() {
   const [desde, setDesde] = useState(hoyAR());
   const [hasta, setHasta] = useState(hoyAR());
 
-  const { data: registros = [], isLoading } = useAsistencia(desde, hasta);
+  const { data: registros = [], isLoading, isError } = useAsistencia(desde, hasta);
   const { data: rechazadas = [] } = useRechazadas();
   const borrar = useBorrarAsistencia();
   const resolver = useResolverRechazada();
@@ -124,6 +124,11 @@ export default function AsistenciaPage() {
           </div>
 
           {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+          {isError && (
+            <p className="mt-2 text-[15px] text-accent-700">
+              No se pudieron cargar los registros. Probá de nuevo.
+            </p>
+          )}
 
           <Table className="mt-4">
             <TableHeader>

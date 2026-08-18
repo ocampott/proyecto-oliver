@@ -28,7 +28,7 @@ export default function HorasPage() {
   const [desde, setDesde] = useState(inicioDeMesAR());
   const [hasta, setHasta] = useState(hoyAR());
 
-  const { data, isLoading } = useHoras(desde, hasta);
+  const { data, isLoading, isError } = useHoras(desde, hasta);
   const turnos = data?.turnos ?? [];
   const resumen = data?.resumen ?? [];
 
@@ -48,6 +48,12 @@ export default function HorasPage() {
           </label>
           {isLoading && <span className="text-[15px] text-text/60">Cargando...</span>}
         </div>
+
+        {isError && (
+          <p className="mt-2 text-[15px] text-accent-700">
+            No se pudieron cargar los datos. Probá de nuevo.
+          </p>
+        )}
 
         {resumen.length > 0 && (
           <section className="mt-6">

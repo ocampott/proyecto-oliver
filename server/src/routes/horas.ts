@@ -31,8 +31,8 @@ export async function horasRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [requireAuth, requireOrg] },
     async (request) => {
       const { sucursalId } = request.query;
-      const desde = request.query.desde ?? inicioDeMesAR();
-      const hasta = request.query.hasta ?? hoyAR();
+      const desde = request.query.desde || inicioDeMesAR();
+      const hasta = request.query.hasta || hoyAR();
 
       const turnos = await calcularHoras(request.org!.id, { desde, hasta, sucursalId });
 

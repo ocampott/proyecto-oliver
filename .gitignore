@@ -32,3 +32,4 @@ server/.env.local
 server/dist
 web/.env.local
 web/dist
+tsconfig.tsbuildinfo

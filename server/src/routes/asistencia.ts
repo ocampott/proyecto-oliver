@@ -37,8 +37,8 @@ export async function asistenciaRoutes(app: FastifyInstance): Promise<void> {
     async (request) => {
       const { desde, hasta, sucursalId, empleadoId } = request.query;
       return listAsistencia(request.org!.id, {
-        desde: desde ?? hoyAR(),
-        hasta: hasta ?? hoyAR(),
+        desde: desde || hoyAR(),
+        hasta: hasta || hoyAR(),
         sucursalId,
         empleadoId,
       });
