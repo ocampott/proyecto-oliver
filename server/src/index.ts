@@ -6,6 +6,7 @@ import { meRoutes } from "./routes/me.js";
 import { orgRoutes } from "./routes/org.js";
 import { marcarRoutes } from "./routes/marcar.js";
 import { sucursalesRoutes } from "./routes/sucursales.js";
+import { empleadosRoutes } from "./routes/empleados.js";
 
 const app = Fastify({ logger: true });
 
@@ -18,6 +19,7 @@ await app.register(meRoutes);
 await app.register(orgRoutes);
 await app.register(marcarRoutes);
 await app.register(sucursalesRoutes);
+await app.register(empleadosRoutes);
 
 app.setErrorHandler((error, request, reply) => {
   request.log.error(error);
