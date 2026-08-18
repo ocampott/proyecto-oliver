@@ -43,6 +43,54 @@ export function getOrgActual(): Promise<Organization> {
   return request("/api/org/current");
 }
 
+export interface Sucursal {
+  id: string;
+  org_id: string;
+  nombre: string;
+  lat: number | null;
+  lon: number | null;
+  radio_metros: number;
+  activa: boolean;
+  created_at: string;
+}
+
+export function listSucursales(): Promise<Sucursal[]> {
+  return request("/api/sucursales");
+}
+
+export interface CrearSucursalInput {
+  nombre: string;
+  lat?: number;
+  lon?: number;
+  radio_metros?: number;
+}
+
+export function createSucursal(input: CrearSucursalInput): Promise<Sucursal> {
+  return request("/api/sucursales", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export interface EditarSucursalInput {
+  nombre?: string;
+  lat?: number | null;
+  lon?: number | null;
+  radio_metros?: number;
+  activa?: boolean;
+}
+
+export function updateSucursal(id: string, patch: EditarSucursalInput): Promise<Sucursal> {
+  return request(`/api/sucursales/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function deactivateSucursal(id: string): Promise<{ ok: true }> {
+  return request(`/api/sucursales/${id}`, { method: "DELETE" });
+}
+
 export interface EstadoMarcado {
   sucursalNombre: string;
   empleadoNombre: string | null;
