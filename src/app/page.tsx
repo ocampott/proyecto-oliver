@@ -13,5 +13,8 @@ export default async function Home() {
   if (await isPlatformAdmin(user.id)) {
     redirect("/admin");
   }
-  redirect(process.env.NEXT_PUBLIC_BASE_URL ?? "/login");
+  if (!process.env.NEXT_PUBLIC_BASE_URL) {
+    throw new Error("Falta la variable de entorno NEXT_PUBLIC_BASE_URL");
+  }
+  redirect(process.env.NEXT_PUBLIC_BASE_URL);
 }

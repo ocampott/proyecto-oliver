@@ -62,7 +62,7 @@ verifican el aislamiento por organización vía RLS.
 | `NEXT_PUBLIC_SUPABASE_URL` | URL de la API de Supabase (`http://127.0.0.1:54321` en local) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Key pública (anon) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Key de service role (solo servidor, salta RLS) |
-| `NEXT_PUBLIC_BASE_URL` | Base pública de la app (default `http://localhost:3000`) — se usa para armar la URL de cada QR de sucursal |
+| `NEXT_PUBLIC_BASE_URL` | Base pública de `web/` (default `http://localhost:5173` en dev) — a donde se manda a un usuario autenticado no-admin que cae en `/` de Next.js |
 | `OPENROUTER_API_KEY` | API key de OpenRouter (la usa el futuro módulo del canal de WhatsApp) |
 | `OPENROUTER_MODEL` | Modelo a usar (default `openai/gpt-4o-mini`) |
 
@@ -126,18 +126,19 @@ autenticado que caiga en `/` de Next.js es redirigido a `web/` (ver
 npm run dev:all
 ```
 
-Esto levanta los tres procesos a la vez: Next.js (`:3000`, el resto del
-panel), Fastify (`:3001`, la API de `web/`) y Vite (`:5173`, el flujo de
-`/marcar`). También se pueden levantar por separado con `npm run dev`,
-`npm run dev --prefix server` y `npm run dev --prefix web`.
+Esto levanta los tres procesos a la vez: Next.js (`:3000`, solo `/admin` y
+su `/login`), Fastify (`:3001`, la API de `web/`) y Vite (`:5173`, el panel
+de organización completo + el flujo público de `/marcar`). También se
+pueden levantar por separado con `npm run dev`, `npm run dev --prefix
+server` y `npm run dev --prefix web`.
 
 Cada proyecto tiene su propio `.env.local`:
-- Raíz (`.env.local`): igual que antes para las variables de Supabase.
-  Ojo con `NEXT_PUBLIC_BASE_URL`: ya NO apunta a la propia app de
-  Next.js — apunta a donde vive `/marcar` ahora (`web/`, puerto 5173
-  en dev). La usa `server/src/routes/sucursales.ts`
-  (`GET /api/sucursales/:id/qr`) y `web/src/pages/sucursales/SucursalesPage.tsx`
-  para armar la URL del QR y el link copiable de cada sucursal.
+- Raíz (`.env.local`): igual que antes para las variables de Supabase, más
+  `NEXT_PUBLIC_BASE_URL` — la usa `src/app/page.tsx` para mandar a los
+  usuarios autenticados que no son platform admin fuera de Next.js, a
+  donde vive el panel ahora (`web/`, puerto 5173 en dev). El QR de cada
+  sucursal usa una variable separada, `MARCAR_BASE_URL` (ver
+  `server/.env.example`), no esta.
 - `server/.env.local`: mismas credenciales de Supabase, nombres de
   variable sin el prefijo `NEXT_PUBLIC_` (ver `server/.env.example`).
 - `web/.env.local`: **requerido** (no opcional) — `web/src/lib/supabase.ts`
