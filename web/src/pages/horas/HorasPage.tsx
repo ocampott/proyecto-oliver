@@ -1,0 +1,113 @@
+import { useState } from "react";
+import { Input } from "../../components/ui/input";
+import { Badge } from "../../components/ui/badge";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
+import { useHoras } from "./hooks";
+
+const AR_TZ = "America/Argentina/Buenos_Aires";
+
+function hoyAR(): string {
+  return new Date().toLocaleDateString("sv", { timeZone: AR_TZ });
+}
+
+function inicioDeMesAR(): string {
+  return `${hoyAR().slice(0, 7)}-01`;
+}
+
+function fechaHoraLocal(iso: string): string {
+  return new Date(iso).toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: AR_TZ,
+  });
+}
+
+export default function HorasPage() {
+  const [desde, setDesde] = useState(inicioDeMesAR());
+  const [hasta, setHasta] = useState(hoyAR());
+
+  const { data, isLoading } = useHoras(desde, hasta);
+  const turnos = data?.turnos ?? [];
+  const resumen = data?.resumen ?? [];
+
+  return (
+    <main className="p-8">
+      <div className="max-w-4xl">
+        <h1 className="text-[32px] font-extrabold text-text">Horas trabajadas</h1>
+
+        <div className="mt-4 flex flex-wrap items-end gap-4">
+          <label className="flex flex-col gap-1 text-[12px] text-text/70">
+            Desde
+            <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="w-40" />
+          </label>
+          <label className="flex flex-col gap-1 text-[12px] text-text/70">
+            Hasta
+            <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="w-40" />
+          </label>
+          {isLoading && <span className="text-[15px] text-text/60">Cargando...</span>}
+        </div>
+
+        {resumen.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-[20px] font-extrabold text-text">Resumen por empleado</h2>
+            <Table className="mt-2">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Empleado</TableHead>
+                  <TableHead>Total horas</TableHead>
+                  <TableHead>Estado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {resumen.map((r) => (
+                  <TableRow key={r.nombre}>
+                    <TableCell>{r.nombre}</TableCell>
+                    <TableCell>{r.totalHoras.toFixed(2)}</TableCell>
+                    <TableCell>{r.enCurso ? <Badge variant="outline">Turno en curso</Badge> : "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </section>
+        )}
+
+        <section className="mt-6">
+          <h2 className="text-[20px] font-extrabold text-text">Turnos</h2>
+          <Table className="mt-2">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Empleado</TableHead>
+                <TableHead>Sucursal</TableHead>
+                <TableHead>Entrada</TableHead>
+                <TableHead>Salida</TableHead>
+                <TableHead>Horas</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {turnos.map((t, i) => (
+                <TableRow key={`${t.empleado_id}-${t.entrada_at}-${i}`}>
+                  <TableCell>{t.nombre}</TableCell>
+                  <TableCell>{t.sucursal_nombre}</TableCell>
+                  <TableCell>{fechaHoraLocal(t.entrada_at)}</TableCell>
+                  <TableCell>
+                    {t.salida_at ? fechaHoraLocal(t.salida_at) : <Badge variant="outline">En curso</Badge>}
+                  </TableCell>
+                  <TableCell>{t.horas !== null ? t.horas.toFixed(2) : "—"}</TableCell>
+                </TableRow>
+              ))}
+              {!isLoading && turnos.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-text/60">
+                    No hay turnos en este rango.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </section>
+      </div>
+    </main>
+  );
+}
