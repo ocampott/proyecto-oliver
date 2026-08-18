@@ -147,3 +147,64 @@ export function registrarMarca(
     body: JSON.stringify({ sucursalId, tipo, lat, lon }),
   });
 }
+
+export interface EmpleadoOtp {
+  code: string;
+  expires_at: string;
+}
+
+export interface Empleado {
+  id: string;
+  org_id: string;
+  nombre: string;
+  celular: string | null;
+  device_token: string | null;
+  activo: boolean;
+  created_at: string;
+  otp: EmpleadoOtp | null;
+}
+
+export function listEmpleados(): Promise<Empleado[]> {
+  return request("/api/empleados");
+}
+
+export interface CrearEmpleadoInput {
+  nombre: string;
+  celular?: string;
+}
+
+export function createEmpleado(input: CrearEmpleadoInput): Promise<Empleado> {
+  return request("/api/empleados", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export interface EditarEmpleadoInput {
+  nombre?: string;
+  celular?: string | null;
+  activo?: boolean;
+}
+
+export function updateEmpleado(id: string, patch: EditarEmpleadoInput): Promise<Empleado | { ok: true }> {
+  return request(`/api/empleados/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(patch),
+  });
+}
+
+export function deactivateEmpleado(id: string): Promise<{ ok: true }> {
+  return request(`/api/empleados/${id}`, { method: "DELETE" });
+}
+
+export function desvincularDispositivo(id: string): Promise<{ ok: true }> {
+  return request(`/api/empleados/${id}/desvincular`, { method: "POST" });
+}
+
+export interface GenerarOtpResponse {
+  code: string;
+}
+
+export function generarOtp(id: string): Promise<GenerarOtpResponse> {
+  return request(`/api/empleados/${id}/otp`, { method: "POST" });
+}
