@@ -103,7 +103,7 @@ export default function SucursalesPage() {
           Sacá las coordenadas de Google Maps: click derecho sobre el local → copiar los números.
         </p>
 
-        {error && <p className="mt-2 text-[15px] text-accent">{error}</p>}
+        {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
 
         <Table className="mt-6">
           <TableHeader>
@@ -213,7 +213,7 @@ export default function SucursalesPage() {
         </Table>
 
         {qrSucursal && (
-          <div className="mt-6 max-w-md rounded-lg border border-text/10 bg-surface p-4">
+          <div className="mt-6 max-w-md border border-divider bg-surface p-4">
             <div className="flex items-start justify-between">
               <h2 className="text-[20px] font-extrabold text-text">QR — {qrSucursal.nombre}</h2>
               <Button variant="ghost" onClick={() => setQrId(null)}>

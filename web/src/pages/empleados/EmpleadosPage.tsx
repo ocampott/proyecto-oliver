@@ -103,7 +103,7 @@ export default function EmpleadosPage() {
           </Button>
         </form>
 
-        {error && <p className="mt-2 text-[15px] text-accent">{error}</p>}
+        {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
 
         <Table className="mt-6">
           <TableHeader>

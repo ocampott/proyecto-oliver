@@ -53,7 +53,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {error && <p className="text-[15px] text-accent">{error}</p>}
+          {error && <p className="text-[15px] text-accent-700">{error}</p>}
           <Button type="submit" variant="accent" size="lg" disabled={loading}>
             {loading ? "Entrando..." : "Entrar"}
           </Button>

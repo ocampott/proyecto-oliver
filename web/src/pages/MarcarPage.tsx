@@ -222,7 +222,7 @@ export default function MarcarPage() {
         )}
 
         {mensaje && <p className="mt-4 text-[15px] text-green-700">{mensaje}</p>}
-        {error && <p className="mt-4 text-[15px] text-accent">{error}</p>}
+        {error && <p className="mt-4 text-[15px] text-accent-700">{error}</p>}
       </Card>
     </main>
   );

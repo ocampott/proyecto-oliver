@@ -18,7 +18,7 @@ const TOOLTIP_DESHABILITADO = "Todavía en el panel viejo (localhost:3000)";
 
 export function PanelNav() {
   return (
-    <nav className="border-b border-text/10 bg-surface px-8 py-3">
+    <nav className="border-b-2 border-divider bg-surface px-8 py-3">
       <div className="flex gap-4 text-[15px]">
         {LINKS.map((item) =>
           item.disabled ? (

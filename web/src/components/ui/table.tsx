@@ -23,19 +23,21 @@ const TableBody = React.forwardRef<
 TableBody.displayName = "TableBody";
 
 const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTMLTableRowElement>>(
-  ({ className, ...props }, ref) => (
-    <tr ref={ref} className={cn("border-b border-text/10", className)} {...props} />
-  )
+  ({ className, ...props }, ref) => <tr ref={ref} className={className} {...props} />
 );
 TableRow.displayName = "TableRow";
 
 const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => <th ref={ref} className={cn("p-2 font-normal", className)} {...props} />
+  ({ className, ...props }, ref) => (
+    <th ref={ref} className={cn("border-b-2 border-divider p-2 font-normal", className)} {...props} />
+  )
 );
 TableHead.displayName = "TableHead";
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => <td ref={ref} className={cn("p-2", className)} {...props} />
+  ({ className, ...props }, ref) => (
+    <td ref={ref} className={cn("border-b border-divider p-2", className)} {...props} />
+  )
 );
 TableCell.displayName = "TableCell";
 

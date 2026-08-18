@@ -4,7 +4,17 @@
   --color-bg: #f3f2f2;
   --color-surface: #eae9e9;
   --color-text: #201e1d;
-  --color-accent: #dc2626;
+  --color-accent: #1d4ed8;
+  --color-accent-100: color-mix(in oklch, var(--color-accent) 12%, white);
+  --color-accent-200: color-mix(in oklch, var(--color-accent) 24%, white);
+  --color-accent-300: color-mix(in oklch, var(--color-accent) 40%, white);
+  --color-accent-400: color-mix(in oklch, var(--color-accent) 65%, white);
+  --color-accent-500: var(--color-accent);
+  --color-accent-600: color-mix(in oklch, var(--color-accent) 85%, black);
+  --color-accent-700: color-mix(in oklch, var(--color-accent) 68%, black);
+  --color-accent-800: color-mix(in oklch, var(--color-accent) 52%, black);
+  --color-accent-900: color-mix(in oklch, var(--color-accent) 38%, black);
+  --color-divider: color-mix(in srgb, var(--color-text) 40%, transparent);
   --font-sans: "Archivo", sans-serif;
 }
 
