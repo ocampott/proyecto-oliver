@@ -1,8 +1,14 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth.js";
 import { requireOrg } from "../plugins/require-org.js";
-import { listEmpleados, createEmpleado, updateEmpleado, setEmpleadoActivo } from "../lib/empleados.js";
-import { getOtpVigente } from "../lib/otp.js";
+import {
+  listEmpleados,
+  createEmpleado,
+  updateEmpleado,
+  setEmpleadoActivo,
+  desvincularDispositivo,
+} from "../lib/empleados.js";
+import { getOtpVigente, generarOtp } from "../lib/otp.js";
 
 interface CrearBody {
   nombre?: string;
@@ -76,6 +82,30 @@ export async function empleadosRoutes(app: FastifyInstance): Promise<void> {
       const { id } = request.params;
       await setEmpleadoActivo(request.org!.id, id, false);
       return { ok: true };
+    }
+  );
+
+  app.post<{ Params: IdParams }>(
+    "/api/empleados/:id/desvincular",
+    { preHandler: [requireAuth, requireOrg] },
+    async (request) => {
+      const { id } = request.params;
+      await desvincularDispositivo(request.org!.id, id);
+      return { ok: true };
+    }
+  );
+
+  app.post<{ Params: IdParams }>(
+    "/api/empleados/:id/otp",
+    { preHandler: [requireAuth, requireOrg] },
+    async (request, reply) => {
+      const { id } = request.params;
+      try {
+        const code = await generarOtp(request.org!.id, id);
+        return { code };
+      } catch {
+        return reply.code(404).send({ error: "Empleado no encontrado" });
+      }
     }
   );
 }
