@@ -10,7 +10,11 @@ import { empleadosRoutes } from "./routes/empleados.js";
 
 const app = Fastify({ logger: true });
 
-await app.register(cors, { origin: env.corsOrigin, credentials: true });
+await app.register(cors, {
+  origin: env.corsOrigin,
+  credentials: true,
+  methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"],
+});
 await app.register(cookie);
 
 app.get("/api/health", async () => ({ ok: true }));
