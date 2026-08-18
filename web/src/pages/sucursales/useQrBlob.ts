@@ -33,6 +33,8 @@ export function useQrBlob(sucursalId: string | null): string | null {
       if (!res.ok || cancelled) return;
 
       const blob = await res.blob();
+      if (cancelled) return;
+
       objectUrl = URL.createObjectURL(blob);
       if (!cancelled) setUrl(objectUrl);
     }
