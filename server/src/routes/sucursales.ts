@@ -1,7 +1,9 @@
 import type { FastifyInstance } from "fastify";
+import QRCode from "qrcode";
 import { requireAuth } from "../plugins/auth.js";
 import { requireOrg } from "../plugins/require-org.js";
-import { listSucursales, createSucursal, updateSucursal } from "../lib/sucursales.js";
+import { listSucursales, createSucursal, updateSucursal, getSucursal } from "../lib/sucursales.js";
+import { env } from "../env.js";
 
 interface CrearBody {
   nombre?: string;
@@ -69,6 +71,23 @@ export async function sucursalesRoutes(app: FastifyInstance): Promise<void> {
       const { id } = request.params;
       await updateSucursal(request.org!.id, id, { activa: false });
       return { ok: true };
+    }
+  );
+
+  app.get<{ Params: IdParams }>(
+    "/api/sucursales/:id/qr",
+    { preHandler: [requireAuth, requireOrg] },
+    async (request, reply) => {
+      const { id } = request.params;
+      const sucursal = await getSucursal(request.org!.id, id);
+      if (!sucursal) {
+        return reply.code(404).send({ error: "Sucursal no encontrada" });
+      }
+      const url = `${env.marcarBaseUrl}/marcar/${request.org!.slug}/${sucursal.id}`;
+      const png = await QRCode.toBuffer(url, { width: 600, margin: 2 });
+      reply.header("Content-Type", "image/png");
+      reply.header("Content-Disposition", `inline; filename="qr-${sucursal.nombre}.png"`);
+      return reply.send(png);
     }
   );
 }
