@@ -16,7 +16,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {};
+  if (init?.body) headers["Content-Type"] = "application/json";
   if (init?.headers) Object.assign(headers, init.headers);
   if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
 
