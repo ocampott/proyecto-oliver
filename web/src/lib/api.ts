@@ -209,3 +209,83 @@ export interface GenerarOtpResponse {
 export function generarOtp(id: string): Promise<GenerarOtpResponse> {
   return request(`/api/empleados/${id}/otp`, { method: "POST" });
 }
+
+export type TipoMarca = "entrada" | "salida";
+
+export interface AsistenciaRegistro {
+  id: string;
+  org_id: string;
+  empleado_id: string;
+  sucursal_id: string;
+  tipo: TipoMarca;
+  lat: number;
+  lon: number;
+  created_at: string;
+  empleado_nombre: string | null;
+  sucursal_nombre: string | null;
+}
+
+export function listAsistencia(desde: string, hasta: string): Promise<AsistenciaRegistro[]> {
+  return request(`/api/asistencia?desde=${desde}&hasta=${hasta}`);
+}
+
+export function deleteAsistencia(id: string): Promise<{ ok: true }> {
+  return request(`/api/asistencia/${id}`, { method: "DELETE" });
+}
+
+export type MotivoRechazo =
+  | "fuera_de_rango"
+  | "sucursal_sin_gps"
+  | "nombre_no_encontrado"
+  | "dispositivo_ya_vinculado";
+
+export interface Rechazada {
+  id: string;
+  org_id: string;
+  empleado_id: string | null;
+  sucursal_id: string | null;
+  tipo: TipoMarca | null;
+  lat: number | null;
+  lon: number | null;
+  distancia_metros: number | null;
+  motivo: MotivoRechazo;
+  resuelto: boolean;
+  created_at: string;
+  empleado_nombre: string | null;
+  sucursal_nombre: string | null;
+}
+
+export function listRechazadas(): Promise<Rechazada[]> {
+  return request("/api/asistencia/rechazadas");
+}
+
+export function resolverRechazada(id: string, accion: "aprobar" | "descartar"): Promise<{ ok: true }> {
+  return request(`/api/asistencia/rechazadas/${id}?accion=${accion}`, { method: "POST" });
+}
+
+export interface Turno {
+  empleado_id: string;
+  nombre: string;
+  sucursal_id: string;
+  sucursal_nombre: string;
+  entrada_at: string;
+  salida_at: string | null;
+  horas: number | null;
+}
+
+export interface ResumenEmpleado {
+  nombre: string;
+  totalHoras: number;
+  enCurso: boolean;
+}
+
+export interface HorasResponse {
+  desde: string;
+  hasta: string;
+  turnos: Turno[];
+  resumen: ResumenEmpleado[];
+}
+
+export function getHoras(desde: string, hasta: string): Promise<HorasResponse> {
+  return request(`/api/horas?desde=${desde}&hasta=${hasta}`);
+}
