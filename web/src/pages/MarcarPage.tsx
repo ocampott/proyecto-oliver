@@ -231,7 +231,7 @@ export default function MarcarPage() {
         {etapa.tipo === "rechazado" && (
           <div className="mt-4 flex flex-col gap-3">
             <TriangleAlert className="h-7 w-7 text-accent-700" />
-            <h4 className="text-[20px] font-extrabold text-text">Estás fuera de rango</h4>
+            <h4 className="text-[20px] font-extrabold text-text">No pudimos registrar la marca</h4>
             <p className="text-[13px] text-text/75">{etapa.mensaje}</p>
             <Button
               variant="secondary"

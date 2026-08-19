@@ -11,7 +11,7 @@ const buttonVariants = cva(
         primary: "bg-accent text-bg hover:bg-accent-600 active:bg-accent-700",
         secondary:
           "border border-divider bg-transparent text-text hover:bg-text/[.07] active:bg-text/[.14]",
-        ghost: "bg-transparent text-accent-700 px-1 hover:bg-accent-100 active:bg-accent-200",
+        ghost: "bg-transparent text-accent-700 hover:bg-accent-100 active:bg-accent-200",
       },
       size: {
         default: "h-9 px-[14px] py-2",
@@ -23,6 +23,7 @@ const buttonVariants = cva(
         false: "",
       },
     },
+    compoundVariants: [{ variant: "ghost", size: "default", class: "px-1" }],
     defaultVariants: { variant: "primary", size: "default", block: false },
   }
 );

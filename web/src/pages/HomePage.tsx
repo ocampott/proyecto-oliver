@@ -90,8 +90,8 @@ export default function HomePage() {
         {ACCESOS.map((a) => {
           const Icon = a.icon;
           return (
-            <Link key={a.href} to={a.href}>
-              <Card className="relative transition-colors hover:bg-text/5">
+            <Link key={a.href} to={a.href} className="block h-full">
+              <Card className="relative h-full transition-colors hover:bg-text/5">
                 <ChevronRight className="absolute right-4 top-4 h-4 w-4 text-text/40" />
                 <Icon className="mb-1 h-[22px] w-[22px] text-accent-700" />
                 <h2 className="text-[17px] font-extrabold text-text">{a.label}</h2>
