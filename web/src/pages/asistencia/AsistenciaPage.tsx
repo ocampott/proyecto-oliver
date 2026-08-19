@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LogIn, LogOut } from "lucide-react";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
+import { Field } from "../../components/ui/field";
 import { Badge } from "../../components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
 import type { MotivoRechazo } from "../../lib/api";
@@ -60,121 +60,125 @@ export default function AsistenciaPage() {
   }
 
   return (
-    <main className="p-8">
-      <div className="max-w-4xl">
-        <h1 className="text-[32px] font-extrabold text-text">Asistencia</h1>
+    <>
+      <h1 className="text-[32px] font-extrabold text-text">Asistencia</h1>
 
-        {rechazadas.length > 0 && (
-          <section className="mt-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-[20px] font-extrabold text-text">Intentos rechazados</h2>
-              <Badge variant="accent">{rechazadas.length} pendientes</Badge>
-            </div>
-            <Table className="mt-2">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Empleado</TableHead>
-                  <TableHead>Sucursal</TableHead>
-                  <TableHead>Motivo</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rechazadas.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>{horaLocal(r.created_at)}</TableCell>
-                    <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
-                    <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
-                    <TableCell>
-                      {MOTIVOS[r.motivo] ?? r.motivo}
-                      {r.motivo === "fuera_de_rango" && r.distancia_metros != null && (
-                        <span className="text-text/55"> (a {r.distancia_metros} m)</span>
-                      )}
-                      {r.tipo && <span className="text-text/55"> — {r.tipo}</span>}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" onClick={() => handleResolver(r.id, "aprobar")}>
-                          Aprobar
-                        </Button>
-                        <Button variant="ghost" onClick={() => handleResolver(r.id, "descartar")}>
-                          Descartar
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </section>
-        )}
-
+      {rechazadas.length > 0 && (
         <section className="mt-6">
-          <div className="flex flex-wrap items-end gap-4">
-            <label className="flex flex-col gap-1 text-[12px] text-text/70">
-              Desde
-              <Input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="w-40" />
-            </label>
-            <label className="flex flex-col gap-1 text-[12px] text-text/70">
-              Hasta
-              <Input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="w-40" />
-            </label>
-            {isLoading && <span className="text-[15px] text-text/60">Cargando...</span>}
+          <div className="flex items-center gap-2">
+            <h2 className="text-[20px] font-extrabold text-text">Intentos rechazados</h2>
+            <Badge variant="accent">{rechazadas.length} pendientes</Badge>
           </div>
-
-          {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
-          {isError && (
-            <p className="mt-2 text-[15px] text-accent-700">
-              No se pudieron cargar los registros. Probá de nuevo.
-            </p>
-          )}
-
-          <Table className="mt-4">
+          <Table className="mt-2">
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha y hora</TableHead>
+                <TableHead>Fecha</TableHead>
                 <TableHead>Empleado</TableHead>
                 <TableHead>Sucursal</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead></TableHead>
+                <TableHead>Motivo</TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {registros.map((r) => (
+              {rechazadas.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell>{horaLocal(r.created_at)}</TableCell>
                   <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
                   <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
                   <TableCell>
-                    {r.tipo === "entrada" ? (
-                      <Badge variant="filled" className="gap-1">
-                        <LogIn className="h-3 w-3" /> Entrada
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="gap-1">
-                        <LogOut className="h-3 w-3" /> Salida
-                      </Badge>
+                    {MOTIVOS[r.motivo] ?? r.motivo}
+                    {r.motivo === "fuera_de_rango" && r.distancia_metros != null && (
+                      <span className="text-text/55"> (a {r.distancia_metros} m)</span>
                     )}
+                    {r.tipo && <span className="text-text/55"> — {r.tipo}</span>}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" onClick={() => handleBorrar(r.id)}>
-                      Borrar
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" onClick={() => handleResolver(r.id, "aprobar")}>
+                        Aprobar
+                      </Button>
+                      <Button variant="ghost" onClick={() => handleResolver(r.id, "descartar")}>
+                        Descartar
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
-              {!isLoading && registros.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-text/60">
-                    No hay registros en este rango.
-                  </TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </section>
-      </div>
-    </main>
+      )}
+
+      <section className="mt-6">
+        <div className="flex flex-wrap items-end gap-4">
+          <Field
+            label="Desde"
+            type="date"
+            value={desde}
+            onChange={(e) => setDesde(e.target.value)}
+            containerClassName="w-40"
+          />
+          <Field
+            label="Hasta"
+            type="date"
+            value={hasta}
+            onChange={(e) => setHasta(e.target.value)}
+            containerClassName="w-40"
+          />
+          {isLoading && <span className="text-[15px] text-text/60">Cargando...</span>}
+        </div>
+
+        {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+        {isError && (
+          <p className="mt-2 text-[15px] text-accent-700">
+            No se pudieron cargar los registros. Probá de nuevo.
+          </p>
+        )}
+
+        <Table className="mt-4">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Fecha y hora</TableHead>
+              <TableHead>Empleado</TableHead>
+              <TableHead>Sucursal</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {registros.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell>{horaLocal(r.created_at)}</TableCell>
+                <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
+                <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
+                <TableCell>
+                  {r.tipo === "entrada" ? (
+                    <Badge variant="filled" className="gap-1">
+                      <LogIn className="h-3 w-3" /> Entrada
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="gap-1">
+                      <LogOut className="h-3 w-3" /> Salida
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Button variant="ghost" onClick={() => handleBorrar(r.id)}>
+                    Borrar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {!isLoading && registros.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-text/60">
+                  No hay registros en este rango.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </section>
+    </>
   );
 }
