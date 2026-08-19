@@ -11,5 +11,6 @@ export async function requirePlatformAdmin(request: FastifyRequest, reply: Fasti
   const isAdmin = await isPlatformAdmin(request.user!.id);
   if (!isAdmin) {
     reply.code(403).send({ error: "No autorizado" });
+    return;
   }
 }
