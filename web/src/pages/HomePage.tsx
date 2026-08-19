@@ -61,52 +61,46 @@ export default function HomePage() {
   }, [cargar]);
 
   if (loading) {
-    return (
-      <main className="p-8">
-        <p className="text-text/60">Cargando...</p>
-      </main>
-    );
+    return <p className="text-text/60">Cargando...</p>;
   }
 
   if (sinOrg) {
     return (
-      <main className="p-8">
-        <p className="text-text">
-          Tu cuenta todavía no está asociada a ninguna organización. Contactá a soporte.
-        </p>
-      </main>
+      <p className="text-text">
+        Tu cuenta todavía no está asociada a ninguna organización. Contactá a soporte.
+      </p>
     );
   }
 
   if (error || !org) {
     return (
-      <main className="p-8">
+      <>
         <p className="text-text">{error ?? "No pudimos cargar tus datos. Probá de nuevo."}</p>
         <Button onClick={cargar} variant="secondary" className="mt-4">
           Reintentar
         </Button>
-      </main>
+      </>
     );
   }
 
   return (
-    <main className="p-8">
+    <>
       <h1 className="text-[32px] font-extrabold text-text">{org.name}</h1>
-      <div className="mt-6 grid max-w-3xl gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {ACCESOS.map((a) => {
           const Icon = a.icon;
           return (
             <Link key={a.href} to={a.href}>
               <Card className="relative transition-colors hover:bg-text/5">
                 <ChevronRight className="absolute right-4 top-4 h-4 w-4 text-text/40" />
-                <Icon className="h-6 w-6 text-accent-700" />
-                <h2 className="text-[15px] font-extrabold text-text">{a.label}</h2>
-                <p className="mt-1 text-[15px] text-text/60">{a.detalle}</p>
+                <Icon className="mb-1 h-[22px] w-[22px] text-accent-700" />
+                <h2 className="text-[17px] font-extrabold text-text">{a.label}</h2>
+                <p className="mt-1 text-[13px] text-text/80">{a.detalle}</p>
               </Card>
             </Link>
           );
         })}
       </div>
-    </main>
+    </>
   );
 }
