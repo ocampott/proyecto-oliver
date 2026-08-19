@@ -5,7 +5,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <PanelNav />
-      {children}
+      <main className="mx-auto w-full max-w-[1440px] px-8 py-8">{children}</main>
     </>
   );
 }
