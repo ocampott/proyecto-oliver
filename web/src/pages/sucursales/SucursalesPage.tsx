@@ -95,7 +95,7 @@ export default function SucursalesPage() {
           <Input placeholder="Latitud" value={lat} onChange={(e) => setLat(e.target.value)} className="w-32" />
           <Input placeholder="Longitud" value={lon} onChange={(e) => setLon(e.target.value)} className="w-32" />
           <Input placeholder="Radio (m)" value={radio} onChange={(e) => setRadio(e.target.value)} className="w-24" />
-          <Button type="submit" variant="accent" disabled={loading}>
+          <Button type="submit" variant="primary" disabled={loading}>
             Agregar
           </Button>
         </form>
@@ -231,7 +231,7 @@ export default function SucursalesPage() {
               </p>
             )}
             {qrUrl && (
-              <Button asChild variant="default" className="mt-2">
+              <Button asChild variant="primary" className="mt-2">
                 <a href={qrUrl} download={`qr-${qrSucursal.nombre}.png`}>
                   Descargar PNG
                 </a>

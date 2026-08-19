@@ -3,20 +3,9 @@ import { cn } from "../../lib/utils";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("bg-surface p-6", className)} {...props} />
+    <div ref={ref} className={cn("bg-surface p-[22px]", className)} {...props} />
   )
 );
 Card.displayName = "Card";
 
-const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn("text-[11px] font-normal uppercase tracking-wide text-text/60", className)}
-      {...props}
-    />
-  )
-);
-CardTitle.displayName = "CardTitle";
-
-export { Card, CardTitle };
+export { Card };

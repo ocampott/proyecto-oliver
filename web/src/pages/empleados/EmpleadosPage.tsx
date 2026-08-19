@@ -98,7 +98,7 @@ export default function EmpleadosPage() {
         <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
           <Input required placeholder="Nombre y apellido" value={nombre} onChange={(e) => setNombre(e.target.value)} />
           <Input placeholder="Celular (opcional)" value={celular} onChange={(e) => setCelular(e.target.value)} />
-          <Button type="submit" variant="accent" disabled={loading}>
+          <Button type="submit" variant="primary" disabled={loading}>
             Agregar
           </Button>
         </form>

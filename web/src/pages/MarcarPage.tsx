@@ -150,7 +150,7 @@ export default function MarcarPage() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
-            <Button type="submit" variant="accent" size="lg" disabled={loading}>
+            <Button type="submit" variant="primary" size="lg" disabled={loading}>
               Continuar
             </Button>
           </form>
@@ -164,7 +164,7 @@ export default function MarcarPage() {
             <div className="flex gap-2">
               <Button
                 onClick={() => handleIdentificar(etapa.sugerencia)}
-                variant="accent"
+                variant="primary"
                 disabled={loading}
                 className="flex-1"
               >
@@ -172,7 +172,7 @@ export default function MarcarPage() {
               </Button>
               <Button
                 onClick={() => setEtapa({ tipo: "identificar" })}
-                variant="outline"
+                variant="secondary"
                 className="flex-1"
               >
                 No
@@ -201,7 +201,7 @@ export default function MarcarPage() {
               onChange={(e) => setCode(e.target.value)}
               className="text-center text-lg tracking-widest"
             />
-            <Button type="submit" variant="accent" size="lg" disabled={loading}>
+            <Button type="submit" variant="primary" size="lg" disabled={loading}>
               Vincular
             </Button>
           </form>
@@ -212,10 +212,10 @@ export default function MarcarPage() {
             <p className="text-text">
               Hola, <strong>{etapa.nombre}</strong>
             </p>
-            <Button onClick={() => handleMarcar("entrada")} variant="accent" size="lg" disabled={loading}>
+            <Button onClick={() => handleMarcar("entrada")} variant="primary" size="lg" disabled={loading}>
               Marcar entrada
             </Button>
-            <Button onClick={() => handleMarcar("salida")} variant="outline" size="lg" disabled={loading}>
+            <Button onClick={() => handleMarcar("salida")} variant="secondary" size="lg" disabled={loading}>
               Marcar salida
             </Button>
           </div>

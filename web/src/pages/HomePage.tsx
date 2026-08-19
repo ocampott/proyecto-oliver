@@ -82,7 +82,7 @@ export default function HomePage() {
     return (
       <main className="p-8">
         <p className="text-text">{error ?? "No pudimos cargar tus datos. Probá de nuevo."}</p>
-        <Button onClick={cargar} variant="outline" className="mt-4">
+        <Button onClick={cargar} variant="secondary" className="mt-4">
           Reintentar
         </Button>
       </main>

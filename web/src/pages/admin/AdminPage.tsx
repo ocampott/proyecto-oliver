@@ -50,7 +50,7 @@ export default function AdminPage() {
         <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
           <Input required placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
           <Input required placeholder="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
-          <Button type="submit" variant="accent" disabled={crear.isPending}>
+          <Button type="submit" variant="primary" disabled={crear.isPending}>
             Agregar
           </Button>
         </form>
