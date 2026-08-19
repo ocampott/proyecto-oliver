@@ -1,14 +1,12 @@
-import { createServiceClient } from "./supabase/service";
-import type { Organization } from "./org";
+import { createServiceClient } from "./supabase-service.js";
+import type { Organization } from "./org.js";
 
 export interface CreateOrganizationInput {
   name: string;
   slug: string;
 }
 
-export async function createOrganization(
-  input: CreateOrganizationInput
-): Promise<Organization> {
+export async function createOrganization(input: CreateOrganizationInput): Promise<Organization> {
   const service = createServiceClient();
 
   const { data: org, error: orgErr } = await service

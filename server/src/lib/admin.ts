@@ -1,4 +1,4 @@
-import { createServiceClient } from "./supabase/service";
+import { createServiceClient } from "./supabase-service.js";
 
 export async function isPlatformAdmin(userId: string): Promise<boolean> {
   const service = createServiceClient();
