@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { ArrowRight, CheckCircle, LogIn, LogOut, RotateCcw, TriangleAlert } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Card } from "../components/ui/card";
@@ -11,7 +12,8 @@ type Etapa =
   | { tipo: "identificar" }
   | { tipo: "confirmar"; sugerencia: string }
   | { tipo: "codigo"; empleadoId: string }
-  | { tipo: "marcar"; nombre: string };
+  | { tipo: "marcar"; nombre: string }
+  | { tipo: "rechazado"; nombreMarcar: string; mensaje: string };
 
 function horaLocal(iso: string): string {
   return new Date(iso).toLocaleTimeString("es-AR", {
@@ -93,9 +95,14 @@ export default function MarcarPage() {
         try {
           const body = await registrarMarca(sucursal, tipo, pos.coords.latitude, pos.coords.longitude);
           const label = body.tipo === "entrada" ? "Entrada" : "Salida";
-          setMensaje(`${label} registrada a las ${horaLocal(body.hora)} ✔`);
+          setMensaje(`${label} registrada a las ${horaLocal(body.hora)}`);
         } catch (err) {
-          setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+          const msg = err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.";
+          if (etapa.tipo === "marcar") {
+            setEtapa({ tipo: "rechazado", nombreMarcar: etapa.nombre, mensaje: msg });
+          } else {
+            setError(msg);
+          }
         } finally {
           setLoading(false);
         }
@@ -130,7 +137,7 @@ export default function MarcarPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg p-8">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm border-2 border-divider">
         <h1 className="text-[20px] font-extrabold text-text">{sucursalNombre}</h1>
 
         {etapa.tipo === "identificar" && (
@@ -150,8 +157,8 @@ export default function MarcarPage() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
-            <Button type="submit" variant="primary" size="lg" disabled={loading}>
-              Continuar
+            <Button type="submit" variant="primary" size="lg" className="justify-between" disabled={loading}>
+              Continuar <ArrowRight className="h-4 w-4" />
             </Button>
           </form>
         )}
@@ -213,15 +220,35 @@ export default function MarcarPage() {
               Hola, <strong>{etapa.nombre}</strong>
             </p>
             <Button onClick={() => handleMarcar("entrada")} variant="primary" size="lg" disabled={loading}>
-              Marcar entrada
+              <LogIn className="h-[18px] w-[18px]" /> Marcar entrada
             </Button>
             <Button onClick={() => handleMarcar("salida")} variant="secondary" size="lg" disabled={loading}>
-              Marcar salida
+              <LogOut className="h-[18px] w-[18px]" /> Marcar salida
             </Button>
           </div>
         )}
 
-        {mensaje && <p className="mt-4 text-[15px] text-green-700">{mensaje}</p>}
+        {etapa.tipo === "rechazado" && (
+          <div className="mt-4 flex flex-col gap-3">
+            <TriangleAlert className="h-7 w-7 text-accent-700" />
+            <h4 className="text-[20px] font-extrabold text-text">Estás fuera de rango</h4>
+            <p className="text-[13px] text-text/75">{etapa.mensaje}</p>
+            <Button
+              variant="secondary"
+              block
+              onClick={() => setEtapa({ tipo: "marcar", nombre: etapa.nombreMarcar })}
+            >
+              <RotateCcw className="h-4 w-4" /> Volver a intentar
+            </Button>
+          </div>
+        )}
+
+        {mensaje && (
+          <div className="mt-4 flex items-center gap-2 bg-text px-[14px] py-3 text-[13px] text-bg">
+            <CheckCircle className="h-4 w-4 flex-none" />
+            {mensaje}
+          </div>
+        )}
         {error && <p className="mt-4 text-[15px] text-accent-700">{error}</p>}
       </Card>
     </main>
