@@ -1,7 +1,9 @@
 # Pixel-perfect Modernist — retrofit fino sobre todo `web/`
 
 Fecha: 2026-08-19
-Estado: aprobado, pendiente de plan de implementación
+Estado: aprobado, incluye §7 (layout macro + filtros, agregado tras
+revisión visual del usuario) — pendiente de plan de implementación
+actualizado
 
 ## 1. Contexto
 
@@ -175,3 +177,104 @@ Pantallas: `LoginPage.tsx`, `HomePage.tsx`,
   criterio que las Etapas anteriores) antes de dar la etapa por cerrada.
 - Sin verificación de servidor: este trabajo es 100% `web/`, no toca
   `server/`.
+
+## 7. Layout macro y filtros (agregado 2026-08-19, tras revisión visual del usuario)
+
+### 7.1 Contexto
+
+Tras ver el retrofit de componentes corriendo, el usuario reportó un
+problema distinto: aunque los componentes matcheen el mock pixel a
+pixel, las 6 pantallas del panel (Home, Sucursales, Empleados,
+Asistencia, Horas, Admin) no usan el espacio de pantalla disponible —
+cada página define su propio `<main className="p-8">` con un
+`max-w-3xl`/`max-w-4xl` interno ad hoc, sin contenedor compartido. En
+monitores grandes queda mucho espacio vacío a la derecha (Home) o las
+tablas quedan angostas cuando podrían mostrar más contenido sin scroll
+horizontal. Además no existe ningún filtro en las tablas de Sucursales
+o Empleados, y el navbar (aun con el wordmark del §4.2) se siente chico.
+
+El mock (`styles.css`, artboards del `.dc.html`) no define un
+`.container` ni un componente de filtros — son artboards de ancho fijo,
+no una app responsiva real — así que este ancho y estos filtros son
+decisiones de producto tomadas directamente con el usuario, no
+extraídas del mock.
+
+### 7.2 Decisiones tomadas con el usuario
+
+- **Contenedor centrado, no full-bleed**: `max-w-[1440px]` centrado con
+  `mx-auto`, en vez de ocupar el 100% del ancho de la ventana siempre.
+  Evita columnas de texto/tablas absurdamente estiradas en ultrawide.
+- **Filtros**: búsqueda por nombre + selector de estado
+  (Todos/Activos/Inactivos), solo en Sucursales y Empleados. Asistencia
+  y Horas no se tocan (ya tienen su propio filtro de rango de fechas).
+  Filtrado en memoria sobre los datos ya cargados por react-query — sin
+  pegarle al server.
+- **Navbar más grande que lo especificado en el §4.2**: además del
+  wordmark/sticky/link-activo ya definidos ahí, se sube el padding
+  vertical y los tamaños de tipografía (valores exactos en §7.4).
+- **Home a 4 columnas**: la grilla pasa de `sm:grid-cols-2` fijo a
+  `lg:grid-cols-4` (con fallback a 2 columnas en tablet, 1 en mobile),
+  usando el ancho completo del nuevo contenedor. Los tamaños de
+  tipografía/ícono de cada card no cambian respecto al §4.3 (Task 4 del
+  plan) — lo que cambia es que ahora ocupan todo el ancho disponible en
+  vez de una columna angosta de `max-w-3xl`.
+- **Login y Marcar quedan afuera**: son pantallas públicas centradas
+  tipo tarjeta, no paneles con tabla/grilla — no les corresponde el
+  contenedor de 1440px.
+
+### 7.3 Arquitectura — contenedor compartido
+
+`PanelLayout` (`web/src/components/PanelLayout.tsx`) pasa a envolver
+`children` en un único `<main className="mx-auto w-full max-w-[1440px]
+px-8 py-8">`. Cada página deja de definir su propio `<main
+className="p-8">` + `max-w-Nxl` interno — pasan a renderizar solo su
+contenido (empezando directo en `<h1>` o el wrapper que corresponda),
+delegando el contenedor a `PanelLayout`. Afecta: `HomePage.tsx`,
+`SucursalesPage.tsx`, `EmpleadosPage.tsx`, `AsistenciaPage.tsx`,
+`HorasPage.tsx`, `AdminPage.tsx`. Los estados de loading/error de cada
+página (que hoy también abren su propio `<main className="p-8">`)
+tienen que actualizarse igual, para no quedar con doble padding.
+
+### 7.4 Nav — valores exactos (reemplazan/extienden al §4.2)
+
+`padding: var(--space-3) var(--space-4)` (12px/16px) del mock sube a
+`py-5 px-6` (20px/24px); wordmark `18px` → `22px`; links `14px` →
+`15px`; `gap-4` → `gap-6`. El resto del §4.2 (sticky, wordmark
+`margin-right: auto`, link activo en `text-accent-700`) no cambia.
+
+### 7.5 Filtros — componente nuevo `Select` + estado de filtro por página
+
+- **`components/ui/select.tsx`** (nuevo): mismo tratamiento visual que
+  `.input` (bg-surface, border-divider, radius 0, 14px), envuelto en un
+  label igual que `Field` (reutiliza la misma estructura de
+  `field.tsx` pero renderiza `<select>` en vez de `<input>`). Opciones
+  fijas para este caso: "Todos" / "Activos" / "Inactivos".
+- **Sucursales/Empleados**: agregan estado local `busqueda: string` y
+  `estadoFiltro: "todos" | "activos" | "inactivos"`. La fila de
+  filtros se agrega arriba de la tabla (debajo del form de alta):
+  `Field` de búsqueda (`label="Buscar"`, `containerClassName="w-64"`) +
+  el nuevo `Select` de estado. La
+  lista que se mapea a `TableRow` se deriva con `.filter()` sobre
+  `empleados`/`sucursales` antes del `.map()`, combinando ambos
+  criterios (nombre `includes` case-insensitive + estado). Sin cambios
+  a los hooks de `react-query` ni al server.
+
+### 7.6 Home — grilla
+
+Reemplaza el `grid` del §4.3 (Task 4 del plan):
+`grid gap-4 sm:grid-cols-2 lg:grid-cols-4` (sin `max-w-3xl`, hereda el
+ancho del contenedor de `PanelLayout`).
+
+### 7.7 Fuera de alcance (extiende al §5)
+
+- Filtros en Asistencia/Horas/Admin — no pedidos, quedan para cuando
+  haga falta.
+- Filtrado/búsqueda server-side o paginación — el volumen actual de
+  datos no lo justifica (YAGNI).
+- Cualquier ajuste de layout a Login/Marcar.
+
+### 7.8 Verificación
+
+Mismo criterio que el §6: `npm run build` limpio + pasada visual del
+usuario, ahora también contra monitores/ventanas anchas (no solo
+comparación 1:1 contra el artboard del mock, que es de ancho fijo).
