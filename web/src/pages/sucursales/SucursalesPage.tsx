@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
+import { Field } from "../../components/ui/field";
+import { Select } from "../../components/ui/select";
+import { Badge } from "../../components/ui/badge";
+import { Dialog } from "../../components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
 import type { Sucursal } from "../../lib/api";
 import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useDesactivarSucursal } from "./hooks";
@@ -12,6 +15,8 @@ interface EditState {
   lon: string;
   radio: string;
 }
+
+type EstadoFiltro = "todos" | "activos" | "inactivos";
 
 function parseNumero(s: string): number | undefined {
   const n = Number(s);
@@ -32,12 +37,21 @@ export default function SucursalesPage() {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [edit, setEdit] = useState<EditState>({ nombre: "", lat: "", lon: "", radio: "100" });
   const [qrId, setQrId] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [error, setError] = useState<string | null>(null);
 
   const qrUrl = useQrBlob(qrId);
   const qrSucursal = sucursales.find((s) => s.id === qrId) ?? null;
 
   const loading = crear.isPending || editar.isPending || desactivar.isPending;
+
+  const sucursalesFiltradas = sucursales.filter((s) => {
+    const matchNombre = s.nombre.toLowerCase().includes(busqueda.toLowerCase());
+    const matchEstado =
+      estadoFiltro === "todos" || (estadoFiltro === "activos" ? s.activa : !s.activa);
+    return matchNombre && matchEstado;
+  });
 
   async function handleAlta(e: FormEvent) {
     e.preventDefault();
@@ -86,160 +100,210 @@ export default function SucursalesPage() {
   }
 
   return (
-    <main className="p-8">
-      <div className="max-w-4xl">
-        <h1 className="text-[32px] font-extrabold text-text">Sucursales</h1>
+    <>
+      <h1 className="text-[32px] font-extrabold text-text">Sucursales</h1>
 
-        <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
-          <Input required placeholder="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
-          <Input placeholder="Latitud" value={lat} onChange={(e) => setLat(e.target.value)} className="w-32" />
-          <Input placeholder="Longitud" value={lon} onChange={(e) => setLon(e.target.value)} className="w-32" />
-          <Input placeholder="Radio (m)" value={radio} onChange={(e) => setRadio(e.target.value)} className="w-24" />
-          <Button type="submit" variant="primary" disabled={loading}>
-            Agregar
-          </Button>
-        </form>
-        <p className="mt-1 text-[15px] text-text/60">
-          Sacá las coordenadas de Google Maps: click derecho sobre el local → copiar los números.
-        </p>
+      <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
+        <Field
+          label="Nombre"
+          required
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          containerClassName="w-[200px]"
+        />
+        <Field
+          label="Latitud"
+          value={lat}
+          onChange={(e) => setLat(e.target.value)}
+          containerClassName="w-[130px]"
+        />
+        <Field
+          label="Longitud"
+          value={lon}
+          onChange={(e) => setLon(e.target.value)}
+          containerClassName="w-[130px]"
+        />
+        <Field
+          label="Radio (m)"
+          value={radio}
+          onChange={(e) => setRadio(e.target.value)}
+          containerClassName="w-[100px]"
+        />
+        <Button type="submit" variant="primary" disabled={loading}>
+          Agregar
+        </Button>
+      </form>
+      <p className="mt-1 text-[15px] text-text/60">
+        Sacá las coordenadas de Google Maps: click derecho sobre el local → copiar los números.
+      </p>
 
-        {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+      {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
 
-        <Table className="mt-6">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Coordenadas</TableHead>
-              <TableHead>Radio</TableHead>
-              <TableHead>Activa</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-text/60">
-                  Cargando...
-                </TableCell>
-              </TableRow>
-            )}
-            {!isLoading &&
-              sucursales.map((suc) => (
-                <TableRow key={suc.id} className={suc.activa ? "" : "text-text/40"}>
-                  <TableCell>
-                    {editandoId === suc.id ? (
-                      <Input value={edit.nombre} onChange={(e) => setEdit({ ...edit, nombre: e.target.value })} />
-                    ) : (
-                      suc.nombre
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editandoId === suc.id ? (
-                      <div className="flex gap-1">
-                        <Input
-                          value={edit.lat}
-                          onChange={(e) => setEdit({ ...edit, lat: e.target.value })}
-                          placeholder="Lat"
-                          className="w-28"
-                        />
-                        <Input
-                          value={edit.lon}
-                          onChange={(e) => setEdit({ ...edit, lon: e.target.value })}
-                          placeholder="Lon"
-                          className="w-28"
-                        />
-                      </div>
-                    ) : suc.lat != null && suc.lon != null ? (
-                      `${suc.lat}, ${suc.lon}`
-                    ) : (
-                      "Sin configurar"
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editandoId === suc.id ? (
-                      <Input value={edit.radio} onChange={(e) => setEdit({ ...edit, radio: e.target.value })} className="w-20" />
-                    ) : (
-                      `${suc.radio_metros} m`
-                    )}
-                  </TableCell>
-                  <TableCell>{suc.activa ? "Sí" : "No"}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-2">
-                      {editandoId === suc.id ? (
-                        <>
-                          <Button variant="ghost" onClick={() => handleGuardarEdicion(suc.id)} disabled={loading}>
-                            Guardar
-                          </Button>
-                          <Button variant="ghost" onClick={() => setEditandoId(null)}>
-                            Cancelar
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            variant="ghost"
-                            onClick={() => {
-                              setEditandoId(suc.id);
-                              setEdit({
-                                nombre: suc.nombre,
-                                lat: suc.lat?.toString() ?? "",
-                                lon: suc.lon?.toString() ?? "",
-                                radio: suc.radio_metros.toString(),
-                              });
-                            }}
-                          >
-                            Editar
-                          </Button>
-                          <Button variant="ghost" onClick={() => handleToggleActiva(suc)} disabled={loading}>
-                            {suc.activa ? "Desactivar" : "Activar"}
-                          </Button>
-                          <Button variant="ghost" onClick={() => setQrId(suc.id)}>
-                            Ver QR
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            {!isLoading && sucursales.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-text/60">
-                  Todavía no hay sucursales cargadas.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-
-        {qrSucursal && (
-          <div className="mt-6 max-w-md border border-divider bg-surface p-4">
-            <div className="flex items-start justify-between">
-              <h2 className="text-[20px] font-extrabold text-text">QR — {qrSucursal.nombre}</h2>
-              <Button variant="ghost" onClick={() => setQrId(null)}>
-                Cerrar
-              </Button>
-            </div>
-            {qrUrl ? (
-              <img src={qrUrl} alt={`QR de ${qrSucursal.nombre}`} className="mt-2 w-full" />
-            ) : (
-              <p className="mt-2 text-[15px] text-text/60">Generando QR...</p>
-            )}
-            {org && (
-              <p className="mt-2 break-all text-[15px] text-text/60">
-                {`${window.location.origin}/marcar/${org.slug}/${qrSucursal.id}`}
-              </p>
-            )}
-            {qrUrl && (
-              <Button asChild variant="primary" className="mt-2">
-                <a href={qrUrl} download={`qr-${qrSucursal.nombre}.png`}>
-                  Descargar PNG
-                </a>
-              </Button>
-            )}
-          </div>
-        )}
+      <div className="mt-4 flex flex-wrap items-end gap-2">
+        <Field
+          label="Buscar"
+          placeholder="Nombre de la sucursal"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          containerClassName="w-64"
+        />
+        <Select
+          label="Estado"
+          value={estadoFiltro}
+          onChange={(e) => setEstadoFiltro(e.target.value as EstadoFiltro)}
+          options={[
+            { value: "todos", label: "Todos" },
+            { value: "activos", label: "Activos" },
+            { value: "inactivos", label: "Inactivos" },
+          ]}
+          containerClassName="w-40"
+        />
       </div>
-    </main>
+
+      <Table className="mt-4">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Coordenadas</TableHead>
+            <TableHead>Radio</TableHead>
+            <TableHead>Activa</TableHead>
+            <TableHead>Acciones</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-text/60">
+                Cargando...
+              </TableCell>
+            </TableRow>
+          )}
+          {!isLoading &&
+            sucursalesFiltradas.map((suc) => (
+              <TableRow key={suc.id} className={suc.activa ? "" : "text-text/40"}>
+                <TableCell>
+                  {editandoId === suc.id ? (
+                    <Field
+                      label="Nombre"
+                      value={edit.nombre}
+                      onChange={(e) => setEdit({ ...edit, nombre: e.target.value })}
+                    />
+                  ) : (
+                    suc.nombre
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editandoId === suc.id ? (
+                    <div className="flex gap-1">
+                      <Field
+                        label="Lat"
+                        value={edit.lat}
+                        onChange={(e) => setEdit({ ...edit, lat: e.target.value })}
+                        containerClassName="w-28"
+                      />
+                      <Field
+                        label="Lon"
+                        value={edit.lon}
+                        onChange={(e) => setEdit({ ...edit, lon: e.target.value })}
+                        containerClassName="w-28"
+                      />
+                    </div>
+                  ) : suc.lat != null && suc.lon != null ? (
+                    `${suc.lat}, ${suc.lon}`
+                  ) : (
+                    "Sin configurar"
+                  )}
+                </TableCell>
+                <TableCell>
+                  {editandoId === suc.id ? (
+                    <Field
+                      label="Radio"
+                      value={edit.radio}
+                      onChange={(e) => setEdit({ ...edit, radio: e.target.value })}
+                      containerClassName="w-20"
+                    />
+                  ) : (
+                    `${suc.radio_metros} m`
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={suc.activa ? "filled" : "neutral"}>{suc.activa ? "Sí" : "No"}</Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-2">
+                    {editandoId === suc.id ? (
+                      <>
+                        <Button variant="ghost" onClick={() => handleGuardarEdicion(suc.id)} disabled={loading}>
+                          Guardar
+                        </Button>
+                        <Button variant="ghost" onClick={() => setEditandoId(null)}>
+                          Cancelar
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setEditandoId(suc.id);
+                            setEdit({
+                              nombre: suc.nombre,
+                              lat: suc.lat?.toString() ?? "",
+                              lon: suc.lon?.toString() ?? "",
+                              radio: suc.radio_metros.toString(),
+                            });
+                          }}
+                        >
+                          Editar
+                        </Button>
+                        <Button variant="ghost" onClick={() => handleToggleActiva(suc)} disabled={loading}>
+                          {suc.activa ? "Desactivar" : "Activar"}
+                        </Button>
+                        <Button variant="ghost" onClick={() => setQrId(suc.id)}>
+                          Ver QR
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          {!isLoading && sucursales.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-text/60">
+                Todavía no hay sucursales cargadas.
+              </TableCell>
+            </TableRow>
+          )}
+          {!isLoading && sucursales.length > 0 && sucursalesFiltradas.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={5} className="text-text/60">
+                Ninguna sucursal coincide con el filtro.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+
+      <Dialog open={qrSucursal != null} onClose={() => setQrId(null)} title={`QR — ${qrSucursal?.nombre ?? ""}`}>
+        {qrUrl ? (
+          <img src={qrUrl} alt={`QR de ${qrSucursal?.nombre}`} className="w-full" />
+        ) : (
+          <p className="text-[15px] text-text/60">Generando QR...</p>
+        )}
+        {org && qrSucursal && (
+          <p className="break-all text-[15px] text-text/60">
+            {`${window.location.origin}/marcar/${org.slug}/${qrSucursal.id}`}
+          </p>
+        )}
+        {qrUrl && (
+          <Button asChild variant="primary" block>
+            <a href={qrUrl} download={`qr-${qrSucursal?.nombre}.png`}>
+              Descargar PNG
+            </a>
+          </Button>
+        )}
+      </Dialog>
+    </>
   );
 }
