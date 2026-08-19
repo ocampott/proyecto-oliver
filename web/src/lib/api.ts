@@ -289,3 +289,27 @@ export interface HorasResponse {
 export function getHoras(desde: string, hasta: string): Promise<HorasResponse> {
   return request(`/api/horas?desde=${desde}&hasta=${hasta}`);
 }
+
+export interface OrganizationAdmin {
+  id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  created_at: string;
+}
+
+export function listOrganizationsAdmin(): Promise<OrganizationAdmin[]> {
+  return request("/api/admin/organizations");
+}
+
+export interface CrearOrganizacionInput {
+  name: string;
+  slug: string;
+}
+
+export function createOrganizationAdmin(input: CrearOrganizacionInput): Promise<OrganizationAdmin> {
+  return request("/api/admin/organizations", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
