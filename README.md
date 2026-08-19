@@ -1,9 +1,10 @@
 # Oliver
 
-Plataforma multi-tenant (SaaS) en construcción. Una sola app Next.js con
-persistencia y autenticación en Supabase (Postgres con Row Level Security +
-Supabase Auth). Cada cliente tiene su propia organización con datos
-completamente aislados.
+Plataforma multi-tenant (SaaS) para control de asistencia. **Vite + React**
+(frontend, `web/`) y **Fastify** (backend, `server/`), con persistencia y
+autenticación en Supabase (Postgres con Row Level Security + Supabase
+Auth). Cada cliente tiene su propia organización con datos completamente
+aislados.
 
 El diseño completo está en
 `docs/superpowers/specs/2026-08-12-whatsapp-saas-platform-design.md` y los
@@ -17,16 +18,20 @@ planes de implementación en `docs/superpowers/plans/`.
 ## Setup rápido
 
 ```bash
-# 1. Instalar dependencias
+# 1. Instalar dependencias (raíz, server/ y web/)
 npm install
+npm install --prefix server
+npm install --prefix web
 
 # 2. Levantar el stack local de Supabase (Postgres + Auth + API + Studio)
 npx supabase start
 
-# 3. Crear el archivo de variables de entorno con las keys locales
+# 3. Crear los archivos de variables de entorno con las keys locales
 #    (las imprime `npx supabase status` -o env)
 cp .env.example .env.local
-# Editá .env.local con los valores del paso anterior
+cp server/.env.example server/.env.local
+cp web/.env.example web/.env.local
+# Editá los tres .env.local con los valores del paso anterior
 
 # 4. Aplicar las migraciones (esto también borra todo dato existente)
 npx supabase db reset
@@ -34,37 +39,41 @@ npx supabase db reset
 # 5. Crear el usuario/org/sucursal/empleado de prueba (idempotente)
 node scripts/seed-demo.js
 
-# 6. Levantar el frontend
-npm run dev
+# 6. Levantar todo
+npm run dev:all
 ```
 
-Después: si tenés rol de platform admin, entrás directo a `/admin`. El
-panel de organización ahora vive en `web/` — para verlo necesitás los tres
-procesos corriendo (`npm run dev:all`, ver la sección "Correr todo en dev"
-más abajo) y entrar por `http://localhost:5173`.
+Después entrá a `http://localhost:5173`. Si tu usuario tiene rol de
+platform admin (ver "Probar el panel de superadmin" más abajo), el panel
+de superadmin está en `http://localhost:5173/admin` — sin link en el nav,
+acceso directo por URL.
 
 Studio de Supabase (UI de la base local): http://127.0.0.1:54323
-
-## Tests
-
-```bash
-npm test
-```
-
-Corren contra el stack local de Supabase (lee `.env.test.local`), así que
-necesitan `npx supabase start` activo. Incluyen tests de integración que
-verifican el aislamiento por organización vía RLS.
 
 ## Variables de entorno
 
 | Variable | Descripción |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL de la API de Supabase (`http://127.0.0.1:54321` en local) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Key pública (anon) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Key de service role (solo servidor, salta RLS) |
-| `NEXT_PUBLIC_BASE_URL` | Base pública de `web/` (default `http://localhost:5173` en dev) — a donde se manda a un usuario autenticado no-admin que cae en `/` de Next.js |
-| `OPENROUTER_API_KEY` | API key de OpenRouter (la usa el futuro módulo del canal de WhatsApp) |
-| `OPENROUTER_MODEL` | Modelo a usar (default `openai/gpt-4o-mini`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL de la API de Supabase (`http://127.0.0.1:54321` en local) — nombre heredado de cuando el proyecto era Next.js; hoy la lee `scripts/seed-demo.js` desde `.env.local` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Key de service role (solo servidor, salta RLS) — la lee `scripts/seed-demo.js` |
+
+`server/.env.local` y `web/.env.local` tienen sus propias variables — ver
+`server/.env.example` y `web/.env.example`. `web/.env.local` es
+**requerido** (no opcional): `web/src/lib/supabase.ts` tira una excepción
+al cargar el módulo si faltan `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`,
+lo que rompe toda la SPA.
+
+## Correr todo en dev
+
+```bash
+# Con Supabase local corriendo (npx supabase start):
+npm run dev:all
+```
+
+Levanta Fastify (`:3001`, la API) y Vite (`:5173`, el panel de
+organización completo, el panel de superadmin y el flujo público
+`/marcar`). También se pueden levantar por separado con `npm run dev
+--prefix server` y `npm run dev --prefix web`.
 
 ## Probar el marcado de asistencia localmente
 
@@ -84,74 +93,46 @@ verifican el aislamiento por organización vía RLS.
 7. Los turnos completos (entrada + salida) se ven en `/horas` con el total
    de horas por empleado.
 
+## Probar el panel de superadmin localmente
+
+`/admin` requiere que tu usuario esté en la tabla `platform_admins`. Para
+dártelo de alta en local, abrí el Studio de Supabase
+(http://127.0.0.1:54323) → SQL Editor, y corré:
+
+```sql
+insert into platform_admins (user_id)
+select id from auth.users where email = 'demo@test.local';
+```
+
+Entrá a `http://localhost:5173/admin` — vas a ver el listado de
+organizaciones y un form para dar de alta una nueva.
+
 ## Estado del refactor
 
 - **Plan 1 — Foundation (hecho)**: multi-tenancy real (`organizations`,
   `org_members`, `org_settings`, `platform_admins`) con RLS probado, login
-  con Supabase Auth, panel de superadmin en `/admin`, y repositorio limpio
-  del stack anterior (Baileys, SQLite, PM2, código específico de un cliente).
+  con Supabase Auth, panel de superadmin, y repositorio limpio del stack
+  anterior (Baileys, SQLite, PM2, código específico de un cliente).
 - **Plan 2 — Módulo de Asistencia multi-sucursal (hecho)**: alta de
-  sucursales y empleados con QR (`/sucursales`, `/empleados`), vínculo
-  dispositivo↔empleado por OTP, marcado público de entrada/salida con
-  geocerca (`/marcar/[org]/[sucursal]`), revisión de intentos rechazados y
-  cálculo de horas trabajadas (`/asistencia`, `/horas`). Detalle completo en
+  sucursales y empleados con QR, vínculo dispositivo↔empleado por OTP,
+  marcado público de entrada/salida con geocerca, revisión de intentos
+  rechazados y cálculo de horas trabajadas. Detalle completo en
   `docs/superpowers/plans/2026-08-13-asistencia-multi-sucursal.md`.
 - **Plan 3 — Canal de WhatsApp Cloud API + agente IA**: pendiente (Embedded
   Signup + webhook + dashboard de conversaciones, sin IA al principio).
 - **Plan 4 — Módulo de RRHH**: pendiente (reutiliza `empleados`,
   `sucursales` y el vínculo de identidad de Asistencia).
-
-## Migración a Vite (en curso)
-
-El panel se está migrando de Next.js a **Vite + React** (frontend, carpeta
-`web/`) y **Fastify** (backend, carpeta `server/`), con el sistema de
-diseño de `docs/superpowers/specs/2026-08-13-vite-migration-design.md`
-aplicado. La migración es **por etapas** y **por reemplazo directo**: cada
-pantalla se borra de Next.js en el momento en que su versión nueva queda
-lista, así que durante la migración el panel vive parcialmente en cada
-stack.
-
-**Estado actual:** todo el panel de organización (`/`, `/sucursales`,
-`/empleados`, `/asistencia`, `/horas`) y el flujo público `/marcar` ya
-viven en `web/` + `server/`. En Next.js solo queda `/admin` (panel de
-superadmin, fuera del alcance de esta migración) y su propio `/login`,
-necesario únicamente para acceder a `/admin` — cualquier otro usuario
-autenticado que caiga en `/` de Next.js es redirigido a `web/` (ver
-`NEXT_PUBLIC_BASE_URL` más abajo).
-
-### Correr todo en dev
-
-```bash
-# Con Supabase local corriendo (npx supabase start):
-npm run dev:all
-```
-
-Esto levanta los tres procesos a la vez: Next.js (`:3000`, solo `/admin` y
-su `/login`), Fastify (`:3001`, la API de `web/`) y Vite (`:5173`, el panel
-de organización completo + el flujo público de `/marcar`). También se
-pueden levantar por separado con `npm run dev`, `npm run dev --prefix
-server` y `npm run dev --prefix web`.
-
-Cada proyecto tiene su propio `.env.local`:
-- Raíz (`.env.local`): igual que antes para las variables de Supabase, más
-  `NEXT_PUBLIC_BASE_URL` — la usa `src/app/page.tsx` para mandar a los
-  usuarios autenticados que no son platform admin fuera de Next.js, a
-  donde vive el panel ahora (`web/`, puerto 5173 en dev). El QR de cada
-  sucursal usa una variable separada, `MARCAR_BASE_URL` (ver
-  `server/.env.example`), no esta.
-- `server/.env.local`: mismas credenciales de Supabase, nombres de
-  variable sin el prefijo `NEXT_PUBLIC_` (ver `server/.env.example`).
-- `web/.env.local`: **requerido** (no opcional) — `web/src/lib/supabase.ts`
-  tira una excepción al cargar el módulo si faltan `VITE_SUPABASE_URL` /
-  `VITE_SUPABASE_ANON_KEY`, lo que rompe toda la SPA (incluido el flujo
-  público `/marcar`, que antes no necesitaba nada de Supabase). Ver
-  `web/.env.example` para las variables necesarias.
+- **Migración de Next.js a Vite + Fastify (hecho)**: el panel completo
+  (organización + superadmin) y el flujo público `/marcar` viven en `web/`
+  (Vite + React) + `server/` (Fastify), con el sistema de diseño
+  "Modernist" aplicado. Detalle de las 5 etapas en
+  `docs/superpowers/plans/` y `docs/superpowers/specs/` (archivos
+  `vite-migra*`).
 
 ## Estructura
 
-- `src/app` — páginas y route handlers (App Router)
-- `src/lib` — lógica de servidor (helpers de organización, clientes de
-  Supabase, OpenRouter)
+- `web/` — frontend (Vite + React + TypeScript + Tailwind v4)
+- `server/` — backend (Fastify + TypeScript)
 - `supabase/migrations` — migraciones de la base (se aplican con
   `npx supabase db reset`)
-- `src/middleware.ts` — verificación de sesión en cada request
+- `scripts/seed-demo.js` — datos de prueba idempotentes

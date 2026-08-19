@@ -6,9 +6,10 @@ Proyecto en refactor a plataforma multi-tenant (SaaS). La fuente de verdad
 del diseño es `docs/superpowers/specs/2026-08-12-whatsapp-saas-platform-design.md`
 y el plan de implementación activo está en `docs/superpowers/plans/`.
 
-Stack: Next.js 15 (App Router) + TypeScript + Supabase (Postgres con RLS,
-Supabase Auth). Tests con Vitest (`npm test`). Desarrollo local contra el
-stack local de Supabase (`npx supabase start`).
+Stack: Vite + React (frontend, `web/`) + Fastify (backend, `server/`) +
+TypeScript + Supabase (Postgres con RLS, Supabase Auth). Sin tests
+automatizados — QA manual. Desarrollo local contra el stack local de
+Supabase (`npx supabase start`).
 
 ## UI / UX
 
