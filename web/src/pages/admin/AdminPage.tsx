@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
+import { Field } from "../../components/ui/field";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
 import { ApiError } from "../../lib/api";
 import { useOrganizacionesAdmin, useCrearOrganizacionAdmin } from "./hooks";
@@ -32,7 +32,7 @@ export default function AdminPage() {
   if (isError) {
     const noAutorizado = error instanceof ApiError && error.status === 403;
     return (
-      <main className="p-8">
+      <main className="mx-auto w-full max-w-[1440px] px-8 py-8">
         <p className="text-[15px] text-text">
           {noAutorizado
             ? "No tenés acceso a esta sección."
@@ -43,56 +43,54 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="p-8">
-      <div className="max-w-4xl">
-        <h1 className="text-[32px] font-extrabold text-text">Organizaciones</h1>
+    <main className="mx-auto w-full max-w-[1440px] px-8 py-8">
+      <h1 className="text-[32px] font-extrabold text-text">Organizaciones</h1>
 
-        <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
-          <Input required placeholder="Nombre" value={name} onChange={(e) => setName(e.target.value)} />
-          <Input required placeholder="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
-          <Button type="submit" variant="primary" disabled={crear.isPending}>
-            Agregar
-          </Button>
-        </form>
+      <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
+        <Field label="Nombre" required value={name} onChange={(e) => setName(e.target.value)} />
+        <Field label="Slug" required value={slug} onChange={(e) => setSlug(e.target.value)} />
+        <Button type="submit" variant="primary" disabled={crear.isPending}>
+          Agregar
+        </Button>
+      </form>
 
-        {formError && <p className="mt-2 text-[15px] text-accent-700">{formError}</p>}
+      {formError && <p className="mt-2 text-[15px] text-accent-700">{formError}</p>}
 
-        <Table className="mt-6">
-          <TableHeader>
+      <Table className="mt-6">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nombre</TableHead>
+            <TableHead>Slug</TableHead>
+            <TableHead>Plan</TableHead>
+            <TableHead>Alta</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading && (
             <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Plan</TableHead>
-              <TableHead>Alta</TableHead>
+              <TableCell colSpan={4} className="text-text/60">
+                Cargando...
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-text/60">
-                  Cargando...
-                </TableCell>
+          )}
+          {!isLoading &&
+            organizaciones.map((org) => (
+              <TableRow key={org.id}>
+                <TableCell>{org.name}</TableCell>
+                <TableCell>{org.slug}</TableCell>
+                <TableCell>{org.plan}</TableCell>
+                <TableCell>{fechaLocal(org.created_at)}</TableCell>
               </TableRow>
-            )}
-            {!isLoading &&
-              organizaciones.map((org) => (
-                <TableRow key={org.id}>
-                  <TableCell>{org.name}</TableCell>
-                  <TableCell>{org.slug}</TableCell>
-                  <TableCell>{org.plan}</TableCell>
-                  <TableCell>{fechaLocal(org.created_at)}</TableCell>
-                </TableRow>
-              ))}
-            {!isLoading && organizaciones.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-text/60">
-                  Todavía no hay organizaciones.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            ))}
+          {!isLoading && organizaciones.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} className="text-text/60">
+                Todavía no hay organizaciones.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </main>
   );
 }
