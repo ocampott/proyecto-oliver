@@ -434,3 +434,87 @@ export function getCumplimiento(filters: {
   if (filters.empleadoId) params.set("empleadoId", filters.empleadoId);
   return request(`/api/turnos/cumplimiento?${params}`);
 }
+
+export interface Ausencia {
+  id: string;
+  empleado_id: string;
+  empleado_nombre: string;
+  sucursal_id: string | null;
+  sucursal_nombre: string | null;
+  fecha_desde: string;
+  fecha_hasta: string;
+  motivo: string;
+  detalle: string | null;
+  contacto: string | null;
+  certificado_pendiente: boolean;
+  created_at: string;
+}
+
+export interface ResumenAusencias {
+  total: number;
+  certificadosPendientes: number;
+  porSucursal: Record<string, number>;
+  porMotivo: Record<string, number>;
+}
+
+export interface AusenciasResponse {
+  ausencias: Ausencia[];
+  resumen: ResumenAusencias;
+}
+
+export function getAusencias(filters: {
+  desde?: string;
+  hasta?: string;
+  sucursalId?: string;
+  motivo?: string;
+  empleadoId?: string;
+}): Promise<AusenciasResponse> {
+  const params = new URLSearchParams();
+  if (filters.desde) params.set("desde", filters.desde);
+  if (filters.hasta) params.set("hasta", filters.hasta);
+  if (filters.sucursalId) params.set("sucursalId", filters.sucursalId);
+  if (filters.motivo) params.set("motivo", filters.motivo);
+  if (filters.empleadoId) params.set("empleadoId", filters.empleadoId);
+  return request(`/api/ausencias?${params}`);
+}
+
+export interface CrearAusenciaInput {
+  empleado_id: string;
+  sucursal_id?: string | null;
+  fecha_desde: string;
+  fecha_hasta: string;
+  motivo: string;
+  detalle?: string | null;
+  contacto?: string | null;
+  certificado_pendiente?: boolean;
+}
+
+export function createAusencia(input: CrearAusenciaInput): Promise<{ ok: true }> {
+  return request("/api/ausencias", { method: "POST", body: JSON.stringify(input) });
+}
+
+export interface EditarAusenciaInput {
+  sucursal_id?: string | null;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  motivo?: string;
+  detalle?: string | null;
+  contacto?: string | null;
+  certificado_pendiente?: boolean;
+}
+
+export function updateAusencia(id: string, patch: EditarAusenciaInput): Promise<{ ok: true }> {
+  return request(`/api/ausencias/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+}
+
+export function deleteAusencia(id: string): Promise<{ ok: true }> {
+  return request(`/api/ausencias/${id}`, { method: "DELETE" });
+}
+
+export function getRrhhCategorias(): Promise<{ categorias: string[] }> {
+  return request("/api/settings/rrhh-categorias");
+}
+
+export function setRrhhCategorias(categorias: string[]): Promise<{ ok: true }> {
+  return request("/api/settings/rrhh-categorias", { method: "PATCH", body: JSON.stringify({ categorias }) });
+}
