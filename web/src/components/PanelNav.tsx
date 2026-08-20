@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { AccountMenu } from "./AccountMenu";
 
 interface NavItem {
   href: string;
@@ -15,20 +16,25 @@ const LINKS: NavItem[] = [
 
 export function PanelNav() {
   return (
-    <nav className="sticky top-0 z-20 flex items-center gap-6 border-b-2 border-divider bg-bg px-6 py-5">
-      <span className="mr-auto text-[22px] font-extrabold text-text">Oliver</span>
-      {LINKS.map((item) => (
-        <NavLink
-          key={item.href}
-          to={item.href}
-          end
-          className={({ isActive }) =>
-            isActive ? "text-[15px] text-accent-700" : "text-[15px] text-text hover:text-accent-700"
-          }
-        >
-          {item.label}
-        </NavLink>
-      ))}
+    <nav className="sticky top-0 z-20 flex items-center bg-white/90 px-8 py-3.5 shadow-[0_1px_0_rgba(24,24,27,0.07)] backdrop-blur-sm">
+      <span className="text-[17px] font-extrabold tracking-tight text-text">oliver</span>
+      <div className="ml-auto flex items-center gap-0.5">
+        {LINKS.map((item) => (
+          <NavLink
+            key={item.href}
+            to={item.href}
+            end
+            className={({ isActive }) =>
+              isActive
+                ? "rounded-full bg-accent-100 px-4 py-2 text-[13.5px] font-semibold text-accent-700"
+                : "rounded-full px-4 py-2 text-[13.5px] font-medium text-text-secondary hover:text-text"
+            }
+          >
+            {item.label}
+          </NavLink>
+        ))}
+        <AccountMenu />
+      </div>
     </nav>
   );
 }

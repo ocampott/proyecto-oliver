@@ -4,19 +4,16 @@ import {
   createSucursal,
   updateSucursal,
   deactivateSucursal,
-  getOrgActual,
   type CrearSucursalInput,
   type EditarSucursalInput,
 } from "../../lib/api";
+
+export { useOrgActual } from "../../lib/hooks";
 
 const QUERY_KEY = ["sucursales"];
 
 export function useSucursales() {
   return useQuery({ queryKey: QUERY_KEY, queryFn: listSucursales });
-}
-
-export function useOrgActual() {
-  return useQuery({ queryKey: ["org"], queryFn: getOrgActual });
 }
 
 export function useCrearSucursal() {
