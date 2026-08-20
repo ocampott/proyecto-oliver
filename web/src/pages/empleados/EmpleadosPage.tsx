@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from "react";
+import { Search } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
-import { Badge } from "../../components/ui/badge";
+import { Status } from "../../components/ui/status";
+import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
 import type { Empleado } from "../../lib/api";
@@ -138,6 +140,7 @@ export default function EmpleadosPage() {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           containerClassName="w-64"
+          icon={<Search className="h-[15px] w-[15px]" />}
         />
         <Select
           label="Estado"
@@ -189,23 +192,22 @@ export default function EmpleadosPage() {
                 </TableCell>
                 <TableCell>
                   {emp.device_token ? (
-                    <Badge variant="filled">Vinculado</Badge>
+                    <Status tone="success">Vinculado</Status>
                   ) : emp.otp ? (
-                    <Badge variant="outline">
-                      {formatCode(emp.otp.code)}{" "}
-                      <span className="font-normal opacity-70">
-                        ({minutosRestantes(emp.otp.expires_at)} min)
-                      </span>
-                    </Badge>
+                    <span className="inline-flex items-center gap-[7px] text-[13px] text-text">
+                      <span className="h-[7px] w-[7px] rounded-full bg-[--color-warning]" />
+                      <span className="font-mono tracking-wide">{formatCode(emp.otp.code)}</span>
+                      <span className="text-text-tertiary">({minutosRestantes(emp.otp.expires_at)} min)</span>
+                    </span>
                   ) : (
-                    <Badge variant="neutral">Sin vincular</Badge>
+                    <Status tone="neutral">Sin vincular</Status>
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={emp.activo ? "filled" : "neutral"}>{emp.activo ? "Sí" : "No"}</Badge>
+                  <Status tone={emp.activo ? "success" : "neutral"}>{emp.activo ? "Activo" : "Inactivo"}</Status>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex justify-end gap-1.5">
                     {editandoId === emp.id ? (
                       <>
                         <Button variant="ghost" onClick={() => handleGuardarEdicion(emp.id)} disabled={loading}>
@@ -217,27 +219,54 @@ export default function EmpleadosPage() {
                       </>
                     ) : (
                       <>
-                        <Button
-                          variant="ghost"
+                        <IconButton
                           onClick={() => {
                             setEditandoId(emp.id);
                             setEditNombre(emp.nombre);
                             setEditCelular(emp.celular ?? "");
                           }}
-                        >
-                          Editar
-                        </Button>
-                        <Button variant="ghost" onClick={() => handleToggleActivo(emp)} disabled={loading}>
-                          {emp.activo ? "Desactivar" : "Activar"}
-                        </Button>
+                          icon={
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                            </svg>
+                          }
+                          aria-label="Editar"
+                        />
+                        <IconButton
+                          onClick={() => handleToggleActivo(emp)}
+                          disabled={loading}
+                          icon={
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2v6" />
+                              <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
+                            </svg>
+                          }
+                          aria-label={emp.activo ? "Desactivar" : "Activar"}
+                        />
                         {emp.device_token ? (
-                          <Button variant="ghost" onClick={() => handleDesvincular(emp)} disabled={loading}>
-                            Desvincular
-                          </Button>
+                          <IconButton
+                            onClick={() => handleDesvincular(emp)}
+                            disabled={loading}
+                            icon={
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                                <line x1="12" y1="2" x2="12" y2="12" />
+                              </svg>
+                            }
+                            aria-label="Desvincular"
+                          />
                         ) : (
-                          <Button variant="ghost" onClick={() => handleGenerarCodigo(emp)} disabled={loading}>
-                            {emp.otp ? "Código nuevo" : "Generar código"}
-                          </Button>
+                          <IconButton
+                            onClick={() => handleGenerarCodigo(emp)}
+                            disabled={loading}
+                            icon={
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                              </svg>
+                            }
+                            aria-label={emp.otp ? "Código nuevo" : "Generar código"}
+                          />
                         )}
                       </>
                     )}
@@ -263,12 +292,21 @@ export default function EmpleadosPage() {
       </Table>
 
       <Dialog open={codigoDialog != null} onClose={() => setCodigoDialog(null)} title="Código de vinculación">
-        <div className="text-center text-[40px] font-extrabold tracking-[0.15em] text-text">
+        <div className="mx-auto -mt-1 flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-accent-100">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-accent" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        <div className="text-center text-[38px] font-extrabold tracking-[0.14em] text-text">
           {codigoDialog?.code}
         </div>
-        <p className="text-center text-[13px] text-text/85">
+        <p className="text-center text-[13.5px] text-text-secondary">
           Vence en 10 minutos. Dictáselo a {codigoDialog?.nombre}.
         </p>
+        <Button variant="secondary" block onClick={() => setCodigoDialog(null)}>
+          Cerrar
+        </Button>
       </Dialog>
     </>
   );
