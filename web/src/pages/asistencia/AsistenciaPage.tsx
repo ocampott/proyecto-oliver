@@ -67,9 +67,9 @@ export default function AsistenciaPage() {
         <section className="mt-6">
           <div className="flex items-center gap-2">
             <h2 className="text-[20px] font-extrabold text-text">Intentos rechazados</h2>
-            <Badge variant="accent">{rechazadas.length} pendientes</Badge>
+            <Badge variant="alert">{rechazadas.length} pendientes</Badge>
           </div>
-          <Table className="mt-2">
+          <Table className="mt-2" containerClassName="border-[#f3ddc9]">
             <TableHeader>
               <TableRow>
                 <TableHead>Fecha</TableHead>
@@ -94,10 +94,10 @@ export default function AsistenciaPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" onClick={() => handleResolver(r.id, "aprobar")}>
+                      <Button variant="secondary" size="default" onClick={() => handleResolver(r.id, "aprobar")}>
                         Aprobar
                       </Button>
-                      <Button variant="ghost" onClick={() => handleResolver(r.id, "descartar")}>
+                      <Button variant="secondary" size="default" onClick={() => handleResolver(r.id, "descartar")}>
                         Descartar
                       </Button>
                     </div>
@@ -153,17 +153,17 @@ export default function AsistenciaPage() {
                 <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
                 <TableCell>
                   {r.tipo === "entrada" ? (
-                    <Badge variant="filled" className="gap-1">
+                    <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-[--color-success-700]">
                       <LogIn className="h-3 w-3" /> Entrada
-                    </Badge>
+                    </span>
                   ) : (
-                    <Badge variant="outline" className="gap-1">
+                    <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-text-secondary">
                       <LogOut className="h-3 w-3" /> Salida
-                    </Badge>
+                    </span>
                   )}
                 </TableCell>
                 <TableCell>
-                  <Button variant="ghost" onClick={() => handleBorrar(r.id)}>
+                  <Button variant="secondary" size="default" onClick={() => handleBorrar(r.id)}>
                     Borrar
                   </Button>
                 </TableCell>
