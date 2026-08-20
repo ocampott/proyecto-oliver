@@ -29,7 +29,10 @@ export function useCrearHorario() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CrearHorarioInput) => createHorario(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["horarios"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["horarios"] });
+      queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+    },
   });
 }
 
@@ -37,7 +40,10 @@ export function useEditarHorario() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: EditarHorarioInput }) => updateHorario(id, patch),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["horarios"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["horarios"] });
+      queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+    },
   });
 }
 
@@ -45,7 +51,10 @@ export function useBorrarHorario() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteHorario(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["horarios"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["horarios"] });
+      queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+    },
   });
 }
 
@@ -53,7 +62,10 @@ export function useAsignarHorarios() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: AsignarHorariosInput) => asignarHorarios(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["horarios"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["horarios"] });
+      queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+    },
   });
 }
 

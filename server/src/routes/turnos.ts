@@ -14,6 +14,8 @@ import {
   setTolerancia,
   calcularCumplimiento,
 } from "../lib/turnos.js";
+import { getEmpleadoById, listEmpleados } from "../lib/empleados.js";
+import { getSucursal } from "../lib/sucursales.js";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -92,6 +94,16 @@ export async function turnosRoutes(app: FastifyInstance): Promise<void> {
       if (!empleado_id || dia_semana === undefined || !hora_inicio || !hora_fin) {
         return reply.code(400).send({ error: "Faltan datos del turno" });
       }
+      const empleado = await getEmpleadoById(empleado_id);
+      if (!empleado || empleado.org_id !== request.org!.id) {
+        return reply.code(400).send({ error: "Empleado inválido" });
+      }
+      if (sucursal_id) {
+        const sucursal = await getSucursal(request.org!.id, sucursal_id);
+        if (!sucursal) {
+          return reply.code(400).send({ error: "Sucursal inválida" });
+        }
+      }
       await insertHorario(request.org!.id, { empleado_id, sucursal_id, dia_semana, hora_inicio, hora_fin, tolerancia_min });
       return { ok: true };
     }
@@ -100,8 +112,14 @@ export async function turnosRoutes(app: FastifyInstance): Promise<void> {
   app.patch<{ Params: IdParams; Body: EditarHorarioBody }>(
     "/api/horarios/:id",
     { preHandler: [requireAuth, requireOrg] },
-    async (request) => {
+    async (request, reply) => {
       const body = request.body ?? {};
+      if (body.sucursal_id !== undefined && body.sucursal_id !== null) {
+        const sucursal = await getSucursal(request.org!.id, body.sucursal_id);
+        if (!sucursal) {
+          return reply.code(400).send({ error: "Sucursal inválida" });
+        }
+      }
       const patch: Parameters<typeof updateHorario>[2] = {};
       if (body.sucursal_id !== undefined) patch.sucursal_id = body.sucursal_id;
       if (body.dia_semana !== undefined) patch.dia_semana = body.dia_semana;
@@ -129,6 +147,11 @@ export async function turnosRoutes(app: FastifyInstance): Promise<void> {
       const { empleado_ids, dias_semana, hora_inicio, hora_fin, tolerancia_min } = request.body ?? {};
       if (!empleado_ids?.length || !dias_semana?.length || !hora_inicio || !hora_fin) {
         return reply.code(400).send({ error: "Faltan datos para asignar el turno" });
+      }
+      const empleadosOrg = await listEmpleados(request.org!.id);
+      const idsValidos = new Set(empleadosOrg.map((e) => e.id));
+      if (!empleado_ids.every((id) => idsValidos.has(id))) {
+        return reply.code(400).send({ error: "Uno o más empleados no son válidos" });
       }
       await insertHorariosBulk(request.org!.id, { empleado_ids, dias_semana, hora_inicio, hora_fin, tolerancia_min });
       return { ok: true };
