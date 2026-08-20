@@ -41,10 +41,10 @@ export function AccountMenu() {
   if (!org) return null;
 
   return (
-    <div ref={ref} className="relative ml-3">
+    <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-[12px] font-bold text-white"
+        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-accent text-[12px] font-bold text-white"
       >
         {iniciales(org.name)}
       </button>
@@ -56,13 +56,13 @@ export function AccountMenu() {
           </div>
           <button
             disabled
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium text-text disabled:opacity-45"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium text-text disabled:cursor-not-allowed disabled:opacity-45"
           >
             Configuración
           </button>
           <button
             onClick={handleCerrarSesion}
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium text-alert hover:bg-black/[.03]"
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium text-alert hover:bg-black/[.03]"
           >
             Cerrar sesión
           </button>

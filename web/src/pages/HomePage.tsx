@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarClock, Clock, Users, MapPin, ChevronRight } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
-import { getOrgActual, ApiError, type Organization } from "../lib/api";
+import { useOrgActual } from "../lib/hooks";
+import { ApiError } from "../lib/api";
 
 const ACCESOS = [
   {
@@ -33,36 +33,13 @@ const ACCESOS = [
 ];
 
 export default function HomePage() {
-  const [org, setOrg] = useState<Organization | null>(null);
-  const [sinOrg, setSinOrg] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: org, isLoading, isError, error, refetch } = useOrgActual();
 
-  const cargar = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    setSinOrg(false);
-    getOrgActual()
-      .then(setOrg)
-      .catch((err) => {
-        if (err instanceof ApiError && err.status === 404) {
-          setSinOrg(true);
-        } else {
-          setError(
-            err instanceof Error ? err.message : "No pudimos cargar tus datos. Probá de nuevo."
-          );
-        }
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    cargar();
-  }, [cargar]);
-
-  if (loading) {
+  if (isLoading) {
     return <p className="text-text/60">Cargando...</p>;
   }
+
+  const sinOrg = isError && error instanceof ApiError && error.status === 404;
 
   if (sinOrg) {
     return (
@@ -72,11 +49,13 @@ export default function HomePage() {
     );
   }
 
-  if (error || !org) {
+  if (isError || !org) {
     return (
       <>
-        <p className="text-text">{error ?? "No pudimos cargar tus datos. Probá de nuevo."}</p>
-        <Button onClick={cargar} variant="secondary" className="mt-4">
+        <p className="text-text">
+          {error instanceof Error ? error.message : "No pudimos cargar tus datos. Probá de nuevo."}
+        </p>
+        <Button onClick={() => refetch()} variant="secondary" className="mt-4">
           Reintentar
         </Button>
       </>

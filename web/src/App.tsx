@@ -12,7 +12,15 @@ import AsistenciaPage from "./pages/asistencia/AsistenciaPage";
 import HorasPage from "./pages/horas/HorasPage";
 import AdminPage from "./pages/admin/AdminPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export default function App() {
   return (
