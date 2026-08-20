@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
 import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { Sucursal } from "../../lib/api";
 import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useDesactivarSucursal } from "./hooks";
 import { useQrBlob } from "./useQrBlob";
@@ -36,6 +36,7 @@ export default function SucursalesPage() {
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
   const [radio, setRadio] = useState("100");
+  const [altaOpen, setAltaOpen] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [edit, setEdit] = useState<EditState>({ nombre: "", lat: "", lon: "", radio: "100" });
   const [qrId, setQrId] = useState<string | null>(null);
@@ -69,6 +70,7 @@ export default function SucursalesPage() {
       setLat("");
       setLon("");
       setRadio("100");
+      setAltaOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
@@ -105,42 +107,6 @@ export default function SucursalesPage() {
     <>
       <h1 className="text-[32px] font-extrabold text-text">Sucursales</h1>
 
-      <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
-        <Field
-          label="Nombre"
-          required
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          containerClassName="w-[200px]"
-        />
-        <Field
-          label="Latitud"
-          value={lat}
-          onChange={(e) => setLat(e.target.value)}
-          containerClassName="w-[130px]"
-        />
-        <Field
-          label="Longitud"
-          value={lon}
-          onChange={(e) => setLon(e.target.value)}
-          containerClassName="w-[130px]"
-        />
-        <Field
-          label="Radio (m)"
-          value={radio}
-          onChange={(e) => setRadio(e.target.value)}
-          containerClassName="w-[100px]"
-        />
-        <Button type="submit" variant="primary" disabled={loading}>
-          Agregar
-        </Button>
-      </form>
-      <p className="mt-1 text-[15px] text-text/60">
-        Sacá las coordenadas de Google Maps: click derecho sobre el local → copiar los números.
-      </p>
-
-      {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
-
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <Field
           label="Buscar"
@@ -161,7 +127,20 @@ export default function SucursalesPage() {
           ]}
           containerClassName="w-40"
         />
+        <Button
+          variant="primary"
+          className="ml-auto"
+          onClick={() => {
+            setError(null);
+            setAltaOpen(true);
+          }}
+        >
+          <Plus className="h-4 w-4" />
+          Nueva sucursal
+        </Button>
       </div>
+
+      {error && !altaOpen && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -174,13 +153,7 @@ export default function SucursalesPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && (
-            <TableRow>
-              <TableCell colSpan={5} className="text-text/60">
-                Cargando...
-              </TableCell>
-            </TableRow>
-          )}
+          {isLoading && <TableSkeleton cols={5} />}
           {!isLoading &&
             sucursalesFiltradas.map((suc) => (
               <TableRow key={suc.id} className={suc.activa ? "" : "text-text/40"}>
@@ -309,6 +282,50 @@ export default function SucursalesPage() {
           )}
         </TableBody>
       </Table>
+
+      <Dialog
+        open={altaOpen}
+        onClose={() => {
+          setAltaOpen(false);
+          setError(null);
+        }}
+        title="Nueva sucursal"
+      >
+        <form onSubmit={handleAlta} className="flex flex-col gap-3">
+          <Field
+            label="Nombre"
+            required
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Latitud"
+            value={lat}
+            onChange={(e) => setLat(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Longitud"
+            value={lon}
+            onChange={(e) => setLon(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Radio (m)"
+            value={radio}
+            onChange={(e) => setRadio(e.target.value)}
+            containerClassName="w-full"
+          />
+          <p className="text-[13.5px] text-text/60">
+            Sacá las coordenadas de Google Maps: click derecho sobre el local → copiar los números.
+          </p>
+          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          <Button type="submit" variant="primary" block disabled={loading}>
+            Agregar
+          </Button>
+        </form>
+      </Dialog>
 
       <Dialog open={qrSucursal != null} onClose={() => setQrId(null)} title={qrSucursal?.nombre ?? ""}>
         <p className="m-0 -mt-2 text-[11.5px] font-semibold uppercase tracking-wide text-text-tertiary">Código QR</p>

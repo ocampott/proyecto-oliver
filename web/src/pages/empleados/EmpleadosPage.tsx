@@ -1,12 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
 import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { Empleado } from "../../lib/api";
 import {
   useEmpleados,
@@ -37,6 +37,7 @@ export default function EmpleadosPage() {
 
   const [nombre, setNombre] = useState("");
   const [celular, setCelular] = useState("");
+  const [altaOpen, setAltaOpen] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editNombre, setEditNombre] = useState("");
   const [editCelular, setEditCelular] = useState("");
@@ -62,6 +63,7 @@ export default function EmpleadosPage() {
       await crear.mutateAsync({ nombre, celular: celular || undefined });
       setNombre("");
       setCelular("");
+      setAltaOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
@@ -112,27 +114,6 @@ export default function EmpleadosPage() {
     <>
       <h1 className="text-[32px] font-extrabold text-text">Empleados</h1>
 
-      <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
-        <Field
-          label="Nombre y apellido"
-          required
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          containerClassName="w-[220px]"
-        />
-        <Field
-          label="Celular (opcional)"
-          value={celular}
-          onChange={(e) => setCelular(e.target.value)}
-          containerClassName="w-[180px]"
-        />
-        <Button type="submit" variant="primary" disabled={loading}>
-          Agregar
-        </Button>
-      </form>
-
-      {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
-
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <Field
           label="Buscar"
@@ -153,7 +134,20 @@ export default function EmpleadosPage() {
           ]}
           containerClassName="w-40"
         />
+        <Button
+          variant="primary"
+          className="ml-auto"
+          onClick={() => {
+            setError(null);
+            setAltaOpen(true);
+          }}
+        >
+          <Plus className="h-4 w-4" />
+          Nuevo empleado
+        </Button>
       </div>
+
+      {error && !altaOpen && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -166,13 +160,7 @@ export default function EmpleadosPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && (
-            <TableRow>
-              <TableCell colSpan={5} className="text-text/60">
-                Cargando...
-              </TableCell>
-            </TableRow>
-          )}
+          {isLoading && <TableSkeleton cols={5} />}
           {!isLoading &&
             empleadosFiltrados.map((emp) => (
               <TableRow key={emp.id} className={emp.activo ? "" : "text-text/40"}>
@@ -290,6 +278,35 @@ export default function EmpleadosPage() {
           )}
         </TableBody>
       </Table>
+
+      <Dialog
+        open={altaOpen}
+        onClose={() => {
+          setAltaOpen(false);
+          setError(null);
+        }}
+        title="Nuevo empleado"
+      >
+        <form onSubmit={handleAlta} className="flex flex-col gap-3">
+          <Field
+            label="Nombre y apellido"
+            required
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Celular (opcional)"
+            value={celular}
+            onChange={(e) => setCelular(e.target.value)}
+            containerClassName="w-full"
+          />
+          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          <Button type="submit" variant="primary" block disabled={loading}>
+            Agregar
+          </Button>
+        </form>
+      </Dialog>
 
       <Dialog open={codigoDialog != null} onClose={() => setCodigoDialog(null)} title="Código de vinculación">
         <div className="mx-auto -mt-1 flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-accent-100">

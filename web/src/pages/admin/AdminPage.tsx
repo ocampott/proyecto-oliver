@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "../../components/ui/button";
+import { Dialog } from "../../components/ui/dialog";
 import { Field } from "../../components/ui/field";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { ApiError } from "../../lib/api";
 import { useOrganizacionesAdmin, useCrearOrganizacionAdmin } from "./hooks";
 
@@ -15,6 +17,7 @@ export default function AdminPage() {
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [altaOpen, setAltaOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   async function handleAlta(e: FormEvent) {
@@ -24,6 +27,7 @@ export default function AdminPage() {
       await crear.mutateAsync({ name, slug });
       setName("");
       setSlug("");
+      setAltaOpen(false);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
@@ -46,17 +50,20 @@ export default function AdminPage() {
     <main className="mx-auto w-full max-w-[1440px] px-8 py-8">
       <h1 className="text-[32px] font-extrabold text-text">Organizaciones</h1>
 
-      <form onSubmit={handleAlta} className="mt-4 flex flex-wrap items-end gap-2">
-        <Field label="Nombre" required value={name} onChange={(e) => setName(e.target.value)} />
-        <Field label="Slug" required value={slug} onChange={(e) => setSlug(e.target.value)} />
-        <Button type="submit" variant="primary" disabled={crear.isPending}>
-          Agregar
+      <div className="mt-4 flex justify-end">
+        <Button
+          variant="primary"
+          onClick={() => {
+            setFormError(null);
+            setAltaOpen(true);
+          }}
+        >
+          <Plus className="h-4 w-4" />
+          Nueva organización
         </Button>
-      </form>
+      </div>
 
-      {formError && <p className="mt-2 text-[15px] text-accent-700">{formError}</p>}
-
-      <Table containerClassName="mt-6">
+      <Table containerClassName="mt-4">
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
@@ -66,13 +73,7 @@ export default function AdminPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && (
-            <TableRow>
-              <TableCell colSpan={4} className="text-text/60">
-                Cargando...
-              </TableCell>
-            </TableRow>
-          )}
+          {isLoading && <TableSkeleton cols={4} />}
           {!isLoading &&
             organizaciones.map((org) => (
               <TableRow key={org.id}>
@@ -91,6 +92,36 @@ export default function AdminPage() {
           )}
         </TableBody>
       </Table>
+
+      <Dialog
+        open={altaOpen}
+        onClose={() => {
+          setAltaOpen(false);
+          setFormError(null);
+        }}
+        title="Nueva organización"
+      >
+        <form onSubmit={handleAlta} className="flex flex-col gap-3">
+          <Field
+            label="Nombre"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Slug"
+            required
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            containerClassName="w-full"
+          />
+          {formError && <p className="text-[15px] text-accent-700">{formError}</p>}
+          <Button type="submit" variant="primary" block disabled={crear.isPending}>
+            Agregar
+          </Button>
+        </form>
+      </Dialog>
     </main>
   );
 }
