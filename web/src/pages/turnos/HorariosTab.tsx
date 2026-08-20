@@ -5,6 +5,7 @@ import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
 import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
+import { MultiSelect } from "../../components/ui/multi-select";
 import { IconButton } from "../../components/ui/icon-button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { HorarioEmpleado } from "../../lib/api";
@@ -79,13 +80,22 @@ export default function HorariosTab() {
   const [plantillaForm, setPlantillaForm] = useState(emptyPlantillaForm);
   const [errorPlantilla, setErrorPlantilla] = useState<string | null>(null);
 
+  const [asignOpen, setAsignOpen] = useState(false);
   const [asignEmpleados, setAsignEmpleados] = useState<string[]>([]);
   const [asignDias, setAsignDias] = useState<number[]>([]);
   const [asignHoraInicio, setAsignHoraInicio] = useState("08:00");
   const [asignHoraFin, setAsignHoraFin] = useState("14:00");
   const [asignTolerancia, setAsignTolerancia] = useState("");
-  const [asignOk, setAsignOk] = useState<string | null>(null);
   const [errorAsign, setErrorAsign] = useState<string | null>(null);
+
+  function resetAsignForm() {
+    setAsignEmpleados([]);
+    setAsignDias([]);
+    setAsignHoraInicio("08:00");
+    setAsignHoraFin("14:00");
+    setAsignTolerancia("");
+    setErrorAsign(null);
+  }
 
   async function handleAlta(e: FormEvent) {
     e.preventDefault();
@@ -173,13 +183,9 @@ export default function HorariosTab() {
     if (t.tolerancia_min !== null) setAsignTolerancia(t.tolerancia_min.toString());
   }
 
-  function toggleAsignEmpleado(id: string) {
-    setAsignEmpleados((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  }
-
-  async function handleAsignar() {
+  async function handleAsignar(e: FormEvent) {
+    e.preventDefault();
     setErrorAsign(null);
-    setAsignOk(null);
     if (asignEmpleados.length === 0 || asignDias.length === 0) {
       setErrorAsign("Elegí al menos un empleado y un día.");
       return;
@@ -192,9 +198,8 @@ export default function HorariosTab() {
         hora_fin: asignHoraFin,
         tolerancia_min: asignTolerancia ? Number(asignTolerancia) : null,
       });
-      setAsignOk(`Turno asignado a ${asignEmpleados.length} empleado(s).`);
-      setAsignEmpleados([]);
-      setAsignDias([]);
+      resetAsignForm();
+      setAsignOpen(false);
     } catch (err) {
       setErrorAsign(err instanceof Error ? err.message : "No se pudo asignar el turno.");
     }
@@ -210,10 +215,16 @@ export default function HorariosTab() {
           options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
           containerClassName="w-64"
         />
-        <Button variant="primary" className="ml-auto" onClick={() => setAltaOpen(true)} disabled={!empleadoId}>
-          <Plus className="h-4 w-4" />
-          Nueva franja
-        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button variant="secondary" onClick={() => setAsignOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Asignar turno
+          </Button>
+          <Button variant="primary" onClick={() => setAltaOpen(true)} disabled={!empleadoId}>
+            <Plus className="h-4 w-4" />
+            Nueva franja
+          </Button>
+        </div>
       </div>
 
       {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
@@ -311,50 +322,6 @@ export default function HorariosTab() {
         </ul>
       </Card>
 
-      <Card className="mt-6">
-        <h2 className="text-[18px] font-extrabold text-text">Asignar turno</h2>
-        <p className="mt-1 text-[13.5px] text-text/60">Asigná el mismo horario a varios empleados y días de una vez.</p>
-
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {empleados.map((e) => (
-            <button
-              key={e.id}
-              type="button"
-              onClick={() => toggleAsignEmpleado(e.id)}
-              className={`rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                asignEmpleados.includes(e.id) ? "border-accent bg-accent-100 text-accent-800" : "border-border text-text-secondary hover:bg-black/[.03]"
-              }`}
-            >
-              {e.nombre}
-            </button>
-          ))}
-        </div>
-
-        <Select
-          label="Plantilla (opcional)"
-          value=""
-          onChange={(e) => elegirTemplate(e.target.value)}
-          options={[{ value: "", label: "Sin plantilla" }, ...templates.map((t) => ({ value: t.id, label: t.nombre }))]}
-          containerClassName="mt-3 w-64"
-        />
-
-        <div className="mt-3">
-          <DiaToggle dias={asignDias} onToggle={(d) => setAsignDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))} />
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-end gap-3">
-          <Field label="Hora inicio" type="time" value={asignHoraInicio} onChange={(e) => setAsignHoraInicio(e.target.value)} containerClassName="w-32" />
-          <Field label="Hora fin" type="time" value={asignHoraFin} onChange={(e) => setAsignHoraFin(e.target.value)} containerClassName="w-32" />
-          <Field label="Tolerancia (min, opcional)" type="number" value={asignTolerancia} onChange={(e) => setAsignTolerancia(e.target.value)} containerClassName="w-44" />
-          <Button variant="primary" onClick={handleAsignar} disabled={asignar.isPending}>
-            Asignar
-          </Button>
-        </div>
-
-        {errorAsign && <p className="mt-2 text-[15px] text-accent-700">{errorAsign}</p>}
-        {asignOk && <p className="mt-2 text-[15px] text-text">{asignOk}</p>}
-      </Card>
-
       <Dialog open={altaOpen} onClose={() => { setAltaOpen(false); setError(null); }} title="Nueva franja horaria">
         <form onSubmit={handleAlta} className="flex flex-col gap-3">
           <Select
@@ -401,6 +368,43 @@ export default function HorariosTab() {
           {errorPlantilla && <p className="text-[15px] text-accent-700">{errorPlantilla}</p>}
           <Button type="submit" variant="primary" block disabled={crearPlantilla.isPending}>
             Crear plantilla
+          </Button>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={asignOpen}
+        onClose={() => { setAsignOpen(false); resetAsignForm(); }}
+        title="Asignar turno"
+        className="max-w-[500px]"
+      >
+        <p className="-mt-1 text-[13.5px] text-text-secondary">Asigná el mismo horario a varios empleados y días de una vez.</p>
+        <form onSubmit={handleAsignar} className="flex flex-col gap-3">
+          <MultiSelect
+            label="Empleados"
+            value={asignEmpleados}
+            onChange={setAsignEmpleados}
+            options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
+            placeholder="Elegí empleados"
+          />
+          <Select
+            label="Plantilla (opcional)"
+            value=""
+            onChange={(e) => elegirTemplate(e.target.value)}
+            options={[{ value: "", label: "Sin plantilla" }, ...templates.map((t) => ({ value: t.id, label: t.nombre }))]}
+          />
+          <div className="flex flex-col gap-[5px]">
+            <span className="text-[12px] text-text/70">Días</span>
+            <DiaToggle dias={asignDias} onToggle={(d) => setAsignDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))} />
+          </div>
+          <div className="flex gap-3">
+            <Field label="Hora inicio" type="time" value={asignHoraInicio} onChange={(e) => setAsignHoraInicio(e.target.value)} containerClassName="w-full" />
+            <Field label="Hora fin" type="time" value={asignHoraFin} onChange={(e) => setAsignHoraFin(e.target.value)} containerClassName="w-full" />
+          </div>
+          <Field label="Tolerancia en minutos (opcional)" type="number" value={asignTolerancia} onChange={(e) => setAsignTolerancia(e.target.value)} containerClassName="w-full" />
+          {errorAsign && <p className="text-[15px] text-accent-700">{errorAsign}</p>}
+          <Button type="submit" variant="primary" block disabled={asignar.isPending}>
+            Asignar
           </Button>
         </form>
       </Dialog>
