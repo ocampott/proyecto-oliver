@@ -14,6 +14,7 @@ const LINKS: NavItem[] = [
   { href: "/", label: "Inicio" },
   { href: "/asistencia", label: "Asistencia" },
   { href: "/horas", label: "Horas" },
+  { href: "/turnos", label: "Turnos" },
   { href: "/empleados", label: "Empleados" },
   { href: "/sucursales", label: "Sucursales" },
 ];
