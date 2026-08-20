@@ -230,7 +230,7 @@ export default function EmpleadosPage() {
                               <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
                             </svg>
                           }
-                          aria-label="Editar"
+                          label="Editar"
                         />
                         <IconButton
                           onClick={() => handleToggleActivo(emp)}
@@ -241,7 +241,7 @@ export default function EmpleadosPage() {
                               <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
                             </svg>
                           }
-                          aria-label={emp.activo ? "Desactivar" : "Activar"}
+                          label={emp.activo ? "Desactivar" : "Activar"}
                         />
                         {emp.device_token ? (
                           <IconButton
@@ -253,7 +253,7 @@ export default function EmpleadosPage() {
                                 <line x1="12" y1="2" x2="12" y2="12" />
                               </svg>
                             }
-                            aria-label="Desvincular"
+                            label="Desvincular"
                           />
                         ) : (
                           <IconButton
@@ -265,7 +265,7 @@ export default function EmpleadosPage() {
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                               </svg>
                             }
-                            aria-label={emp.otp ? "Código nuevo" : "Generar código"}
+                            label={emp.otp ? "Código nuevo" : "Generar código"}
                           />
                         )}
                       </>

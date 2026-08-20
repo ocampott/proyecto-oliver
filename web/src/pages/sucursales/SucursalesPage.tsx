@@ -260,7 +260,7 @@ export default function SucursalesPage() {
                               <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
                             </svg>
                           }
-                          aria-label="Editar"
+                          label="Editar"
                         />
                         <IconButton
                           onClick={() => handleToggleActiva(suc)}
@@ -271,7 +271,7 @@ export default function SucursalesPage() {
                               <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
                             </svg>
                           }
-                          aria-label={suc.activa ? "Desactivar" : "Activar"}
+                          label={suc.activa ? "Desactivar" : "Activar"}
                         />
                         <IconButton
                           onClick={() => setQrId(suc.id)}
@@ -285,7 +285,7 @@ export default function SucursalesPage() {
                               <path d="M21 14v3" />
                             </svg>
                           }
-                          aria-label="Ver QR"
+                          label="Ver QR"
                         />
                       </>
                     )}

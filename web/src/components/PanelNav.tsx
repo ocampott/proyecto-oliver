@@ -65,7 +65,7 @@ export function PanelNav() {
           <IconButton
             className="md:hidden"
             onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Cerrar menú" : "Abrir menú"}
+            label={open ? "Cerrar menú" : "Abrir menú"}
             icon={open ? <X className="h-[18px] w-[18px]" /> : <Menu className="h-[18px] w-[18px]" />}
           />
         </div>
