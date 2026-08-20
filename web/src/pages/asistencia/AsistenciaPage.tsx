@@ -69,14 +69,14 @@ export default function AsistenciaPage() {
             <h2 className="text-[20px] font-extrabold text-text">Intentos rechazados</h2>
             <Badge variant="alert">{rechazadas.length} pendientes</Badge>
           </div>
-          <Table className="mt-2" containerClassName="border-[#f3ddc9]">
+          <Table containerClassName="mt-2 border-[#f3ddc9]">
             <TableHeader>
               <TableRow>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Empleado</TableHead>
                 <TableHead>Sucursal</TableHead>
                 <TableHead>Motivo</TableHead>
-                <TableHead>Acciones</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -93,7 +93,7 @@ export default function AsistenciaPage() {
                     {r.tipo && <span className="text-text/55"> — {r.tipo}</span>}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
+                    <div className="flex justify-end gap-2">
                       <Button variant="secondary" size="default" onClick={() => handleResolver(r.id, "aprobar")}>
                         Aprobar
                       </Button>
@@ -135,14 +135,14 @@ export default function AsistenciaPage() {
           </p>
         )}
 
-        <Table className="mt-4">
+        <Table containerClassName="mt-4">
           <TableHeader>
             <TableRow>
               <TableHead>Fecha y hora</TableHead>
               <TableHead>Empleado</TableHead>
               <TableHead>Sucursal</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead></TableHead>
+              <TableHead className="text-right"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -153,7 +153,7 @@ export default function AsistenciaPage() {
                 <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
                 <TableCell>
                   {r.tipo === "entrada" ? (
-                    <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-[--color-success-700]">
+                    <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-success-700">
                       <LogIn className="h-3 w-3" /> Entrada
                     </span>
                   ) : (
@@ -163,9 +163,11 @@ export default function AsistenciaPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Button variant="secondary" size="default" onClick={() => handleBorrar(r.id)}>
-                    Borrar
-                  </Button>
+                  <div className="flex justify-end">
+                    <Button variant="secondary" size="default" onClick={() => handleBorrar(r.id)}>
+                      Borrar
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

@@ -56,7 +56,7 @@ export default function AdminPage() {
 
       {formError && <p className="mt-2 text-[15px] text-accent-700">{formError}</p>}
 
-      <Table className="mt-6">
+      <Table containerClassName="mt-6">
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>

@@ -163,14 +163,14 @@ export default function SucursalesPage() {
         />
       </div>
 
-      <Table className="mt-4">
+      <Table containerClassName="mt-4">
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
             <TableHead>Coordenadas</TableHead>
             <TableHead>Radio</TableHead>
             <TableHead>Activa</TableHead>
-            <TableHead>Acciones</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

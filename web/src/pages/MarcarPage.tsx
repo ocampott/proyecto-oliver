@@ -242,8 +242,8 @@ export default function MarcarPage() {
 
         {etapa.tipo === "rechazado" && (
           <div className="mt-4 flex flex-col gap-3">
-            <span className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[--color-alert-100]">
-              <TriangleAlert className="h-[26px] w-[26px] text-[--color-alert]" />
+            <span className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-alert-100">
+              <TriangleAlert className="h-[26px] w-[26px] text-alert" />
             </span>
             <h4 className="text-[20px] font-extrabold text-text">No pudimos registrar la marca</h4>
             <p className="text-[13px] text-text/75">{etapa.mensaje}</p>
@@ -258,8 +258,8 @@ export default function MarcarPage() {
         )}
 
         {mensaje && (
-          <div className="mt-4 flex items-center gap-[10px] rounded-xl bg-[#eafaf0] px-[14px] py-[13px] text-[13.5px] font-semibold text-[--color-success-700]">
-            <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-[--color-success-700]">
+          <div className="mt-4 flex items-center gap-[10px] rounded-xl bg-[#eafaf0] px-[14px] py-[13px] text-[13.5px] font-semibold text-success-700">
+            <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-success-700">
               <CheckCircle className="h-3.5 w-3.5 text-white" />
             </span>
             {mensaje}

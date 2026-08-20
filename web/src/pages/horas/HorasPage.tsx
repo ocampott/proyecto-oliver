@@ -63,7 +63,7 @@ export default function HorasPage() {
       {resumen.length > 0 && (
         <section className="mt-6">
           <h2 className="text-[20px] font-extrabold text-text">Resumen por empleado</h2>
-          <Table className="mt-2">
+          <Table containerClassName="mt-2">
             <TableHeader>
               <TableRow>
                 <TableHead>Empleado</TableHead>
@@ -86,7 +86,7 @@ export default function HorasPage() {
 
       <section className="mt-6">
         <h2 className="text-[20px] font-extrabold text-text">Turnos</h2>
-        <Table className="mt-2">
+        <Table containerClassName="mt-2">
           <TableHeader>
             <TableRow>
               <TableHead>Empleado</TableHead>

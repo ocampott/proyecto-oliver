@@ -2,9 +2,9 @@ import * as React from "react";
 import { cn } from "../../lib/utils";
 
 const DOT_COLOR = {
-  success: "bg-[--color-success]",
-  warning: "bg-[--color-warning]",
-  neutral: "bg-[--color-text-muted]",
+  success: "bg-success",
+  warning: "bg-warning",
+  neutral: "bg-text-muted",
   accent: "bg-accent",
 } as const;
 

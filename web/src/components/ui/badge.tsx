@@ -11,7 +11,7 @@ const badgeVariants = cva(
         outline: "border border-accent-700 text-accent-700",
         accent: "bg-accent-100 text-accent-800",
         neutral: "bg-black/[.06] text-text-secondary",
-        alert: "bg-[--color-alert-100] text-[--color-alert]",
+        alert: "bg-alert-100 text-alert",
       },
     },
     defaultVariants: { variant: "outline" },

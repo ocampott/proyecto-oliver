@@ -155,14 +155,14 @@ export default function EmpleadosPage() {
         />
       </div>
 
-      <Table className="mt-4">
+      <Table containerClassName="mt-4">
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
             <TableHead>Celular</TableHead>
             <TableHead>Dispositivo</TableHead>
             <TableHead>Activo</TableHead>
-            <TableHead>Acciones</TableHead>
+            <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -195,7 +195,7 @@ export default function EmpleadosPage() {
                     <Status tone="success">Vinculado</Status>
                   ) : emp.otp ? (
                     <span className="inline-flex items-center gap-[7px] text-[13px] text-text">
-                      <span className="h-[7px] w-[7px] rounded-full bg-[--color-warning]" />
+                      <span className="h-[7px] w-[7px] rounded-full bg-warning" />
                       <span className="font-mono tracking-wide">{formatCode(emp.otp.code)}</span>
                       <span className="text-text-tertiary">({minutosRestantes(emp.otp.expires_at)} min)</span>
                     </span>
