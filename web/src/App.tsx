@@ -11,6 +11,7 @@ import EmpleadosPage from "./pages/empleados/EmpleadosPage";
 import AsistenciaPage from "./pages/asistencia/AsistenciaPage";
 import HorasPage from "./pages/horas/HorasPage";
 import TurnosPage from "./pages/turnos/TurnosPage";
+import RrhhPage from "./pages/rrhh/RrhhPage";
 import AdminPage from "./pages/admin/AdminPage";
 
 const queryClient = new QueryClient({
@@ -86,6 +87,16 @@ export default function App() {
                 <ProtectedRoute>
                   <PanelLayout>
                     <TurnosPage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/rrhh"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <RrhhPage />
                   </PanelLayout>
                 </ProtectedRoute>
               }
