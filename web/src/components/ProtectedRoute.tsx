@@ -9,7 +9,11 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg">
-        <p className="text-text/60">Cargando...</p>
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-[3px] border-text/15 border-t-accent"
+          role="status"
+          aria-label="Cargando"
+        />
       </main>
     );
   }

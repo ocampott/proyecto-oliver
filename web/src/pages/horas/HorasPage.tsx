@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Field } from "../../components/ui/field";
 import { Status } from "../../components/ui/status";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { useHoras } from "./hooks";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
@@ -51,7 +51,6 @@ export default function HorasPage() {
           onChange={(e) => setHasta(e.target.value)}
           containerClassName="w-40"
         />
-        {isLoading && <span className="text-[15px] text-text/60">Cargando...</span>}
       </div>
 
       {isError && (
@@ -97,6 +96,7 @@ export default function HorasPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {isLoading && <TableSkeleton cols={5} />}
             {turnos.map((t, i) => (
               <TableRow key={`${t.empleado_id}-${t.entrada_at}-${i}`}>
                 <TableCell>{t.nombre}</TableCell>

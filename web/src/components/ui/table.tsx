@@ -56,4 +56,20 @@ const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<
 );
 TableCell.displayName = "TableCell";
 
-export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell };
+function TableSkeleton({ cols, rows = 4 }: { cols: number; rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <TableRow key={i}>
+          {Array.from({ length: cols }).map((__, j) => (
+            <TableCell key={j}>
+              <div className="h-[14px] animate-pulse rounded bg-text/10" />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </>
+  );
+}
+
+export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton };

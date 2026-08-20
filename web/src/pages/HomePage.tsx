@@ -36,7 +36,16 @@ export default function HomePage() {
   const { data: org, isLoading, isFetching, isError, error, refetch } = useOrgActual();
 
   if (isLoading || (isFetching && !org)) {
-    return <p className="text-text/60">Cargando...</p>;
+    return (
+      <div className="animate-pulse">
+        <div className="h-8 w-56 rounded-lg bg-text/10" />
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-[130px] rounded-[14px] border border-border bg-text/[.04]" />
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const sinOrg = isError && error instanceof ApiError && error.status === 404;

@@ -3,7 +3,7 @@ import { LogIn, LogOut } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Badge } from "../../components/ui/badge";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { MotivoRechazo } from "../../lib/api";
 import { useAsistencia, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
 
@@ -125,7 +125,6 @@ export default function AsistenciaPage() {
             onChange={(e) => setHasta(e.target.value)}
             containerClassName="w-40"
           />
-          {isLoading && <span className="text-[15px] text-text/60">Cargando...</span>}
         </div>
 
         {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
@@ -146,6 +145,7 @@ export default function AsistenciaPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {isLoading && <TableSkeleton cols={5} />}
             {registros.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>{horaLocal(r.created_at)}</TableCell>
