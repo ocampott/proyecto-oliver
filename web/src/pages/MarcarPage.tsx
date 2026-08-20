@@ -137,7 +137,7 @@ export default function MarcarPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg p-8">
-      <Card className="w-full max-w-sm border-2 border-divider">
+      <Card className="w-full max-w-sm rounded-[20px]">
         <h1 className="text-[20px] font-extrabold text-text">{sucursalNombre}</h1>
 
         {etapa.tipo === "identificar" && (
@@ -219,10 +219,22 @@ export default function MarcarPage() {
             <p className="text-text">
               Hola, <strong>{etapa.nombre}</strong>
             </p>
-            <Button onClick={() => handleMarcar("entrada")} variant="primary" size="lg" disabled={loading}>
+            <Button
+              onClick={() => handleMarcar("entrada")}
+              variant="primary"
+              size="lg"
+              className="h-[52px] rounded-[14px]"
+              disabled={loading}
+            >
               <LogIn className="h-[18px] w-[18px]" /> Marcar entrada
             </Button>
-            <Button onClick={() => handleMarcar("salida")} variant="secondary" size="lg" disabled={loading}>
+            <Button
+              onClick={() => handleMarcar("salida")}
+              variant="secondary"
+              size="lg"
+              className="h-[52px] rounded-[14px]"
+              disabled={loading}
+            >
               <LogOut className="h-[18px] w-[18px]" /> Marcar salida
             </Button>
           </div>
@@ -230,7 +242,9 @@ export default function MarcarPage() {
 
         {etapa.tipo === "rechazado" && (
           <div className="mt-4 flex flex-col gap-3">
-            <TriangleAlert className="h-7 w-7 text-accent-700" />
+            <span className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[--color-alert-100]">
+              <TriangleAlert className="h-[26px] w-[26px] text-[--color-alert]" />
+            </span>
             <h4 className="text-[20px] font-extrabold text-text">No pudimos registrar la marca</h4>
             <p className="text-[13px] text-text/75">{etapa.mensaje}</p>
             <Button
@@ -244,8 +258,10 @@ export default function MarcarPage() {
         )}
 
         {mensaje && (
-          <div className="mt-4 flex items-center gap-2 bg-text px-[14px] py-3 text-[13px] text-bg">
-            <CheckCircle className="h-4 w-4 flex-none" />
+          <div className="mt-4 flex items-center gap-[10px] rounded-xl bg-[#eafaf0] px-[14px] py-[13px] text-[13.5px] font-semibold text-[--color-success-700]">
+            <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-[--color-success-700]">
+              <CheckCircle className="h-3.5 w-3.5 text-white" />
+            </span>
             {mensaje}
           </div>
         )}
