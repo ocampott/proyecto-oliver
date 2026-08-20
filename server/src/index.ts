@@ -11,6 +11,7 @@ import { asistenciaRoutes } from "./routes/asistencia.js";
 import { horasRoutes } from "./routes/horas.js";
 import { adminRoutes } from "./routes/admin.js";
 import { turnosRoutes } from "./routes/turnos.js";
+import { rrhhRoutes } from "./routes/rrhh.js";
 
 const app = Fastify({ logger: true });
 
@@ -31,6 +32,7 @@ await app.register(empleadosRoutes);
 await app.register(asistenciaRoutes);
 await app.register(horasRoutes);
 await app.register(turnosRoutes);
+await app.register(rrhhRoutes);
 await app.register(adminRoutes);
 
 app.setErrorHandler((error, request, reply) => {
