@@ -33,9 +33,9 @@ const ACCESOS = [
 ];
 
 export default function HomePage() {
-  const { data: org, isLoading, isError, error, refetch } = useOrgActual();
+  const { data: org, isLoading, isFetching, isError, error, refetch } = useOrgActual();
 
-  if (isLoading) {
+  if (isLoading || (isFetching && !org)) {
     return <p className="text-text/60">Cargando...</p>;
   }
 
