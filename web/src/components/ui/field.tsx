@@ -5,10 +5,11 @@ import { cn } from "../../lib/utils";
 export interface FieldProps extends InputProps {
   label: string;
   containerClassName?: string;
+  icon?: React.ReactNode;
 }
 
 const Field = React.forwardRef<HTMLInputElement, FieldProps>(
-  ({ label, containerClassName, id, ...props }, ref) => {
+  ({ label, containerClassName, icon, id, className, ...props }, ref) => {
     const autoId = React.useId();
     const inputId = id ?? autoId;
     return (
@@ -16,7 +17,16 @@ const Field = React.forwardRef<HTMLInputElement, FieldProps>(
         <label htmlFor={inputId} className="text-[12px] text-text/70">
           {label}
         </label>
-        <Input id={inputId} ref={ref} {...props} />
+        {icon ? (
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary">
+              {icon}
+            </span>
+            <Input id={inputId} ref={ref} className={cn("pl-9", className)} {...props} />
+          </div>
+        ) : (
+          <Input id={inputId} ref={ref} className={className} {...props} />
+        )}
       </div>
     );
   }

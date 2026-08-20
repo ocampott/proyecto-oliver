@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Search } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
@@ -147,6 +148,7 @@ export default function SucursalesPage() {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           containerClassName="w-64"
+          icon={<Search className="h-[15px] w-[15px]" />}
         />
         <Select
           label="Estado"
