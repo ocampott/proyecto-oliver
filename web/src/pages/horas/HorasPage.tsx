@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Field } from "../../components/ui/field";
-import { Badge } from "../../components/ui/badge";
+import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
 import { useHoras } from "./hooks";
 
@@ -76,7 +76,7 @@ export default function HorasPage() {
                 <TableRow key={r.nombre}>
                   <TableCell>{r.nombre}</TableCell>
                   <TableCell>{r.totalHoras.toFixed(2)}</TableCell>
-                  <TableCell>{r.enCurso ? <Badge variant="outline">Turno en curso</Badge> : "—"}</TableCell>
+                  <TableCell>{r.enCurso ? <Status tone="accent">Turno en curso</Status> : "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -103,7 +103,7 @@ export default function HorasPage() {
                 <TableCell>{t.sucursal_nombre}</TableCell>
                 <TableCell>{fechaHoraLocal(t.entrada_at)}</TableCell>
                 <TableCell>
-                  {t.salida_at ? fechaHoraLocal(t.salida_at) : <Badge variant="outline">En curso</Badge>}
+                  {t.salida_at ? fechaHoraLocal(t.salida_at) : <Status tone="accent">En curso</Status>}
                 </TableCell>
                 <TableCell>{t.horas !== null ? t.horas.toFixed(2) : "—"}</TableCell>
               </TableRow>
