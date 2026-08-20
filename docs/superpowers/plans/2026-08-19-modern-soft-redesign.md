@@ -101,6 +101,7 @@ usa Radix).
   --color-warning: #f59e0b;
   --color-alert: #c2410c;
   --color-alert-100: #fdf1e8;
+  --color-divider: color-mix(in srgb, var(--color-text) 40%, transparent);
   --font-sans: "Archivo", sans-serif;
 }
 
@@ -111,10 +112,15 @@ body {
 }
 ```
 
-`--color-divider` queda eliminado — cualquier archivo tocado por este
-plan que use `border-divider`/`border-b-2 border-divider` pasa a
-`border-[--color-border]` (contenedores/inputs) o
+`--color-divider` se mantiene definido (no se borra) — `LoginPage.tsx`
+sigue usando `border-divider` y está explícitamente fuera de alcance de
+este plan (Global Constraints); borrar el token rompería su borde en
+silencio sin que ningún task lo detecte. Ningún archivo tocado por este
+plan debe seguir usando `border-divider`/`border-b-2 border-divider` —
+pasan a `border-[--color-border]` (contenedores/inputs) o
 `border-[--color-border-soft]` (divisores internos de fila, ver Task 4).
+`--color-divider` queda así como un token "legacy" con un solo
+consumidor (`LoginPage.tsx`), a propósito.
 
 - [ ] **Step 2: Reescribir `button.tsx`**
 
