@@ -2,7 +2,8 @@ import { useState, type FormEvent } from "react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
-import { Badge } from "../../components/ui/badge";
+import { Status } from "../../components/ui/status";
+import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
 import type { Sucursal } from "../../lib/api";
@@ -227,10 +228,10 @@ export default function SucursalesPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={suc.activa ? "filled" : "neutral"}>{suc.activa ? "Sí" : "No"}</Badge>
+                  <Status tone={suc.activa ? "success" : "neutral"}>{suc.activa ? "Activa" : "Inactiva"}</Status>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex justify-end gap-1.5">
                     {editandoId === suc.id ? (
                       <>
                         <Button variant="ghost" onClick={() => handleGuardarEdicion(suc.id)} disabled={loading}>
@@ -242,8 +243,7 @@ export default function SucursalesPage() {
                       </>
                     ) : (
                       <>
-                        <Button
-                          variant="ghost"
+                        <IconButton
                           onClick={() => {
                             setEditandoId(suc.id);
                             setEdit({
@@ -253,15 +253,38 @@ export default function SucursalesPage() {
                               radio: suc.radio_metros.toString(),
                             });
                           }}
-                        >
-                          Editar
-                        </Button>
-                        <Button variant="ghost" onClick={() => handleToggleActiva(suc)} disabled={loading}>
-                          {suc.activa ? "Desactivar" : "Activar"}
-                        </Button>
-                        <Button variant="ghost" onClick={() => setQrId(suc.id)}>
-                          Ver QR
-                        </Button>
+                          icon={
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                            </svg>
+                          }
+                          aria-label="Editar"
+                        />
+                        <IconButton
+                          onClick={() => handleToggleActiva(suc)}
+                          disabled={loading}
+                          icon={
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 2v6" />
+                              <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
+                            </svg>
+                          }
+                          aria-label={suc.activa ? "Desactivar" : "Activar"}
+                        />
+                        <IconButton
+                          onClick={() => setQrId(suc.id)}
+                          icon={
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="7" height="7" />
+                              <rect x="14" y="3" width="7" height="7" />
+                              <rect x="3" y="14" width="7" height="7" />
+                              <path d="M14 14h3v3" />
+                              <path d="M14 21h7v-4" />
+                              <path d="M21 14v3" />
+                            </svg>
+                          }
+                          aria-label="Ver QR"
+                        />
                       </>
                     )}
                   </div>
@@ -285,7 +308,8 @@ export default function SucursalesPage() {
         </TableBody>
       </Table>
 
-      <Dialog open={qrSucursal != null} onClose={() => setQrId(null)} title={`QR — ${qrSucursal?.nombre ?? ""}`}>
+      <Dialog open={qrSucursal != null} onClose={() => setQrId(null)} title={qrSucursal?.nombre ?? ""}>
+        <p className="m-0 -mt-2 text-[11.5px] font-semibold uppercase tracking-wide text-text-tertiary">Código QR</p>
         {qrUrl ? (
           <img src={qrUrl} alt={`QR de ${qrSucursal?.nombre}`} className="w-full" />
         ) : (
