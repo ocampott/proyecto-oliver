@@ -48,7 +48,7 @@ export async function empleadosRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(400).send({ error: "El nombre es requerido" });
       }
 
-      const ent = await getEntitlements(request.org!.id);
+      const ent = await getEntitlements(request.org!.id, request.user!.id);
       const activos = await countEmpleadosActivos(request.org!.id);
       if (!puedeCrearEmpleado(ent, activos)) {
         return reply.code(403).send({

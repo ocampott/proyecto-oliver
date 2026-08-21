@@ -229,6 +229,29 @@ Todas las rutas `/api/admin/*` ya están detrás de `requirePlatformAdmin`.
   suscripción (Select plan, Select período, precio calculado editable,
   notas) o cancelarla. Es la herramienta de gestión manual de cobros.
 
+## 4bis. Superadmin: siempre ilimitado, sin plan
+
+**Regla del proyecto, no negociable**: un usuario en `platform_admins` no
+tiene plan ni vencimiento — puede hacer todo, sin límites, siempre. No es
+"le asignamos el plan Pro", es que los límites de plan no le aplican en
+absoluto, sin importar el plan de la organización a la que pertenezca.
+
+**Implementación** (`server/src/lib/planes.ts`): `Entitlements` tiene un
+campo `ilimitado: boolean`. `getEntitlements(orgId, userId)` chequea
+`isPlatformAdmin(userId)` primero — si es true, devuelve
+`ENTITLEMENTS_SUPERADMIN` (`ilimitado: true`, sin mirar el plan de la org)
+sin pisar nada en la base. `tieneModulo`/`puedeCrearSucursal`/
+`puedeCrearEmpleado` chequean `ent.ilimitado` antes que cualquier otra
+condición.
+
+**Convención para todo lo que se agregue a futuro**: cualquier función
+nueva que decida algo en base a `Entitlements` (un módulo nuevo, un límite
+nuevo, lo que sea) DEBE chequear `ilimitado` primero y devolver "permitido"
+sin evaluar el resto. No hay que mantener una lista de módulos/límites que
+el superadmin tiene "habilitados" — el bypass es incondicional, no
+enumerado. Todo call site de `getEntitlements` debe pasarle el `userId`
+del request (`request.user!.id`), no solo el `orgId`.
+
 ## 5. Alcance
 
 ### Dentro de alcance

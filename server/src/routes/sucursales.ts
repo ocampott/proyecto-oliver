@@ -41,7 +41,7 @@ export async function sucursalesRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(400).send({ error: "El nombre es requerido" });
       }
 
-      const ent = await getEntitlements(request.org!.id);
+      const ent = await getEntitlements(request.org!.id, request.user!.id);
       const activas = await countSucursalesActivas(request.org!.id);
       if (!puedeCrearSucursal(ent, activas)) {
         return reply.code(403).send({

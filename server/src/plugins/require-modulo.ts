@@ -7,7 +7,7 @@ import { getEntitlements, planRequeridoParaModulo, tieneModulo, type Modulo } fr
  */
 export function requireModulo(modulo: Modulo) {
   return async function (request: FastifyRequest, reply: FastifyReply): Promise<void> {
-    const ent = await getEntitlements(request.org!.id);
+    const ent = await getEntitlements(request.org!.id, request.user!.id);
     if (!tieneModulo(ent, modulo)) {
       const planRequerido = planRequeridoParaModulo(modulo) ?? "basico";
       reply.code(403).send({

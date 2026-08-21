@@ -11,7 +11,7 @@ export async function orgRoutes(app: FastifyInstance): Promise<void> {
         error: "Tu cuenta todavía no está asociada a ninguna organización.",
       });
     }
-    const entitlements = await getEntitlements(org.id);
+    const entitlements = await getEntitlements(org.id, request.user!.id);
     return { ...org, plan: entitlements.plan.slug, entitlements };
   });
 }

@@ -1,4 +1,5 @@
 import { createServiceClient } from "./supabase-service.js";
+import { isPlatformAdmin } from "./admin.js";
 
 export type PlanSlug = "gratis" | "basico" | "pro";
 
@@ -28,7 +29,36 @@ export interface Entitlements {
   maxSucursales: number | null;
   maxEmpleados: number | null;
   modulos: Modulo[];
+  /**
+   * true solo para platform_admins (superadmin de la plataforma, no un
+   * plan que se contrata). Un superadmin no tiene plan ni vencimiento —
+   * puede hacer todo, sin límites, siempre.
+   *
+   * Convención para código nuevo: CUALQUIER función que use Entitlements
+   * para decidir si algo está permitido (features, cupos, lo que sea que
+   * se agregue a futuro) DEBE chequear `ilimitado` primero y devolver
+   * permitido sin mirar nada más — ver tieneModulo/puedeCrearSucursal/
+   * puedeCrearEmpleado más abajo como ejemplo. No hace falta tocar esta
+   * lista cada vez que se agrega un módulo o un límite nuevo.
+   */
+  ilimitado: boolean;
 }
+
+const ENTITLEMENTS_SUPERADMIN: Entitlements = {
+  plan: {
+    slug: "pro",
+    nombre: "Superadmin (ilimitado)",
+    maxSucursales: null,
+    maxEmpleados: null,
+    modulos: [],
+    precioMensual: null,
+  },
+  suscripcion: null,
+  maxSucursales: null,
+  maxEmpleados: null,
+  modulos: [],
+  ilimitado: true,
+};
 
 export interface Periodo {
   meses: number;
@@ -95,15 +125,18 @@ export function precioPeriodoFormateado(planSlug: PlanSlug, meses: number): stri
 }
 
 export function tieneModulo(ent: Entitlements, modulo: Modulo): boolean {
+  if (ent.ilimitado) return true;
   return ent.modulos.includes(modulo);
 }
 
 export function puedeCrearSucursal(ent: Entitlements, cantidadActual: number): boolean {
+  if (ent.ilimitado) return true;
   if (ent.maxSucursales === null) return true;
   return cantidadActual < ent.maxSucursales;
 }
 
 export function puedeCrearEmpleado(ent: Entitlements, cantidadActual: number): boolean {
+  if (ent.ilimitado) return true;
   if (ent.maxEmpleados === null) return true;
   return cantidadActual < ent.maxEmpleados;
 }
@@ -123,7 +156,17 @@ interface SuscripcionRow {
   estado: string;
 }
 
-export async function getEntitlements(orgId: string): Promise<Entitlements> {
+/**
+ * userId es opcional solo por compatibilidad con quien todavía no lo pase —
+ * pero todo call site nuevo DEBE pasarlo: es lo que permite detectar
+ * platform_admins y devolverles acceso ilimitado sin importar el plan de
+ * la organización.
+ */
+export async function getEntitlements(orgId: string, userId?: string): Promise<Entitlements> {
+  if (userId && (await isPlatformAdmin(userId))) {
+    return ENTITLEMENTS_SUPERADMIN;
+  }
+
   const service = createServiceClient();
 
   const { data: org, error: orgErr } = await service
@@ -155,6 +198,7 @@ export async function getEntitlements(orgId: string): Promise<Entitlements> {
       maxSucursales: plan.maxSucursales,
       maxEmpleados: plan.maxEmpleados,
       modulos: plan.modulos,
+      ilimitado: false,
     };
   }
 
@@ -169,5 +213,6 @@ export async function getEntitlements(orgId: string): Promise<Entitlements> {
     maxSucursales: plan.maxSucursales,
     maxEmpleados: plan.maxEmpleados,
     modulos: plan.modulos,
+    ilimitado: false,
   };
 }
