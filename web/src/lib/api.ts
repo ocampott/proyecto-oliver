@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { descargarArchivo } from "./descargarArchivo";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
@@ -535,4 +536,26 @@ export function getRrhhCategorias(): Promise<{ categorias: string[] }> {
 
 export function setRrhhCategorias(categorias: string[]): Promise<{ ok: true }> {
   return request("/api/settings/rrhh-categorias", { method: "PATCH", body: JSON.stringify({ categorias }) });
+}
+
+export function exportarAsistencia(desde: string, hasta: string): Promise<void> {
+  return descargarArchivo(`/api/asistencia/export?desde=${desde}&hasta=${hasta}`, `asistencia_${desde}_${hasta}.xlsx`);
+}
+
+export function exportarHoras(desde: string, hasta: string): Promise<void> {
+  return descargarArchivo(`/api/horas/export?desde=${desde}&hasta=${hasta}`, `horas_${desde}_${hasta}.xlsx`);
+}
+
+export interface ExportarAusenciasFilters {
+  desde: string;
+  hasta: string;
+  sucursalId?: string;
+  motivo?: string;
+}
+
+export function exportarAusencias(filters: ExportarAusenciasFilters): Promise<void> {
+  const params = new URLSearchParams({ desde: filters.desde, hasta: filters.hasta });
+  if (filters.sucursalId) params.set("sucursalId", filters.sucursalId);
+  if (filters.motivo) params.set("motivo", filters.motivo);
+  return descargarArchivo(`/api/ausencias/export?${params}`, `rrhh_${filters.desde}_${filters.hasta}.xlsx`);
 }
