@@ -349,3 +349,26 @@ export async function calcularHoras(
 
   return turnos.sort((a, b) => a.nombre.localeCompare(b.nombre) || a.entrada_at.localeCompare(b.entrada_at));
 }
+
+export interface ResumenEmpleado {
+  nombre: string;
+  totalHoras: number;
+  enCurso: boolean;
+}
+
+export function calcularResumenHoras(turnos: Turno[]): ResumenEmpleado[] {
+  const porEmpleado = new Map<string, ResumenEmpleado>();
+  for (const t of turnos) {
+    let e = porEmpleado.get(t.empleado_id);
+    if (!e) {
+      e = { nombre: t.nombre, totalHoras: 0, enCurso: false };
+      porEmpleado.set(t.empleado_id, e);
+    }
+    if (t.horas !== null) {
+      e.totalHoras += t.horas;
+    } else {
+      e.enCurso = true;
+    }
+  }
+  return Array.from(porEmpleado.values()).sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
