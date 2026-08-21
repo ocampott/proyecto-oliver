@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import QRCode from "qrcode";
 import { requireAuth } from "../plugins/auth.js";
 import { requireOrg } from "../plugins/require-org.js";
-import { listSucursales, createSucursal, updateSucursal, getSucursal } from "../lib/sucursales.js";
+import { listSucursales, createSucursal, updateSucursal, getSucursal, tieneAsistencia, deleteSucursal } from "../lib/sucursales.js";
 import { env } from "../env.js";
 
 interface CrearBody {
@@ -71,9 +71,19 @@ export async function sucursalesRoutes(app: FastifyInstance): Promise<void> {
   app.delete<{ Params: IdParams }>(
     "/api/sucursales/:id",
     { preHandler: [requireAuth, requireOrg] },
-    async (request) => {
+    async (request, reply) => {
       const { id } = request.params;
-      await updateSucursal(request.org!.id, id, { activa: false });
+      const sucursal = await getSucursal(request.org!.id, id);
+      if (!sucursal) {
+        return reply.code(404).send({ error: "Sucursal no encontrada" });
+      }
+      if (sucursal.activa) {
+        return reply.code(400).send({ error: "Desactivá la sucursal antes de eliminarla" });
+      }
+      if (await tieneAsistencia(request.org!.id, id)) {
+        return reply.code(400).send({ error: "No se puede eliminar: tiene marcaciones de asistencia registradas" });
+      }
+      await deleteSucursal(request.org!.id, id);
       return { ok: true };
     }
   );
