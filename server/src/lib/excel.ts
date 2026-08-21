@@ -19,7 +19,8 @@ export async function generarExcel(hojas: HojaExcel[]): Promise<Buffer> {
 }
 
 export function enviarExcel(reply: FastifyReply, buffer: Buffer, filename: string): void {
+  const safeFilename = filename.replace(/[^\w.-]/g, "_");
   reply.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-  reply.header("Content-Disposition", `attachment; filename="${filename}"`);
+  reply.header("Content-Disposition", `attachment; filename="${safeFilename}"`);
   reply.send(buffer);
 }

@@ -183,7 +183,7 @@ export async function rrhhRoutes(app: FastifyInstance): Promise<void> {
 
       const desde = request.query.desde ?? "todas";
       const hasta = request.query.hasta ?? "todas";
-      enviarExcel(reply, buffer, `rrhh_${desde}_${hasta}.xlsx`);
+      return enviarExcel(reply, buffer, `rrhh_${desde}_${hasta}.xlsx`);
     }
   );
 }

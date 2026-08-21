@@ -41,14 +41,15 @@ export default function AsistenciaPage() {
   const resolver = useResolverRechazada();
   const [error, setError] = useState<string | null>(null);
   const [descargando, setDescargando] = useState(false);
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
 
   async function handleDescargarExcel() {
-    setError(null);
+    setErrorDescarga(null);
     setDescargando(true);
     try {
       await exportarAsistencia(desde, hasta);
     } catch {
-      setError("No se pudo descargar el archivo.");
+      setErrorDescarga("No se pudo descargar el archivo.");
     } finally {
       setDescargando(false);
     }
@@ -145,6 +146,7 @@ export default function AsistenciaPage() {
           </Button>
         </div>
 
+        {errorDescarga && <p className="mt-2 text-[15px] text-accent-700">{errorDescarga}</p>}
         {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
         {isError && (
           <p className="mt-2 text-[15px] text-accent-700">

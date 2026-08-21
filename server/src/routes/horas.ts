@@ -47,7 +47,12 @@ export async function horasRoutes(app: FastifyInstance): Promise<void> {
     }
   );
 
-  app.get<{ Querystring: HorasQuery }>(
+  interface ExportQuery {
+    desde?: string;
+    hasta?: string;
+  }
+
+  app.get<{ Querystring: ExportQuery }>(
     "/api/horas/export",
     { preHandler: [requireAuth, requireOrg] },
     async (request, reply) => {
@@ -90,7 +95,7 @@ export async function horasRoutes(app: FastifyInstance): Promise<void> {
         },
       ]);
 
-      enviarExcel(reply, buffer, `horas_${desde}_${hasta}.xlsx`);
+      return enviarExcel(reply, buffer, `horas_${desde}_${hasta}.xlsx`);
     }
   );
 }

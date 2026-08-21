@@ -539,11 +539,13 @@ export function setRrhhCategorias(categorias: string[]): Promise<{ ok: true }> {
 }
 
 export function exportarAsistencia(desde: string, hasta: string): Promise<void> {
-  return descargarArchivo(`/api/asistencia/export?desde=${desde}&hasta=${hasta}`, `asistencia_${desde}_${hasta}.xlsx`);
+  const params = new URLSearchParams({ desde, hasta });
+  return descargarArchivo(`/api/asistencia/export?${params}`, `asistencia_${desde}_${hasta}.xlsx`);
 }
 
 export function exportarHoras(desde: string, hasta: string): Promise<void> {
-  return descargarArchivo(`/api/horas/export?desde=${desde}&hasta=${hasta}`, `horas_${desde}_${hasta}.xlsx`);
+  const params = new URLSearchParams({ desde, hasta });
+  return descargarArchivo(`/api/horas/export?${params}`, `horas_${desde}_${hasta}.xlsx`);
 }
 
 export interface ExportarAusenciasFilters {

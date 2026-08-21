@@ -162,7 +162,7 @@ export async function asistenciaRoutes(app: FastifyInstance): Promise<void> {
         },
       ]);
 
-      enviarExcel(reply, buffer, `asistencia_${desde}_${hasta}.xlsx`);
+      return enviarExcel(reply, buffer, `asistencia_${desde}_${hasta}.xlsx`);
     }
   );
 }
