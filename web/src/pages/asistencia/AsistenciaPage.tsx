@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Badge } from "../../components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { MotivoRechazo } from "../../lib/api";
 import { useAsistencia, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
+import { exportarAsistencia } from "../../lib/api";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -39,6 +40,20 @@ export default function AsistenciaPage() {
   const borrar = useBorrarAsistencia();
   const resolver = useResolverRechazada();
   const [error, setError] = useState<string | null>(null);
+  const [descargando, setDescargando] = useState(false);
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
+
+  async function handleDescargarExcel() {
+    setErrorDescarga(null);
+    setDescargando(true);
+    try {
+      await exportarAsistencia(desde, hasta);
+    } catch {
+      setErrorDescarga("No se pudo descargar el archivo.");
+    } finally {
+      setDescargando(false);
+    }
+  }
 
   async function handleBorrar(id: string) {
     if (!confirm("¿Borrar este registro?")) return;
@@ -125,8 +140,13 @@ export default function AsistenciaPage() {
             onChange={(e) => setHasta(e.target.value)}
             containerClassName="w-40"
           />
+          <Button variant="secondary" className="ml-auto" onClick={handleDescargarExcel} disabled={descargando}>
+            <Download className="h-4 w-4" />
+            {descargando ? "Generando…" : "Descargar Excel"}
+          </Button>
         </div>
 
+        {errorDescarga && <p className="mt-2 text-[15px] text-accent-700">{errorDescarga}</p>}
         {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
         {isError && (
           <p className="mt-2 text-[15px] text-accent-700">

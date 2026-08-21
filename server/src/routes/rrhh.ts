@@ -12,6 +12,7 @@ import {
 } from "../lib/rrhh.js";
 import { getEmpleadoById } from "../lib/empleados.js";
 import { getSucursal } from "../lib/sucursales.js";
+import { generarExcel, enviarExcel } from "../lib/excel.js";
 
 interface ListQuery {
   desde?: string;
@@ -145,6 +146,44 @@ export async function rrhhRoutes(app: FastifyInstance): Promise<void> {
       }
       await setRrhhCategorias(request.org!.id, categorias);
       return { ok: true };
+    }
+  );
+
+  app.get<{ Querystring: ListQuery }>(
+    "/api/ausencias/export",
+    { preHandler: [requireAuth, requireOrg] },
+    async (request, reply) => {
+      const ausencias = await listAusencias(request.org!.id, request.query);
+
+      const buffer = await generarExcel([
+        {
+          nombre: "Ausencias",
+          columnas: [
+            { header: "Empleado", key: "empleado", width: 26 },
+            { header: "Sucursal", key: "sucursal", width: 22 },
+            { header: "Fecha desde", key: "desde", width: 14 },
+            { header: "Fecha hasta", key: "hasta", width: 14 },
+            { header: "Motivo", key: "motivo", width: 24 },
+            { header: "Certificado pendiente", key: "certificado", width: 20 },
+            { header: "Detalle", key: "detalle", width: 32 },
+            { header: "Contacto", key: "contacto", width: 22 },
+          ],
+          filas: ausencias.map((a) => ({
+            empleado: a.empleado_nombre,
+            sucursal: a.sucursal_nombre ?? "—",
+            desde: a.fecha_desde,
+            hasta: a.fecha_hasta,
+            motivo: a.motivo,
+            certificado: a.certificado_pendiente ? "Sí" : "No",
+            detalle: a.detalle ?? "",
+            contacto: a.contacto ?? "",
+          })),
+        },
+      ]);
+
+      const desde = request.query.desde ?? "todas";
+      const hasta = request.query.hasta ?? "todas";
+      return enviarExcel(reply, buffer, `rrhh_${desde}_${hasta}.xlsx`);
     }
   );
 }

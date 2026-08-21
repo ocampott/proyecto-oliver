@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { Download } from "lucide-react";
+import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { useHoras } from "./hooks";
+import { exportarHoras } from "../../lib/api";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -30,6 +33,21 @@ export default function HorasPage() {
   const [hasta, setHasta] = useState(hoyAR());
 
   const { data, isLoading, isError, error } = useHoras(desde, hasta);
+  const [descargando, setDescargando] = useState(false);
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
+
+  async function handleDescargarExcel() {
+    setErrorDescarga(null);
+    setDescargando(true);
+    try {
+      await exportarHoras(desde, hasta);
+    } catch {
+      setErrorDescarga("No se pudo descargar el archivo.");
+    } finally {
+      setDescargando(false);
+    }
+  }
+
   const turnos = data?.turnos ?? [];
   const resumen = data?.resumen ?? [];
 
@@ -52,7 +70,13 @@ export default function HorasPage() {
           onChange={(e) => setHasta(e.target.value)}
           containerClassName="w-40"
         />
+        <Button variant="secondary" className="ml-auto" onClick={handleDescargarExcel} disabled={descargando}>
+          <Download className="h-4 w-4" />
+          {descargando ? "Generando…" : "Descargar Excel"}
+        </Button>
       </div>
+
+      {errorDescarga && <p className="mt-2 text-[15px] text-accent-700">{errorDescarga}</p>}
 
       {isError && (
         <div className="mt-2">

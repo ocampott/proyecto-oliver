@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { descargarArchivo } from "./descargarArchivo";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
@@ -624,4 +625,28 @@ export function cancelSuscripcionAdmin(id: string): Promise<{ ok: true }> {
     method: "PATCH",
     body: JSON.stringify({ estado: "cancelada" }),
   });
+}
+
+export function exportarAsistencia(desde: string, hasta: string): Promise<void> {
+  const params = new URLSearchParams({ desde, hasta });
+  return descargarArchivo(`/api/asistencia/export?${params}`, `asistencia_${desde}_${hasta}.xlsx`);
+}
+
+export function exportarHoras(desde: string, hasta: string): Promise<void> {
+  const params = new URLSearchParams({ desde, hasta });
+  return descargarArchivo(`/api/horas/export?${params}`, `horas_${desde}_${hasta}.xlsx`);
+}
+
+export interface ExportarAusenciasFilters {
+  desde: string;
+  hasta: string;
+  sucursalId?: string;
+  motivo?: string;
+}
+
+export function exportarAusencias(filters: ExportarAusenciasFilters): Promise<void> {
+  const params = new URLSearchParams({ desde: filters.desde, hasta: filters.hasta });
+  if (filters.sucursalId) params.set("sucursalId", filters.sucursalId);
+  if (filters.motivo) params.set("motivo", filters.motivo);
+  return descargarArchivo(`/api/ausencias/export?${params}`, `rrhh_${filters.desde}_${filters.hasta}.xlsx`);
 }
