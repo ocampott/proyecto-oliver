@@ -313,3 +313,17 @@ export function createOrganizationAdmin(input: CrearOrganizacionInput): Promise<
     body: JSON.stringify(input),
   });
 }
+
+export interface PlaceDetails {
+  formattedAddress: string | null;
+  lat: number | null;
+  lng: number | null;
+  addressComponents: unknown[];
+}
+
+export function getPlaceDetails(placeId: string, sessionToken: string): Promise<PlaceDetails> {
+  return request("/api/places/details", {
+    method: "POST",
+    body: JSON.stringify({ placeId, sessionToken }),
+  });
+}
