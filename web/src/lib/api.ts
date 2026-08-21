@@ -330,3 +330,124 @@ export function getPlaceDetails(placeId: string, sessionToken: string): Promise<
     body: JSON.stringify({ placeId, sessionToken }),
   });
 }
+
+export interface HorarioEmpleado {
+  id: string;
+  empleado_id: string;
+  sucursal_id: string | null;
+  sucursal_nombre: string | null;
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fin: string;
+  tolerancia_min: number | null;
+}
+
+export function getHorarios(empleadoId: string): Promise<HorarioEmpleado[]> {
+  return request(`/api/horarios?empleadoId=${empleadoId}`);
+}
+
+export interface CrearHorarioInput {
+  empleado_id: string;
+  sucursal_id?: string | null;
+  dia_semana: number;
+  hora_inicio: string;
+  hora_fin: string;
+  tolerancia_min?: number | null;
+}
+
+export function createHorario(input: CrearHorarioInput): Promise<{ ok: true }> {
+  return request("/api/horarios", { method: "POST", body: JSON.stringify(input) });
+}
+
+export interface EditarHorarioInput {
+  sucursal_id?: string | null;
+  dia_semana?: number;
+  hora_inicio?: string;
+  hora_fin?: string;
+  tolerancia_min?: number | null;
+}
+
+export function updateHorario(id: string, patch: EditarHorarioInput): Promise<{ ok: true }> {
+  return request(`/api/horarios/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+}
+
+export function deleteHorario(id: string): Promise<{ ok: true }> {
+  return request(`/api/horarios/${id}`, { method: "DELETE" });
+}
+
+export interface AsignarHorariosInput {
+  empleado_ids: string[];
+  dias_semana: number[];
+  hora_inicio: string;
+  hora_fin: string;
+  tolerancia_min?: number | null;
+}
+
+export function asignarHorarios(input: AsignarHorariosInput): Promise<{ ok: true }> {
+  return request("/api/horarios/bulk", { method: "POST", body: JSON.stringify(input) });
+}
+
+export interface TurnoTemplate {
+  id: string;
+  nombre: string;
+  hora_inicio: string;
+  hora_fin: string;
+  dias_semana: number[];
+  tolerancia_min: number | null;
+}
+
+export function getTurnoTemplates(): Promise<TurnoTemplate[]> {
+  return request("/api/turno-templates");
+}
+
+export interface CrearTurnoTemplateInput {
+  nombre: string;
+  hora_inicio: string;
+  hora_fin: string;
+  dias_semana: number[];
+  tolerancia_min?: number | null;
+}
+
+export function createTurnoTemplate(input: CrearTurnoTemplateInput): Promise<{ ok: true }> {
+  return request("/api/turno-templates", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function deleteTurnoTemplate(id: string): Promise<{ ok: true }> {
+  return request(`/api/turno-templates/${id}`, { method: "DELETE" });
+}
+
+export function getTolerancia(): Promise<{ tolerancia_min: number }> {
+  return request("/api/turnos/tolerancia");
+}
+
+export function setTolerancia(tolerancia_min: number): Promise<{ ok: true }> {
+  return request("/api/turnos/tolerancia", { method: "PATCH", body: JSON.stringify({ tolerancia_min }) });
+}
+
+export interface CumplimientoRow {
+  empleado_id: string;
+  nombre: string;
+  sucursal_nombre: string;
+  fecha: string;
+  entrada_real: string;
+  entrada_esperada: string | null;
+  diff_entrada_min: number | null;
+  salida_real: string | null;
+  salida_esperada: string | null;
+  diff_salida_min: number | null;
+  en_curso: boolean;
+  estado: "a_horario" | "tarde" | "salida_anticipada" | "tarde_y_anticipada" | "sin_horario";
+  tolerancia_aplicada: number | null;
+}
+
+export function getCumplimiento(filters: {
+  desde: string;
+  hasta: string;
+  sucursalId?: string;
+  empleadoId?: string;
+}): Promise<CumplimientoRow[]> {
+  const params = new URLSearchParams({ desde: filters.desde, hasta: filters.hasta });
+  if (filters.sucursalId) params.set("sucursalId", filters.sucursalId);
+  if (filters.empleadoId) params.set("empleadoId", filters.empleadoId);
+  return request(`/api/turnos/cumplimiento?${params}`);
+}

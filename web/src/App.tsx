@@ -10,6 +10,7 @@ import SucursalesPage from "./pages/sucursales/SucursalesPage";
 import EmpleadosPage from "./pages/empleados/EmpleadosPage";
 import AsistenciaPage from "./pages/asistencia/AsistenciaPage";
 import HorasPage from "./pages/horas/HorasPage";
+import TurnosPage from "./pages/turnos/TurnosPage";
 import AdminPage from "./pages/admin/AdminPage";
 
 const queryClient = new QueryClient({
@@ -75,6 +76,16 @@ export default function App() {
                 <ProtectedRoute>
                   <PanelLayout>
                     <HorasPage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/turnos"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <TurnosPage />
                   </PanelLayout>
                 </ProtectedRoute>
               }

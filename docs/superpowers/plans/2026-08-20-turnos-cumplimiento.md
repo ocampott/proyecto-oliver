@@ -21,7 +21,8 @@
 - Cada mutación de TanStack Query invalida la(s) query key(s) relacionadas al completarse.
 - **Sin tests automatizados** (convención del repo: `server/`/`web/` no tienen suite de tests) — verificación vía `typecheck`/`build` por task y checklist manual en navegador al final.
 - **`sucursal_id` en `horarios_empleado` es opcional** — el cálculo de cumplimiento ignora la sucursal, compara solo empleado + día + hora.
-- **Puertos de dev**: este plan se ejecuta en un worktree nuevo (ver `superpowers:using-git-worktrees`). Al momento de escribir este plan, `.worktrees/modern-soft-redesign` usa server `3010`/web `5173`, `.worktrees/modernist-pixel-perfect` usa server `3001`/web `5173`, y el repo principal usa server `3020`. Estos pueden haber cambiado para cuando se ejecute — verificar con `lsof -iTCP -sTCP:LISTEN -P` antes de elegir puerto y no asumir que los de arriba siguen libres.
+- **Puertos de dev de este worktree** (`.worktrees/turnos-cumplimiento`, rama `turnos-cumplimiento`, creado desde `main` local): server `3011` (`server/.env.local` ya seteado, `PORT=3011`/`CORS_ORIGIN=http://localhost:5175`), web `5175` (arrancar con `npx vite --port 5175` — `web/vite.config.ts` no se toca, sigue en `5173` para no generar diff con `main`; `web/.env.local` ya apunta `VITE_API_URL=http://localhost:3011`). Los otros worktrees del repo (`modern-soft-redesign`: server 3010/web 5173; `modernist-pixel-perfect`: server 3001/web 5173) pueden seguir corriendo en paralelo sin choque de puertos.
+- **Supabase de este proyecto es un proyecto remoto real** (`SUPABASE_URL=https://utgjmreanqbzncvykqgd.supabase.co` en `server/.env.local`/`web/.env.local`), no el stack local de Docker que documenta el README — no hay `supabase_db_proyecto-oliver` corriendo ni proyecto linkeado (`npx supabase link`). Las migraciones se aplican pegando el SQL a mano en el SQL Editor del Dashboard de Supabase (https://supabase.com/dashboard/project/utgjmreanqbzncvykqgd/sql/new) — acción que solo puede hacer el usuario, no el agente. Ver Task 1 Step 2.
 
 ---
 
@@ -77,26 +78,40 @@ create policy "members can read their org turno_templates"
   using (org_id in (select org_id from org_members where user_id = auth.uid()));
 ```
 
-- [ ] **Step 2: Aplicar la migración y verificar**
+- [ ] **Step 2: Pedirle al usuario que aplique la migración en el Dashboard de Supabase**
 
-Con Docker corriendo:
+Este proyecto usa un Supabase remoto real, no un stack local — el agente no tiene forma de correr la migración por su cuenta. Pedirle al usuario, explícitamente, que:
+
+1. Abra el SQL Editor del proyecto: https://supabase.com/dashboard/project/utgjmreanqbzncvykqgd/sql/new
+2. Pegue el contenido completo de `supabase/migrations/0004_turnos.sql` (Step 1) y lo ejecute.
+3. Confirme acá que corrió sin errores.
+
+Esperar la confirmación explícita antes de seguir al Step 3 — no asumir que ya está aplicada.
+
+- [ ] **Step 3: Verificar contra la API REST (no requiere psql/Docker)**
 
 ```bash
-npx supabase db reset
+source <(grep -E "^SUPABASE_URL|^SUPABASE_SERVICE_ROLE_KEY" server/.env.local | sed 's/^/export /')
+
+echo "--- horarios_empleado existe (200 + [] o filas) ---"
+curl -s -w " [%{http_code}]" "$SUPABASE_URL/rest/v1/horarios_empleado?select=id&limit=1" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+echo
+
+echo "--- turno_templates existe (200 + [] o filas) ---"
+curl -s -w " [%{http_code}]" "$SUPABASE_URL/rest/v1/turno_templates?select=id&limit=1" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+echo
+
+echo "--- org_settings.tolerancia_min existe con default 30 ---"
+curl -s -w " [%{http_code}]" "$SUPABASE_URL/rest/v1/org_settings?select=org_id,tolerancia_min&limit=5" \
+  -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"
+echo
 ```
 
-Esperado: corre limpio, sin errores, y al final vuelve a correr `scripts/seed-demo.js` si el proyecto lo tiene enganchado al `db reset` (si no, correrlo a mano: `node scripts/seed-demo.js`).
+Esperado: las tres llamadas devuelven `[200]`; la primera y segunda dan `[]` (tablas nuevas, sin filas todavía) o `403`/`404` si la migración no se aplicó (en ese caso, volver al Step 2); la tercera devuelve las orgs existentes, todas con `tolerancia_min: 30`.
 
-```bash
-psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" \
-  -c "\d horarios_empleado" \
-  -c "\d turno_templates" \
-  -c "select column_name, column_default from information_schema.columns where table_name = 'org_settings' and column_name = 'tolerancia_min';"
-```
-
-Esperado: `\d horarios_empleado` muestra las 8 columnas definidas arriba con sus FKs; `\d turno_templates` muestra la constraint `unique (org_id, nombre)`; la tercera consulta devuelve una fila con `tolerancia_min` y default `30`.
-
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add supabase/migrations/0004_turnos.sql
