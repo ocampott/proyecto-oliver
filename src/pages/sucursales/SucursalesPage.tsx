@@ -6,6 +6,7 @@ import { Select } from "../../components/ui/select";
 import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
+import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { MapaUbicacion, type Coordenadas } from "../../components/MapaUbicacion";
 import type { Sucursal } from "../../lib/api";
@@ -30,6 +31,7 @@ export default function SucursalesPage() {
   const crear = useCrearSucursal();
   const editar = useEditarSucursal();
   const eliminar = useEliminarSucursal();
+  const toast = useToast();
 
   const [nombre, setNombre] = useState("");
   const [radio, setRadio] = useState("100");
@@ -52,6 +54,10 @@ export default function SucursalesPage() {
   const qrSucursal = sucursales.find((s) => s.id === qrId) ?? null;
 
   const loading = crear.isPending || editar.isPending || eliminar.isPending;
+
+  const ent = org?.entitlements;
+  const activasCount = sucursales.filter((s) => s.activa).length;
+  const alTope = !!ent && !ent.ilimitado && ent.maxSucursales !== null && activasCount >= ent.maxSucursales;
 
   const sucursalesFiltradas = sucursales.filter((s) => {
     const matchNombre = s.nombre.toLowerCase().includes(busqueda.toLowerCase());
@@ -80,6 +86,7 @@ export default function SucursalesPage() {
       });
       resetAlta();
       setAltaOpen(false);
+      toast.success(`${nombre.trim()} fue agregada.`);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
@@ -110,18 +117,19 @@ export default function SucursalesPage() {
         },
       });
       setEditando(null);
+      toast.success("Sucursal actualizada.");
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
   async function handleToggleActiva(suc: Sucursal) {
-    setError(null);
     setAccionandoId(suc.id);
     try {
       await editar.mutateAsync({ id: suc.id, patch: { activa: !suc.activa } });
+      toast.success(suc.activa ? `${suc.nombre} fue desactivada.` : `${suc.nombre} fue activada.`);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
+      toast.error(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     } finally {
       setAccionandoId(null);
     }
@@ -132,6 +140,7 @@ export default function SucursalesPage() {
     setError(null);
     try {
       await eliminar.mutateAsync(eliminarTarget.id);
+      toast.success("Sucursal eliminada.");
       setEliminarTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
@@ -165,6 +174,8 @@ export default function SucursalesPage() {
         <Button
           variant="primary"
           className="ml-auto"
+          disabled={alTope}
+          title={alTope ? `Llegaste al máximo de ${ent!.maxSucursales} sucursales de tu plan. Pasate a un plan superior para sumar más.` : undefined}
           onClick={() => {
             setError(null);
             setAltaOpen(true);

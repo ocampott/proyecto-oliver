@@ -3,10 +3,13 @@ import { LogIn, LogOut, Download, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Badge } from "../../components/ui/badge";
+import { Dialog } from "../../components/ui/dialog";
+import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import type { MotivoRechazo } from "../../lib/api";
+import type { MotivoRechazo, AsistenciaRegistro } from "../../lib/api";
 import { useAsistencia, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
 import { exportarAsistencia } from "../../lib/api";
+import { useEntitlements, tieneModulo } from "../../lib/hooks";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -39,44 +42,43 @@ export default function AsistenciaPage() {
   const { data: rechazadas = [] } = useRechazadas();
   const borrar = useBorrarAsistencia();
   const resolver = useResolverRechazada();
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  const ent = useEntitlements();
+  const sinReportes = !tieneModulo(ent, "reportes");
   const [descargando, setDescargando] = useState(false);
-  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
-  const [borrandoId, setBorrandoId] = useState<string | null>(null);
   const [resolviendoId, setResolviendoId] = useState<string | null>(null);
+  const [borrarTarget, setBorrarTarget] = useState<AsistenciaRegistro | null>(null);
 
   async function handleDescargarExcel() {
-    setErrorDescarga(null);
     setDescargando(true);
     try {
       await exportarAsistencia(desde, hasta);
+      toast.success("Excel descargado.");
     } catch {
-      setErrorDescarga("No se pudo descargar el archivo.");
+      toast.error("No se pudo descargar el archivo.");
     } finally {
       setDescargando(false);
     }
   }
 
-  async function handleBorrar(id: string) {
-    if (!confirm("¿Borrar este registro?")) return;
-    setError(null);
-    setBorrandoId(id);
+  async function handleBorrar() {
+    if (!borrarTarget) return;
     try {
-      await borrar.mutateAsync(id);
+      await borrar.mutateAsync(borrarTarget.id);
+      toast.success("Registro borrado.");
+      setBorrarTarget(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo borrar el registro.");
-    } finally {
-      setBorrandoId(null);
+      toast.error(err instanceof Error ? err.message : "No se pudo borrar el registro.");
     }
   }
 
   async function handleResolver(id: string, accion: "aprobar" | "descartar") {
-    setError(null);
     setResolviendoId(id);
     try {
       await resolver.mutateAsync({ id, accion });
+      toast.success(accion === "aprobar" ? "Intento aprobado." : "Intento descartado.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo resolver el intento.");
+      toast.error(err instanceof Error ? err.message : "No se pudo resolver el intento.");
     } finally {
       setResolviendoId(null);
     }
@@ -159,14 +161,18 @@ export default function AsistenciaPage() {
             onChange={(e) => setHasta(e.target.value)}
             containerClassName="w-40"
           />
-          <Button variant="secondary" className="ml-auto" onClick={handleDescargarExcel} disabled={descargando}>
+          <Button
+            variant="secondary"
+            className="ml-auto"
+            onClick={handleDescargarExcel}
+            disabled={descargando || sinReportes}
+            title={sinReportes ? "Exportar es una función del plan Básico. Pasate a un plan superior para usarla." : undefined}
+          >
             <Download className="h-4 w-4" />
             {descargando ? "Generando…" : "Descargar Excel"}
           </Button>
         </div>
 
-        {errorDescarga && <p className="mt-2 text-[15px] text-accent-700">{errorDescarga}</p>}
-        {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
         {isError && (
           <p className="mt-2 text-[15px] text-accent-700">
             No se pudieron cargar los registros. Probá de nuevo.
@@ -203,8 +209,7 @@ export default function AsistenciaPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end">
-                    <Button variant="secondary" size="default" onClick={() => handleBorrar(r.id)} disabled={borrandoId === r.id}>
-                      {borrandoId === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                    <Button variant="secondary" size="default" onClick={() => setBorrarTarget(r)}>
                       Borrar
                     </Button>
                   </div>
@@ -221,6 +226,23 @@ export default function AsistenciaPage() {
           </TableBody>
         </Table>
       </section>
+
+      <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar registro">
+        <p className="text-[15px] text-text/70">
+          ¿Borrar el registro de {borrarTarget?.tipo === "entrada" ? "entrada" : "salida"} de{" "}
+          <strong>{borrarTarget?.empleado_nombre ?? "este empleado"}</strong> del{" "}
+          {borrarTarget ? horaLocal(borrarTarget.created_at) : ""}? Esta acción no se puede deshacer.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setBorrarTarget(null)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleBorrar} disabled={borrar.isPending}>
+            {borrar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Borrar
+          </Button>
+        </div>
+      </Dialog>
     </>
   );
 }

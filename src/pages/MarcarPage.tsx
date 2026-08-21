@@ -157,7 +157,7 @@ export default function MarcarPage() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
-            <Button type="submit" variant="primary" size="lg" className="justify-between" disabled={loading}>
+            <Button type="submit" variant="primary" size="lg" className="h-12 justify-between rounded-[12px] text-[15px]" disabled={loading}>
               Continuar <ArrowRight className="h-4 w-4" />
             </Button>
           </form>
@@ -205,10 +205,10 @@ export default function MarcarPage() {
               inputMode="numeric"
               placeholder="Código de 6 dígitos"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e) => setCode(e.target.value.replace(/\s/g, ""))}
               className="text-center text-lg tracking-widest"
             />
-            <Button type="submit" variant="primary" size="lg" disabled={loading}>
+            <Button type="submit" variant="primary" size="lg" className="h-12 rounded-[12px] text-[15px]" disabled={loading}>
               Vincular
             </Button>
           </form>
@@ -223,19 +223,19 @@ export default function MarcarPage() {
               onClick={() => handleMarcar("entrada")}
               variant="primary"
               size="lg"
-              className="h-[52px] rounded-[14px]"
+              className="h-12 rounded-[12px] text-[15px]"
               disabled={loading}
             >
-              <LogIn className="h-[18px] w-[18px]" /> Marcar entrada
+              <LogIn className="h-4 w-4" /> Marcar entrada
             </Button>
             <Button
               onClick={() => handleMarcar("salida")}
               variant="secondary"
               size="lg"
-              className="h-[52px] rounded-[14px]"
+              className="h-12 rounded-[12px] text-[15px]"
               disabled={loading}
             >
-              <LogOut className="h-[18px] w-[18px]" /> Marcar salida
+              <LogOut className="h-4 w-4" /> Marcar salida
             </Button>
           </div>
         )}

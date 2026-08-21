@@ -465,6 +465,18 @@ export function createTurnoTemplate(input: CrearTurnoTemplateInput): Promise<{ o
   return request("/api/turno-templates", { method: "POST", body: JSON.stringify(input) });
 }
 
+export interface EditarTurnoTemplateInput {
+  nombre?: string;
+  hora_inicio?: string;
+  hora_fin?: string;
+  dias_semana?: number[];
+  tolerancia_min?: number | null;
+}
+
+export function updateTurnoTemplate(id: string, patch: EditarTurnoTemplateInput): Promise<{ ok: true }> {
+  return request(`/api/turno-templates/${id}`, { method: "PATCH", body: JSON.stringify(patch) });
+}
+
 export function deleteTurnoTemplate(id: string): Promise<{ ok: true }> {
   return request(`/api/turno-templates/${id}`, { method: "DELETE" });
 }

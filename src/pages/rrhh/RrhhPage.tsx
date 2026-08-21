@@ -6,6 +6,7 @@ import { Select } from "../../components/ui/select";
 import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
 import { IconButton } from "../../components/ui/icon-button";
+import { useToast } from "../../components/ui/toast";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { Ausencia } from "../../lib/api";
@@ -44,6 +45,7 @@ function motivoFinal(f: FormState): string {
 }
 
 export default function RrhhPage() {
+  const toast = useToast();
   const { data: empleados = [] } = useEmpleados();
   const { data: sucursales = [] } = useSucursales();
   const { data: categoriasData } = useRrhhCategorias();
@@ -65,15 +67,23 @@ export default function RrhhPage() {
       return;
     }
     setErrorCategoria(null);
-    await guardarCategorias.mutateAsync([...categorias, nombre]);
-    setNuevaCategoria("");
-    setCategoriaModalOpen(false);
+    try {
+      await guardarCategorias.mutateAsync([...categorias, nombre]);
+      setNuevaCategoria("");
+      setCategoriaModalOpen(false);
+      toast.success("Categoría agregada.");
+    } catch (err) {
+      setErrorCategoria(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+    }
   }
 
   async function handleQuitarCategoria(nombre: string) {
     setQuitandoCategoria(nombre);
     try {
       await guardarCategorias.mutateAsync(categorias.filter((c) => c !== nombre));
+      toast.success("Categoría quitada.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo quitar la categoría.");
     } finally {
       setQuitandoCategoria(null);
     }
@@ -84,10 +94,8 @@ export default function RrhhPage() {
   const [sucursalFiltro, setSucursalFiltro] = useState("");
   const [motivoFiltro, setMotivoFiltro] = useState("");
   const [descargando, setDescargando] = useState(false);
-  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
 
   async function handleDescargarExcel() {
-    setErrorDescarga(null);
     setDescargando(true);
     try {
       await exportarAusencias({
@@ -96,8 +104,9 @@ export default function RrhhPage() {
         sucursalId: sucursalFiltro || undefined,
         motivo: motivoFiltro || undefined,
       });
+      toast.success("Excel descargado.");
     } catch {
-      setErrorDescarga("No se pudo descargar el archivo.");
+      toast.error("No se pudo descargar el archivo.");
     } finally {
       setDescargando(false);
     }
@@ -120,9 +129,10 @@ export default function RrhhPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
 
-  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [editando, setEditando] = useState<Ausencia | null>(null);
   const [editForm, setEditForm] = useState<FormState>(emptyForm);
-  const [borrandoId, setBorrandoId] = useState<string | null>(null);
+  const [errorEdit, setErrorEdit] = useState<string | null>(null);
+  const [borrarTarget, setBorrarTarget] = useState<Ausencia | null>(null);
 
   async function handleAlta(e: FormEvent) {
     e.preventDefault();
@@ -140,13 +150,15 @@ export default function RrhhPage() {
       });
       setForm(emptyForm);
       setAltaOpen(false);
+      toast.success("Ausencia cargada.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
   }
 
-  function startEdit(a: Ausencia) {
-    setEditandoId(a.id);
+  function abrirDetalle(a: Ausencia) {
+    setErrorEdit(null);
+    setEditando(a);
     setEditForm({
       empleado_id: a.empleado_id,
       sucursal_id: a.sucursal_id ?? "",
@@ -160,11 +172,13 @@ export default function RrhhPage() {
     });
   }
 
-  async function handleGuardarEdicion(id: string) {
-    setError(null);
+  async function handleGuardarEdicion(e: FormEvent) {
+    e.preventDefault();
+    if (!editando) return;
+    setErrorEdit(null);
     try {
       await editar.mutateAsync({
-        id,
+        id: editando.id,
         patch: {
           sucursal_id: editForm.sucursal_id || null,
           fecha_desde: editForm.fecha_desde,
@@ -175,19 +189,21 @@ export default function RrhhPage() {
           certificado_pendiente: editForm.certificado_pendiente,
         },
       });
-      setEditandoId(null);
+      setEditando(null);
+      toast.success("Ausencia actualizada.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setErrorEdit(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
   }
 
-  async function handleBorrar(id: string) {
-    if (!confirm("¿Borrar esta ausencia?")) return;
-    setBorrandoId(id);
+  async function handleBorrar() {
+    if (!borrarTarget) return;
     try {
-      await borrar.mutateAsync(id);
-    } finally {
-      setBorrandoId(null);
+      await borrar.mutateAsync(borrarTarget.id);
+      toast.success("Ausencia borrada.");
+      setBorrarTarget(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo borrar la ausencia.");
     }
   }
 
@@ -297,9 +313,7 @@ export default function RrhhPage() {
         </div>
       </div>
 
-      {errorDescarga && <p className="mt-2 text-[15px] text-accent-700">{errorDescarga}</p>}
-
-      {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+      {error && !altaOpen && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -315,69 +329,21 @@ export default function RrhhPage() {
         <TableBody>
           {isLoading && <TableSkeleton cols={6} />}
           {!isLoading &&
-            ausencias.map((a) =>
-              editandoId === a.id ? (
-                <TableRow key={a.id}>
-                  <TableCell colSpan={6}>
-                    <div className="flex flex-wrap items-end gap-3 py-2">
-                      <Select
-                        label="Sucursal"
-                        value={editForm.sucursal_id}
-                        onChange={(e) => setEditForm({ ...editForm, sucursal_id: e.target.value })}
-                        options={[{ value: "", label: "Sin especificar" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-                        containerClassName="w-40"
-                      />
-                      <Field label="Desde" type="date" value={editForm.fecha_desde} onChange={(e) => setEditForm({ ...editForm, fecha_desde: e.target.value })} containerClassName="w-36" />
-                      <Field label="Hasta" type="date" value={editForm.fecha_hasta} onChange={(e) => setEditForm({ ...editForm, fecha_hasta: e.target.value })} containerClassName="w-36" />
-                      <Select
-                        label="Motivo"
-                        value={editForm.motivoSeleccionado}
-                        onChange={(e) => setEditForm({ ...editForm, motivoSeleccionado: e.target.value })}
-                        options={opcionesMotivo}
-                        containerClassName="w-40"
-                      />
-                      {editForm.motivoSeleccionado === OTRO && (
-                        <Field label="Motivo (otro)" value={editForm.motivoLibre} onChange={(e) => setEditForm({ ...editForm, motivoLibre: e.target.value })} containerClassName="w-40" />
-                      )}
-                      <Field label="Detalle" value={editForm.detalle} onChange={(e) => setEditForm({ ...editForm, detalle: e.target.value })} containerClassName="w-40" />
-                      <Field label="Contacto" value={editForm.contacto} onChange={(e) => setEditForm({ ...editForm, contacto: e.target.value })} containerClassName="w-40" />
-                      <label className="flex items-center gap-2 text-[14px] text-text">
-                        <input
-                          type="checkbox"
-                          checked={editForm.certificado_pendiente}
-                          onChange={(e) => setEditForm({ ...editForm, certificado_pendiente: e.target.checked })}
-                          className="h-4 w-4 rounded border-border accent-accent"
-                        />
-                        Certificado pendiente
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" onClick={() => handleGuardarEdicion(a.id)}>Guardar</Button>
-                        <Button variant="ghost" onClick={() => setEditandoId(null)}>Cancelar</Button>
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                <TableRow key={a.id}>
-                  <TableCell>{a.empleado_nombre}</TableCell>
-                  <TableCell>{a.sucursal_nombre ?? "—"}</TableCell>
-                  <TableCell>{a.fecha_desde === a.fecha_hasta ? a.fecha_desde : `${a.fecha_desde} – ${a.fecha_hasta}`}</TableCell>
-                  <TableCell>{a.motivo}</TableCell>
-                  <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-1.5">
-                      <IconButton onClick={() => startEdit(a)} disabled={borrandoId === a.id} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar" />
-                      <IconButton
-                        onClick={() => handleBorrar(a.id)}
-                        disabled={borrandoId === a.id}
-                        icon={borrandoId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                        label="Borrar"
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )
-            )}
+            ausencias.map((a) => (
+              <TableRow key={a.id}>
+                <TableCell>{a.empleado_nombre}</TableCell>
+                <TableCell>{a.sucursal_nombre ?? "—"}</TableCell>
+                <TableCell>{a.fecha_desde === a.fecha_hasta ? a.fecha_desde : `${a.fecha_desde} – ${a.fecha_hasta}`}</TableCell>
+                <TableCell>{a.motivo}</TableCell>
+                <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1.5">
+                    <IconButton onClick={() => abrirDetalle(a)} icon={<Pencil className="h-3.5 w-3.5" />} label="Ver detalle" />
+                    <IconButton onClick={() => setBorrarTarget(a)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           {!isLoading && ausencias.length === 0 && (
             <TableRow>
               <TableCell colSpan={6} className="text-text/60">Sin ausencias en este rango.</TableCell>
@@ -431,6 +397,70 @@ export default function RrhhPage() {
             Agregar
           </Button>
         </form>
+      </Dialog>
+
+      <Dialog
+        open={editando != null}
+        onClose={() => { setEditando(null); setErrorEdit(null); }}
+        title={`Ausencia de ${editando?.empleado_nombre ?? ""}`}
+      >
+        <form onSubmit={handleGuardarEdicion} className="flex flex-col gap-3">
+          <Select
+            label="Sucursal (opcional)"
+            value={editForm.sucursal_id}
+            onChange={(e) => setEditForm({ ...editForm, sucursal_id: e.target.value })}
+            options={[{ value: "", label: "Sin especificar" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+            containerClassName="w-full"
+          />
+          <div className="flex gap-3">
+            <Field label="Desde" type="date" value={editForm.fecha_desde} onChange={(e) => setEditForm({ ...editForm, fecha_desde: e.target.value })} containerClassName="w-full" required />
+            <Field label="Hasta" type="date" value={editForm.fecha_hasta} onChange={(e) => setEditForm({ ...editForm, fecha_hasta: e.target.value })} containerClassName="w-full" required />
+          </div>
+          <Select
+            label="Motivo"
+            value={editForm.motivoSeleccionado}
+            onChange={(e) => setEditForm({ ...editForm, motivoSeleccionado: e.target.value })}
+            options={[{ value: "", label: "Elegí un motivo" }, ...opcionesMotivo]}
+            containerClassName="w-full"
+            required
+          />
+          {editForm.motivoSeleccionado === OTRO && (
+            <Field label="Motivo (otro)" value={editForm.motivoLibre} onChange={(e) => setEditForm({ ...editForm, motivoLibre: e.target.value })} containerClassName="w-full" required />
+          )}
+          <Field label="Detalle (opcional)" value={editForm.detalle} onChange={(e) => setEditForm({ ...editForm, detalle: e.target.value })} containerClassName="w-full" />
+          <Field label="Contacto (opcional)" value={editForm.contacto} onChange={(e) => setEditForm({ ...editForm, contacto: e.target.value })} containerClassName="w-full" />
+          <label className="flex items-center gap-2 text-[14px] text-text">
+            <input
+              type="checkbox"
+              checked={editForm.certificado_pendiente}
+              onChange={(e) => setEditForm({ ...editForm, certificado_pendiente: e.target.checked })}
+              className="h-4 w-4 rounded border-border accent-accent"
+            />
+            Certificado pendiente
+          </label>
+          {errorEdit && <p className="text-[15px] text-accent-700">{errorEdit}</p>}
+          <Button type="submit" variant="primary" block disabled={editar.isPending}>
+            Guardar
+          </Button>
+        </form>
+      </Dialog>
+
+      <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar ausencia">
+        <p className="text-[15px] text-text/70">
+          ¿Borrar la ausencia de <strong>{borrarTarget?.empleado_nombre}</strong>{" "}
+          ({borrarTarget?.fecha_desde === borrarTarget?.fecha_hasta
+            ? borrarTarget?.fecha_desde
+            : `${borrarTarget?.fecha_desde} – ${borrarTarget?.fecha_hasta}`})?
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setBorrarTarget(null)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleBorrar} disabled={borrar.isPending}>
+            {borrar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Borrar
+          </Button>
+        </div>
       </Dialog>
 
       <Dialog

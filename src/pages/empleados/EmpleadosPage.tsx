@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2, Copy } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
 import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
+import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { Empleado } from "../../lib/api";
 import {
@@ -17,6 +18,7 @@ import {
   useGenerarOtp,
 } from "./hooks";
 import { ErrorPlan } from "../../components/ErrorPlan";
+import { useOrgActual } from "../../lib/hooks";
 
 function formatCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
@@ -30,26 +32,33 @@ type EstadoFiltro = "todos" | "activos" | "inactivos";
 
 export default function EmpleadosPage() {
   const { data: empleados = [], isLoading } = useEmpleados();
+  const { data: org } = useOrgActual();
   const crear = useCrearEmpleado();
   const editar = useEditarEmpleado();
   const desactivar = useDesactivarEmpleado();
   const desvincular = useDesvincularDispositivo();
   const generarCodigo = useGenerarOtp();
+  const toast = useToast();
 
   const [nombre, setNombre] = useState("");
   const [celular, setCelular] = useState("");
   const [altaOpen, setAltaOpen] = useState(false);
-  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [editando, setEditando] = useState<Empleado | null>(null);
   const [editNombre, setEditNombre] = useState("");
   const [editCelular, setEditCelular] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [codigoDialog, setCodigoDialog] = useState<{ nombre: string; code: string } | null>(null);
+  const [desvincularTarget, setDesvincularTarget] = useState<Empleado | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [accionandoId, setAccionandoId] = useState<string | null>(null);
 
   const loading =
     crear.isPending || editar.isPending || desactivar.isPending || desvincular.isPending || generarCodigo.isPending;
+
+  const ent = org?.entitlements;
+  const activosCount = empleados.filter((e) => e.activo).length;
+  const alTope = !!ent && !ent.ilimitado && ent.maxEmpleados !== null && activosCount >= ent.maxEmpleados;
 
   const empleadosFiltrados = empleados.filter((emp) => {
     const matchNombre = emp.nombre.toLowerCase().includes(busqueda.toLowerCase());
@@ -66,55 +75,77 @@ export default function EmpleadosPage() {
       setNombre("");
       setCelular("");
       setAltaOpen(false);
+      toast.success(`${nombre.trim()} fue agregado a la nómina.`);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
-  async function handleGuardarEdicion(id: string) {
+  function abrirEdicion(emp: Empleado) {
+    setError(null);
+    setEditando(emp);
+    setEditNombre(emp.nombre);
+    setEditCelular(emp.celular ?? "");
+  }
+
+  async function handleGuardarEdicion(e: FormEvent) {
+    e.preventDefault();
+    if (!editando) return;
     setError(null);
     try {
-      await editar.mutateAsync({ id, patch: { nombre: editNombre, celular: editCelular || null } });
-      setEditandoId(null);
+      await editar.mutateAsync({ id: editando.id, patch: { nombre: editNombre, celular: editCelular || null } });
+      setEditando(null);
+      toast.success("Empleado actualizado.");
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
   async function handleToggleActivo(emp: Empleado) {
-    setError(null);
     setAccionandoId(emp.id);
     try {
       await editar.mutateAsync({ id: emp.id, patch: { activo: !emp.activo } });
+      toast.success(emp.activo ? `${emp.nombre} fue desactivado.` : `${emp.nombre} fue activado.`);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
+      toast.error(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     } finally {
       setAccionandoId(null);
     }
   }
 
-  async function handleDesvincular(emp: Empleado) {
-    if (!confirm(`¿Desvincular el dispositivo de ${emp.nombre}? Va a tener que revincular con un código nuevo.`)) {
-      return;
-    }
-    setError(null);
-    setAccionandoId(emp.id);
+  async function handleDesvincular() {
+    if (!desvincularTarget) return;
+    setAccionandoId(desvincularTarget.id);
     try {
-      await desvincular.mutateAsync(emp.id);
+      await desvincular.mutateAsync(desvincularTarget.id);
+      toast.success(`Se desvinculó el dispositivo de ${desvincularTarget.nombre}.`);
+      setDesvincularTarget(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
+      toast.error(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     } finally {
       setAccionandoId(null);
     }
   }
 
   async function handleGenerarCodigo(emp: Empleado) {
-    setError(null);
+    setAccionandoId(emp.id);
     try {
       const otp = await generarCodigo.mutateAsync(emp.id);
-      setCodigoDialog({ nombre: emp.nombre, code: formatCode(otp.code) });
+      setCodigoDialog({ nombre: emp.nombre, code: otp.code });
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
+      toast.error(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+    } finally {
+      setAccionandoId(null);
+    }
+  }
+
+  async function handleCopiarCodigo() {
+    if (!codigoDialog) return;
+    try {
+      await navigator.clipboard.writeText(codigoDialog.code);
+      toast.success("Código copiado.");
+    } catch {
+      toast.error("No se pudo copiar. Copialo manualmente.");
     }
   }
 
@@ -145,6 +176,8 @@ export default function EmpleadosPage() {
         <Button
           variant="primary"
           className="ml-auto"
+          disabled={alTope}
+          title={alTope ? `Llegaste al máximo de ${ent!.maxEmpleados} empleados de tu plan. Pasate a un plan superior para sumar más.` : undefined}
           onClick={() => {
             setError(null);
             setAltaOpen(true);
@@ -155,7 +188,7 @@ export default function EmpleadosPage() {
         </Button>
       </div>
 
-      {error && !altaOpen && (
+      {error && !altaOpen && !editando && (
         <ErrorPlan error={error} className="mt-2">
           <p className="mt-2 text-[15px] text-accent-700">{error.message}</p>
         </ErrorPlan>
@@ -176,20 +209,8 @@ export default function EmpleadosPage() {
           {!isLoading &&
             empleadosFiltrados.map((emp) => (
               <TableRow key={emp.id} className={emp.activo ? "" : "text-text/40"}>
-                <TableCell>
-                  {editandoId === emp.id ? (
-                    <Field label="Nombre" value={editNombre} onChange={(e) => setEditNombre(e.target.value)} />
-                  ) : (
-                    emp.nombre
-                  )}
-                </TableCell>
-                <TableCell>
-                  {editandoId === emp.id ? (
-                    <Field label="Celular" value={editCelular} onChange={(e) => setEditCelular(e.target.value)} />
-                  ) : (
-                    emp.celular ?? "—"
-                  )}
-                </TableCell>
+                <TableCell>{emp.nombre}</TableCell>
+                <TableCell>{emp.celular ?? "—"}</TableCell>
                 <TableCell>
                   {emp.device_token ? (
                     <Status tone="success">Vinculado</Status>
@@ -208,75 +229,63 @@ export default function EmpleadosPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-1.5">
-                    {editandoId === emp.id ? (
-                      <>
-                        <Button variant="ghost" onClick={() => handleGuardarEdicion(emp.id)} disabled={loading}>
-                          Guardar
-                        </Button>
-                        <Button variant="ghost" onClick={() => setEditandoId(null)}>
-                          Cancelar
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <IconButton
-                          onClick={() => {
-                            setEditandoId(emp.id);
-                            setEditNombre(emp.nombre);
-                            setEditCelular(emp.celular ?? "");
-                          }}
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                            </svg>
-                          }
-                          label="Editar"
-                        />
-                        <IconButton
-                          onClick={() => handleToggleActivo(emp)}
-                          disabled={loading}
-                          icon={
-                            accionandoId === emp.id ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 2v6" />
-                                <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
-                              </svg>
-                            )
-                          }
-                          label={emp.activo ? "Desactivar" : "Activar"}
-                        />
-                        {emp.device_token ? (
-                          <IconButton
-                            onClick={() => handleDesvincular(emp)}
-                            disabled={loading}
-                            icon={
-                              accionandoId === emp.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-                                  <line x1="12" y1="2" x2="12" y2="12" />
-                                </svg>
-                              )
-                            }
-                            label="Desvincular"
-                          />
+                    <IconButton
+                      onClick={() => abrirEdicion(emp)}
+                      disabled={loading}
+                      icon={
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                        </svg>
+                      }
+                      label="Editar"
+                    />
+                    <IconButton
+                      onClick={() => handleToggleActivo(emp)}
+                      disabled={loading}
+                      icon={
+                        accionandoId === emp.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <IconButton
-                            onClick={() => handleGenerarCodigo(emp)}
-                            disabled={loading}
-                            icon={
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                              </svg>
-                            }
-                            label={emp.otp ? "Código nuevo" : "Generar código"}
-                          />
-                        )}
-                      </>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2v6" />
+                            <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
+                          </svg>
+                        )
+                      }
+                      label={emp.activo ? "Desactivar" : "Activar"}
+                    />
+                    {emp.device_token ? (
+                      <IconButton
+                        onClick={() => setDesvincularTarget(emp)}
+                        disabled={loading}
+                        icon={
+                          accionandoId === emp.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                              <line x1="12" y1="2" x2="12" y2="12" />
+                            </svg>
+                          )
+                        }
+                        label="Desvincular"
+                      />
+                    ) : (
+                      <IconButton
+                        onClick={() => handleGenerarCodigo(emp)}
+                        disabled={loading}
+                        icon={
+                          accionandoId === emp.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="11" width="18" height="11" rx="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                          )
+                        }
+                        label={emp.otp ? "Código nuevo" : "Generar código"}
+                      />
                     )}
                   </div>
                 </TableCell>
@@ -332,6 +341,39 @@ export default function EmpleadosPage() {
         </form>
       </Dialog>
 
+      <Dialog
+        open={editando != null}
+        onClose={() => {
+          setEditando(null);
+          setError(null);
+        }}
+        title={`Editar ${editando?.nombre ?? "empleado"}`}
+      >
+        <form onSubmit={handleGuardarEdicion} className="flex flex-col gap-3">
+          <Field
+            label="Nombre y apellido"
+            required
+            value={editNombre}
+            onChange={(e) => setEditNombre(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Celular (opcional)"
+            value={editCelular}
+            onChange={(e) => setEditCelular(e.target.value)}
+            containerClassName="w-full"
+          />
+          {error && (
+            <ErrorPlan error={error}>
+              <p className="text-[15px] text-accent-700">{error.message}</p>
+            </ErrorPlan>
+          )}
+          <Button type="submit" variant="primary" block disabled={loading}>
+            Guardar
+          </Button>
+        </form>
+      </Dialog>
+
       <Dialog open={codigoDialog != null} onClose={() => setCodigoDialog(null)} title="Código de vinculación">
         <div className="mx-auto -mt-1 flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-accent-100">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-accent" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -340,14 +382,38 @@ export default function EmpleadosPage() {
           </svg>
         </div>
         <div className="text-center text-[38px] font-extrabold tracking-[0.14em] text-text">
-          {codigoDialog?.code}
+          {codigoDialog ? formatCode(codigoDialog.code) : ""}
         </div>
         <p className="text-center text-[13.5px] text-text-secondary">
-          Vence en 10 minutos. Dictáselo a {codigoDialog?.nombre}.
+          Vence en 10 minutos. Dictáselo a {codigoDialog?.nombre}, o copialo y compartíselo.
         </p>
-        <Button variant="secondary" block onClick={() => setCodigoDialog(null)}>
+        <Button variant="secondary" block onClick={handleCopiarCodigo}>
+          <Copy className="h-4 w-4" />
+          Copiar código
+        </Button>
+        <Button variant="ghost" block onClick={() => setCodigoDialog(null)}>
           Cerrar
         </Button>
+      </Dialog>
+
+      <Dialog
+        open={desvincularTarget != null}
+        onClose={() => setDesvincularTarget(null)}
+        title="Desvincular dispositivo"
+      >
+        <p className="text-[15px] text-text/70">
+          ¿Desvincular el dispositivo de <strong>{desvincularTarget?.nombre}</strong>? Va a tener que
+          revincular con un código nuevo la próxima vez que quiera marcar.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setDesvincularTarget(null)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleDesvincular} disabled={desvincular.isPending}>
+            {desvincular.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Desvincular
+          </Button>
+        </div>
       </Dialog>
     </>
   );

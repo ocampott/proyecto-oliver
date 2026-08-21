@@ -7,6 +7,7 @@ import {
   asignarHorarios,
   getTurnoTemplates,
   createTurnoTemplate,
+  updateTurnoTemplate,
   deleteTurnoTemplate,
   getTolerancia,
   setTolerancia,
@@ -15,6 +16,7 @@ import {
   type EditarHorarioInput,
   type AsignarHorariosInput,
   type CrearTurnoTemplateInput,
+  type EditarTurnoTemplateInput,
 } from "../../lib/api";
 
 export function useHorarios(empleadoId: string) {
@@ -77,6 +79,14 @@ export function useCrearPlantilla() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CrearTurnoTemplateInput) => createTurnoTemplate(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["turno-templates"] }),
+  });
+}
+
+export function useEditarPlantilla() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: EditarTurnoTemplateInput }) => updateTurnoTemplate(id, patch),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["turno-templates"] }),
   });
 }

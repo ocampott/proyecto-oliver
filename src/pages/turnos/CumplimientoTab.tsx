@@ -4,6 +4,7 @@ import { Select } from "../../components/ui/select";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Status, type StatusProps } from "../../components/ui/status";
+import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { CumplimientoRow } from "../../lib/api";
 import { useSucursales } from "../sucursales/hooks";
@@ -44,7 +45,7 @@ export default function CumplimientoTab() {
   const [sucursalId, setSucursalId] = useState("");
   const [empleadoId, setEmpleadoId] = useState("");
   const [toleranciaInput, setToleranciaInput] = useState("");
-  const [guardadoOk, setGuardadoOk] = useState(false);
+  const toast = useToast();
 
   const { data: sucursales = [] } = useSucursales();
   const { data: empleados = [] } = useEmpleados();
@@ -60,9 +61,12 @@ export default function CumplimientoTab() {
   const toleranciaActual = toleranciaInput || toleranciaData?.tolerancia_min?.toString() || "";
 
   async function handleGuardarTolerancia() {
-    setGuardadoOk(false);
-    await guardarTolerancia.mutateAsync(Number(toleranciaActual));
-    setGuardadoOk(true);
+    try {
+      await guardarTolerancia.mutateAsync(Number(toleranciaActual));
+      toast.success("Tolerancia actualizada.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo guardar la tolerancia.");
+    }
   }
 
   return (
@@ -73,11 +77,10 @@ export default function CumplimientoTab() {
           Minutos de margen antes de marcar un turno como "tarde" o "salida anticipada" — aplica salvo que la franja tenga su propia tolerancia.
         </p>
         <div className="mt-3 flex items-end gap-3">
-          <Field label="Minutos" type="number" value={toleranciaActual} onChange={(e) => { setToleranciaInput(e.target.value); setGuardadoOk(false); }} containerClassName="w-32" />
+          <Field label="Minutos" type="number" value={toleranciaActual} onChange={(e) => setToleranciaInput(e.target.value)} containerClassName="w-32" />
           <Button variant="secondary" onClick={handleGuardarTolerancia} disabled={guardarTolerancia.isPending}>
             Guardar
           </Button>
-          {guardadoOk && <span className="text-[13.5px] text-text/60">Guardado.</span>}
         </div>
       </Card>
 

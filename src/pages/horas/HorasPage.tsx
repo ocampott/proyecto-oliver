@@ -5,6 +5,7 @@ import { Field } from "../../components/ui/field";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { ErrorPlan } from "../../components/ErrorPlan";
+import { useToast } from "../../components/ui/toast";
 import { useHoras } from "./hooks";
 import { exportarHoras } from "../../lib/api";
 
@@ -33,16 +34,16 @@ export default function HorasPage() {
   const [hasta, setHasta] = useState(hoyAR());
 
   const { data, isLoading, isError, error } = useHoras(desde, hasta);
+  const toast = useToast();
   const [descargando, setDescargando] = useState(false);
-  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
 
   async function handleDescargarExcel() {
-    setErrorDescarga(null);
     setDescargando(true);
     try {
       await exportarHoras(desde, hasta);
+      toast.success("Excel descargado.");
     } catch {
-      setErrorDescarga("No se pudo descargar el archivo.");
+      toast.error("No se pudo descargar el archivo.");
     } finally {
       setDescargando(false);
     }
@@ -75,8 +76,6 @@ export default function HorasPage() {
           {descargando ? "Generando…" : "Descargar Excel"}
         </Button>
       </div>
-
-      {errorDescarga && <p className="mt-2 text-[15px] text-accent-700">{errorDescarga}</p>}
 
       {isError && (
         <div className="mt-2">

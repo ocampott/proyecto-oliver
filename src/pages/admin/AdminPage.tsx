@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Dialog } from "../../components/ui/dialog";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
+import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { ApiError, getPlanes, type OrganizationAdmin, type SuscripcionAdmin, type PlanesResponse } from "../../lib/api";
 import {
@@ -27,6 +28,7 @@ export default function AdminPage() {
   const { data: organizaciones = [], isLoading, isError, error } = useOrganizacionesAdmin();
   const crear = useCrearOrganizacionAdmin();
   const { data: catalogo } = useQuery({ queryKey: ["planes"], queryFn: getPlanes });
+  const toast = useToast();
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -43,6 +45,7 @@ export default function AdminPage() {
       setName("");
       setSlug("");
       setAltaOpen(false);
+      toast.success("Organización creada.");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
@@ -176,6 +179,7 @@ function GestionSuscripcionDialog({ org, planes, onClose }: GestionSuscripcionDi
   const { data: suscripcionesData, isLoading: suscripcionesLoading } = useSuscripcionesAdmin(org.id);
   const crear = useCrearSuscripcionAdmin(org.id);
   const cancelar = useCancelarSuscripcionAdmin(org.id);
+  const toast = useToast();
 
   const [plan, setPlan] = useState<"basico" | "pro">("basico");
   const [periodo, setPeriodo] = useState<string>("1");
@@ -199,6 +203,7 @@ function GestionSuscripcionDialog({ org, planes, onClose }: GestionSuscripcionDi
       });
       setNotas("");
       setPrecio("");
+      toast.success("Suscripción registrada.");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
@@ -208,14 +213,15 @@ function GestionSuscripcionDialog({ org, planes, onClose }: GestionSuscripcionDi
     if (!confirm("¿Cancelar esta suscripción? La organización volverá al plan Gratis.")) return;
     try {
       await cancelar.mutateAsync(suscripcion.id);
-    } catch {
-      // el error queda en cancelar.error
+      toast.success("Suscripción cancelada.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo cancelar la suscripción.");
     }
   }
 
   return (
-    <Dialog open onClose={onClose} title={`Suscripción: ${org.name}`}>
-      <div className="flex max-h-[80vh] flex-col gap-4">
+    <Dialog open onClose={onClose} title={`Suscripción: ${org.name}`} className="max-w-[560px]">
+      <div className="flex min-w-0 max-h-[80vh] flex-col gap-4">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <Select
@@ -280,8 +286,8 @@ function GestionSuscripcionDialog({ org, planes, onClose }: GestionSuscripcionDi
             <p className="text-[14px] text-text-secondary">No hay suscripciones registradas.</p>
           )}
           {!suscripcionesLoading && (suscripcionesData?.suscripciones.length ?? 0) > 0 && (
-            <div className="mt-2 max-h-[240px] overflow-auto rounded-[10px] border border-border">
-              <Table>
+            <div className="mt-2 min-w-0 max-h-[240px] overflow-auto rounded-[10px] border border-border">
+              <Table containerClassName="overflow-x-auto rounded-none border-none">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Plan</TableHead>

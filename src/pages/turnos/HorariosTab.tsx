@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Users } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
@@ -7,8 +7,9 @@ import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
 import { MultiSelect } from "../../components/ui/multi-select";
 import { IconButton } from "../../components/ui/icon-button";
+import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import type { HorarioEmpleado } from "../../lib/api";
+import type { HorarioEmpleado, TurnoTemplate } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
 import {
@@ -19,6 +20,7 @@ import {
   useAsignarHorarios,
   useTurnoTemplates,
   useCrearPlantilla,
+  useEditarPlantilla,
   useBorrarPlantilla,
 } from "./hooks";
 
@@ -57,6 +59,7 @@ export default function HorariosTab() {
   const { data: empleados = [] } = useEmpleados();
   const { data: sucursales = [] } = useSucursales();
   const { data: templates = [] } = useTurnoTemplates();
+  const toast = useToast();
 
   const [empleadoIdManual, setEmpleadoIdManual] = useState("");
   const empleadoId = empleadoIdManual || empleados[0]?.id || "";
@@ -67,22 +70,29 @@ export default function HorariosTab() {
   const borrarHorario = useBorrarHorario();
   const asignar = useAsignarHorarios();
   const crearPlantilla = useCrearPlantilla();
+  const editarPlantilla = useEditarPlantilla();
   const borrarPlantilla = useBorrarPlantilla();
 
   const [altaOpen, setAltaOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
 
-  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [editando, setEditando] = useState<HorarioEmpleado | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
-  const [borrandoId, setBorrandoId] = useState<string | null>(null);
-  const [borrandoPlantillaId, setBorrandoPlantillaId] = useState<string | null>(null);
+  const [errorEdit, setErrorEdit] = useState<string | null>(null);
+  const [borrarTarget, setBorrarTarget] = useState<HorarioEmpleado | null>(null);
 
   const [plantillaOpen, setPlantillaOpen] = useState(false);
   const [plantillaForm, setPlantillaForm] = useState(emptyPlantillaForm);
   const [errorPlantilla, setErrorPlantilla] = useState<string | null>(null);
 
+  const [editandoPlantilla, setEditandoPlantilla] = useState<TurnoTemplate | null>(null);
+  const [editPlantillaForm, setEditPlantillaForm] = useState(emptyPlantillaForm);
+  const [errorEditPlantilla, setErrorEditPlantilla] = useState<string | null>(null);
+  const [borrarPlantillaTarget, setBorrarPlantillaTarget] = useState<TurnoTemplate | null>(null);
+
   const [asignOpen, setAsignOpen] = useState(false);
+  const [asignTodos, setAsignTodos] = useState(false);
   const [asignEmpleados, setAsignEmpleados] = useState<string[]>([]);
   const [asignDias, setAsignDias] = useState<number[]>([]);
   const [asignHoraInicio, setAsignHoraInicio] = useState("08:00");
@@ -91,6 +101,7 @@ export default function HorariosTab() {
   const [errorAsign, setErrorAsign] = useState<string | null>(null);
 
   function resetAsignForm() {
+    setAsignTodos(false);
     setAsignEmpleados([]);
     setAsignDias([]);
     setAsignHoraInicio("08:00");
@@ -113,13 +124,15 @@ export default function HorariosTab() {
       });
       setForm(emptyForm);
       setAltaOpen(false);
+      toast.success("Franja horaria agregada.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
   }
 
-  function startEdit(h: HorarioEmpleado) {
-    setEditandoId(h.id);
+  function abrirEdicion(h: HorarioEmpleado) {
+    setErrorEdit(null);
+    setEditando(h);
     setEditForm({
       dia_semana: h.dia_semana,
       sucursal_id: h.sucursal_id ?? "",
@@ -129,11 +142,13 @@ export default function HorariosTab() {
     });
   }
 
-  async function handleGuardarEdicion(id: string) {
-    setError(null);
+  async function handleGuardarEdicion(e: FormEvent) {
+    e.preventDefault();
+    if (!editando) return;
+    setErrorEdit(null);
     try {
       await editarHorario.mutateAsync({
-        id,
+        id: editando.id,
         patch: {
           sucursal_id: editForm.sucursal_id || null,
           dia_semana: editForm.dia_semana,
@@ -142,19 +157,21 @@ export default function HorariosTab() {
           tolerancia_min: editForm.tolerancia_min ? Number(editForm.tolerancia_min) : null,
         },
       });
-      setEditandoId(null);
+      setEditando(null);
+      toast.success("Franja horaria actualizada.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setErrorEdit(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
   }
 
-  async function handleBorrar(id: string) {
-    if (!confirm("¿Borrar esta franja horaria?")) return;
-    setBorrandoId(id);
+  async function handleBorrar() {
+    if (!borrarTarget) return;
     try {
-      await borrarHorario.mutateAsync(id);
-    } finally {
-      setBorrandoId(null);
+      await borrarHorario.mutateAsync(borrarTarget.id);
+      toast.success("Franja horaria borrada.");
+      setBorrarTarget(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo borrar la franja.");
     }
   }
 
@@ -171,18 +188,54 @@ export default function HorariosTab() {
       });
       setPlantillaForm(emptyPlantillaForm);
       setPlantillaOpen(false);
+      toast.success("Plantilla creada.");
     } catch (err) {
       setErrorPlantilla(err instanceof Error ? err.message : "No se pudo crear la plantilla.");
     }
   }
 
-  async function handleBorrarPlantilla(id: string) {
-    if (!confirm("¿Borrar esta plantilla?")) return;
-    setBorrandoPlantillaId(id);
+  function abrirEdicionPlantilla(t: TurnoTemplate) {
+    setErrorEditPlantilla(null);
+    setEditandoPlantilla(t);
+    setEditPlantillaForm({
+      nombre: t.nombre,
+      hora_inicio: t.hora_inicio,
+      hora_fin: t.hora_fin,
+      dias_semana: t.dias_semana,
+      tolerancia_min: t.tolerancia_min?.toString() ?? "",
+    });
+  }
+
+  async function handleGuardarPlantilla(e: FormEvent) {
+    e.preventDefault();
+    if (!editandoPlantilla) return;
+    setErrorEditPlantilla(null);
     try {
-      await borrarPlantilla.mutateAsync(id);
-    } finally {
-      setBorrandoPlantillaId(null);
+      await editarPlantilla.mutateAsync({
+        id: editandoPlantilla.id,
+        patch: {
+          nombre: editPlantillaForm.nombre,
+          hora_inicio: editPlantillaForm.hora_inicio,
+          hora_fin: editPlantillaForm.hora_fin,
+          dias_semana: editPlantillaForm.dias_semana,
+          tolerancia_min: editPlantillaForm.tolerancia_min ? Number(editPlantillaForm.tolerancia_min) : null,
+        },
+      });
+      setEditandoPlantilla(null);
+      toast.success("Plantilla actualizada.");
+    } catch (err) {
+      setErrorEditPlantilla(err instanceof Error ? err.message : "No se pudo editar la plantilla.");
+    }
+  }
+
+  async function handleBorrarPlantilla() {
+    if (!borrarPlantillaTarget) return;
+    try {
+      await borrarPlantilla.mutateAsync(borrarPlantillaTarget.id);
+      toast.success("Plantilla borrada.");
+      setBorrarPlantillaTarget(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo borrar la plantilla.");
     }
   }
 
@@ -198,18 +251,22 @@ export default function HorariosTab() {
   async function handleAsignar(e: FormEvent) {
     e.preventDefault();
     setErrorAsign(null);
-    if (asignEmpleados.length === 0 || asignDias.length === 0) {
+    const empleadoIds = asignTodos ? empleados.map((emp) => emp.id) : asignEmpleados;
+    if (empleadoIds.length === 0 || asignDias.length === 0) {
       setErrorAsign("Elegí al menos un empleado y un día.");
       return;
     }
     try {
       await asignar.mutateAsync({
-        empleado_ids: asignEmpleados,
+        empleado_ids: empleadoIds,
         dias_semana: asignDias,
         hora_inicio: asignHoraInicio,
         hora_fin: asignHoraFin,
         tolerancia_min: asignTolerancia ? Number(asignTolerancia) : null,
       });
+      toast.success(
+        empleadoIds.length === 1 ? "Turno asignado." : `Turno asignado a ${empleadoIds.length} empleados.`
+      );
       resetAsignForm();
       setAsignOpen(false);
     } catch (err) {
@@ -229,12 +286,12 @@ export default function HorariosTab() {
         />
         <div className="ml-auto flex gap-2">
           <Button variant="secondary" onClick={() => setAsignOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Asignar turno
+            <Users className="h-4 w-4" />
+            Asignar a varios empleados
           </Button>
           <Button variant="primary" onClick={() => setAltaOpen(true)} disabled={!empleadoId}>
             <Plus className="h-4 w-4" />
-            Nueva franja
+            Franja individual
           </Button>
         </div>
       </div>
@@ -254,61 +311,20 @@ export default function HorariosTab() {
         <TableBody>
           {isLoading && <TableSkeleton cols={5} />}
           {!isLoading &&
-            ordenarHorarios(horarios).map((h) =>
-              editandoId === h.id ? (
-                <TableRow key={h.id}>
-                  <TableCell>
-                    <Select
-                      label="Día"
-                      value={editForm.dia_semana.toString()}
-                      onChange={(e) => setEditForm({ ...editForm, dia_semana: Number(e.target.value) })}
-                      options={ORDEN_DIAS.map((d) => ({ value: d.toString(), label: DIAS[d] }))}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1.5">
-                      <Field label="Inicio" type="time" value={editForm.hora_inicio} onChange={(e) => setEditForm({ ...editForm, hora_inicio: e.target.value })} containerClassName="w-24" />
-                      <Field label="Fin" type="time" value={editForm.hora_fin} onChange={(e) => setEditForm({ ...editForm, hora_fin: e.target.value })} containerClassName="w-24" />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      label="Sucursal"
-                      value={editForm.sucursal_id}
-                      onChange={(e) => setEditForm({ ...editForm, sucursal_id: e.target.value })}
-                      options={[{ value: "", label: "Sin especificar" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Field label="Min." type="number" value={editForm.tolerancia_min} onChange={(e) => setEditForm({ ...editForm, tolerancia_min: e.target.value })} containerClassName="w-20" />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-1.5">
-                      <Button variant="ghost" onClick={() => handleGuardarEdicion(h.id)}>Guardar</Button>
-                      <Button variant="ghost" onClick={() => setEditandoId(null)}>Cancelar</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                <TableRow key={h.id}>
-                  <TableCell>{DIAS[h.dia_semana]}</TableCell>
-                  <TableCell>{h.hora_inicio}–{h.hora_fin}</TableCell>
-                  <TableCell>{h.sucursal_nombre ?? "—"}</TableCell>
-                  <TableCell>{h.tolerancia_min ?? "General"}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-1.5">
-                      <IconButton onClick={() => startEdit(h)} disabled={borrandoId === h.id} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar" />
-                      <IconButton
-                        onClick={() => handleBorrar(h.id)}
-                        disabled={borrandoId === h.id}
-                        icon={borrandoId === h.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                        label="Borrar"
-                      />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )
-            )}
+            ordenarHorarios(horarios).map((h) => (
+              <TableRow key={h.id}>
+                <TableCell>{DIAS[h.dia_semana]}</TableCell>
+                <TableCell>{h.hora_inicio}–{h.hora_fin}</TableCell>
+                <TableCell>{h.sucursal_nombre ?? "—"}</TableCell>
+                <TableCell>{h.tolerancia_min ?? "General"}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1.5">
+                    <IconButton onClick={() => abrirEdicion(h)} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar" />
+                    <IconButton onClick={() => setBorrarTarget(h)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           {!isLoading && horarios.length === 0 && (
             <TableRow>
               <TableCell colSpan={5} className="text-text/60">Sin franjas cargadas para este empleado.</TableCell>
@@ -319,7 +335,12 @@ export default function HorariosTab() {
 
       <Card className="mt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-[18px] font-extrabold text-text">Plantillas</h2>
+          <div>
+            <h2 className="text-[18px] font-extrabold text-text">Plantillas</h2>
+            <p className="mt-0.5 text-[13px] text-text-secondary">
+              Horarios guardados para no tipearlos de nuevo al asignar un turno a varios empleados.
+            </p>
+          </div>
           <Button variant="secondary" onClick={() => setPlantillaOpen(true)}>
             <Plus className="h-4 w-4" />
             Nueva plantilla
@@ -332,12 +353,10 @@ export default function HorariosTab() {
                 <strong className="font-semibold">{t.nombre}</strong> — {t.hora_inicio}–{t.hora_fin}
                 {t.dias_semana.length > 0 && ` (${t.dias_semana.map((d) => DIAS[d].slice(0, 3)).join(", ")})`}
               </span>
-              <IconButton
-                onClick={() => handleBorrarPlantilla(t.id)}
-                disabled={borrandoPlantillaId === t.id}
-                icon={borrandoPlantillaId === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                label="Borrar plantilla"
-              />
+              <div className="flex gap-1">
+                <IconButton onClick={() => abrirEdicionPlantilla(t)} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar plantilla" />
+                <IconButton onClick={() => setBorrarPlantillaTarget(t)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar plantilla" />
+              </div>
             </li>
           ))}
           {templates.length === 0 && <p className="text-[14px] text-text/60">Todavía no hay plantillas.</p>}
@@ -370,6 +389,52 @@ export default function HorariosTab() {
         </form>
       </Dialog>
 
+      <Dialog
+        open={editando != null}
+        onClose={() => { setEditando(null); setErrorEdit(null); }}
+        title="Editar franja horaria"
+      >
+        <form onSubmit={handleGuardarEdicion} className="flex flex-col gap-3">
+          <Select
+            label="Día"
+            value={editForm.dia_semana.toString()}
+            onChange={(e) => setEditForm({ ...editForm, dia_semana: Number(e.target.value) })}
+            options={ORDEN_DIAS.map((d) => ({ value: d.toString(), label: DIAS[d] }))}
+          />
+          <div className="flex gap-3">
+            <Field label="Hora inicio" type="time" value={editForm.hora_inicio} onChange={(e) => setEditForm({ ...editForm, hora_inicio: e.target.value })} containerClassName="w-full" />
+            <Field label="Hora fin" type="time" value={editForm.hora_fin} onChange={(e) => setEditForm({ ...editForm, hora_fin: e.target.value })} containerClassName="w-full" />
+          </div>
+          <Select
+            label="Sucursal (opcional)"
+            value={editForm.sucursal_id}
+            onChange={(e) => setEditForm({ ...editForm, sucursal_id: e.target.value })}
+            options={[{ value: "", label: "Sin especificar" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+          />
+          <Field label="Tolerancia en minutos (opcional)" type="number" value={editForm.tolerancia_min} onChange={(e) => setEditForm({ ...editForm, tolerancia_min: e.target.value })} containerClassName="w-full" />
+          {errorEdit && <p className="text-[15px] text-accent-700">{errorEdit}</p>}
+          <Button type="submit" variant="primary" block disabled={editarHorario.isPending}>
+            Guardar
+          </Button>
+        </form>
+      </Dialog>
+
+      <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar franja horaria">
+        <p className="text-[15px] text-text/70">
+          ¿Borrar la franja de <strong>{borrarTarget ? DIAS[borrarTarget.dia_semana] : ""}</strong>{" "}
+          {borrarTarget?.hora_inicio}–{borrarTarget?.hora_fin}?
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setBorrarTarget(null)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleBorrar} disabled={borrarHorario.isPending}>
+            {borrarHorario.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Borrar
+          </Button>
+        </div>
+      </Dialog>
+
       <Dialog open={plantillaOpen} onClose={() => { setPlantillaOpen(false); setErrorPlantilla(null); }} title="Nueva plantilla">
         <form onSubmit={handleCrearPlantilla} className="flex flex-col gap-3">
           <Field label="Nombre" required value={plantillaForm.nombre} onChange={(e) => setPlantillaForm({ ...plantillaForm, nombre: e.target.value })} containerClassName="w-full" />
@@ -395,20 +460,82 @@ export default function HorariosTab() {
       </Dialog>
 
       <Dialog
+        open={editandoPlantilla != null}
+        onClose={() => { setEditandoPlantilla(null); setErrorEditPlantilla(null); }}
+        title="Editar plantilla"
+      >
+        <form onSubmit={handleGuardarPlantilla} className="flex flex-col gap-3">
+          <Field label="Nombre" required value={editPlantillaForm.nombre} onChange={(e) => setEditPlantillaForm({ ...editPlantillaForm, nombre: e.target.value })} containerClassName="w-full" />
+          <div className="flex gap-3">
+            <Field label="Hora inicio" type="time" value={editPlantillaForm.hora_inicio} onChange={(e) => setEditPlantillaForm({ ...editPlantillaForm, hora_inicio: e.target.value })} containerClassName="w-full" />
+            <Field label="Hora fin" type="time" value={editPlantillaForm.hora_fin} onChange={(e) => setEditPlantillaForm({ ...editPlantillaForm, hora_fin: e.target.value })} containerClassName="w-full" />
+          </div>
+          <DiaToggle
+            dias={editPlantillaForm.dias_semana}
+            onToggle={(d) =>
+              setEditPlantillaForm((prev) => ({
+                ...prev,
+                dias_semana: prev.dias_semana.includes(d) ? prev.dias_semana.filter((x) => x !== d) : [...prev.dias_semana, d],
+              }))
+            }
+          />
+          <Field label="Tolerancia en minutos (opcional)" type="number" value={editPlantillaForm.tolerancia_min} onChange={(e) => setEditPlantillaForm({ ...editPlantillaForm, tolerancia_min: e.target.value })} containerClassName="w-full" />
+          {errorEditPlantilla && <p className="text-[15px] text-accent-700">{errorEditPlantilla}</p>}
+          <Button type="submit" variant="primary" block disabled={editarPlantilla.isPending}>
+            Guardar
+          </Button>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={borrarPlantillaTarget != null}
+        onClose={() => setBorrarPlantillaTarget(null)}
+        title="Borrar plantilla"
+      >
+        <p className="text-[15px] text-text/70">
+          ¿Borrar la plantilla <strong>{borrarPlantillaTarget?.nombre}</strong>? Los turnos ya asignados con
+          esta plantilla no se modifican.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setBorrarPlantillaTarget(null)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleBorrarPlantilla} disabled={borrarPlantilla.isPending}>
+            {borrarPlantilla.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Borrar
+          </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
         open={asignOpen}
         onClose={() => { setAsignOpen(false); resetAsignForm(); }}
-        title="Asignar turno"
+        title="Asignar turno a varios empleados"
         className="max-w-[500px]"
       >
-        <p className="-mt-1 text-[13.5px] text-text-secondary">Asigná el mismo horario a varios empleados y días de una vez.</p>
+        <p className="-mt-1 text-[13.5px] text-text-secondary">
+          Carga el mismo horario para todos los días y empleados que elijas de una sola vez — la forma
+          recomendada de armar franjas generales (por ejemplo, el horario de apertura para todo el equipo).
+        </p>
         <form onSubmit={handleAsignar} className="flex flex-col gap-3">
-          <MultiSelect
-            label="Empleados"
-            value={asignEmpleados}
-            onChange={setAsignEmpleados}
-            options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
-            placeholder="Elegí empleados"
-          />
+          <label className="flex items-center gap-2 text-[14px] text-text">
+            <input
+              type="checkbox"
+              checked={asignTodos}
+              onChange={(e) => setAsignTodos(e.target.checked)}
+              className="h-4 w-4 rounded border-border accent-accent"
+            />
+            Aplicar a todos los empleados ({empleados.length})
+          </label>
+          {!asignTodos && (
+            <MultiSelect
+              label="Empleados"
+              value={asignEmpleados}
+              onChange={setAsignEmpleados}
+              options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
+              placeholder="Elegí empleados"
+            />
+          )}
           <Select
             label="Plantilla (opcional)"
             value=""
