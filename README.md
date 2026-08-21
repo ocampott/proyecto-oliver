@@ -1,25 +1,18 @@
 # Oliver
 
 Plataforma multi-tenant (SaaS) para control de asistencia. Este repo tiene
-el **frontend** (`web/`, Vite + React). El **backend** (Node + Express +
+el **frontend** (`web/`, Vite + React). 
+El **backend** (Node + Express +
 TypeScript) vive en el repo hermano
 [`proyecto-oliver-api`](../proyecto-oliver-api), conectado a Supabase
 (Postgres con Row Level Security + Supabase Auth). Cada cliente tiene su
 propia organización con datos completamente aislados.
-
-El diseño completo está en
-`docs/superpowers/specs/2026-08-12-whatsapp-saas-platform-design.md` y los
-planes de implementación en `docs/superpowers/plans/`.
 
 ## Requisitos
 
 - Node.js >= 22.5.0
 - El repo `proyecto-oliver-api` (backend) levantado por separado — ver su
   propio README.
-- **No hace falta Docker ni Supabase local.** El proyecto corre contra un
-  proyecto Supabase remoto compartido — pedile a quien te invitó las
-  variables de entorno reales (`VITE_SUPABASE_URL`,
-  `VITE_SUPABASE_ANON_KEY`, `VITE_GOOGLE_MAPS_API_KEY`).
 
 ## Setup rápido
 
