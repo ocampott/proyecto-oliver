@@ -7,13 +7,33 @@ import {
   listRechazadas,
   aprobarRechazada,
   descartarRechazada,
+  type MotivoRechazo,
 } from "../lib/asistencia.js";
+import { generarExcel, enviarExcel } from "../lib/excel.js";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
 function hoyAR(): string {
   return new Date().toLocaleDateString("sv", { timeZone: AR_TZ });
 }
+
+function fechaHoraAR(iso: string): string {
+  return new Date(iso).toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: AR_TZ,
+  });
+}
+
+const MOTIVOS: Record<MotivoRechazo, string> = {
+  fuera_de_rango: "Fuera de rango",
+  sucursal_sin_gps: "Sucursal sin GPS configurado",
+  nombre_no_encontrado: "Nombre no encontrado en la nómina",
+  dispositivo_ya_vinculado: "Ya vinculado a otro dispositivo",
+};
 
 interface ListQuery {
   desde?: string;
@@ -83,6 +103,66 @@ export async function asistenciaRoutes(app: FastifyInstance): Promise<void> {
         });
       }
       return { ok: true };
+    }
+  );
+
+  interface ExportQuery {
+    desde?: string;
+    hasta?: string;
+  }
+
+  app.get<{ Querystring: ExportQuery }>(
+    "/api/asistencia/export",
+    { preHandler: [requireAuth, requireOrg] },
+    async (request, reply) => {
+      const desde = request.query.desde || hoyAR();
+      const hasta = request.query.hasta || hoyAR();
+
+      const [registros, rechazadas] = await Promise.all([
+        listAsistencia(request.org!.id, { desde, hasta }),
+        listRechazadas(request.org!.id),
+      ]);
+
+      const buffer = await generarExcel([
+        {
+          nombre: "Registros",
+          columnas: [
+            { header: "Fecha y hora", key: "fecha", width: 20 },
+            { header: "Empleado", key: "empleado", width: 26 },
+            { header: "Sucursal", key: "sucursal", width: 22 },
+            { header: "Tipo", key: "tipo", width: 12 },
+          ],
+          filas: registros.map((r) => ({
+            fecha: fechaHoraAR(r.created_at),
+            empleado: r.empleado_nombre ?? "—",
+            sucursal: r.sucursal_nombre ?? "—",
+            tipo: r.tipo === "entrada" ? "Entrada" : "Salida",
+          })),
+        },
+        {
+          nombre: "Rechazadas",
+          columnas: [
+            { header: "Fecha", key: "fecha", width: 20 },
+            { header: "Empleado", key: "empleado", width: 26 },
+            { header: "Sucursal", key: "sucursal", width: 22 },
+            { header: "Tipo", key: "tipo", width: 12 },
+            { header: "Motivo", key: "motivo", width: 32 },
+            { header: "Distancia (m)", key: "distancia", width: 14 },
+            { header: "Resuelto", key: "resuelto", width: 12 },
+          ],
+          filas: rechazadas.map((r) => ({
+            fecha: fechaHoraAR(r.created_at),
+            empleado: r.empleado_nombre ?? "—",
+            sucursal: r.sucursal_nombre ?? "—",
+            tipo: r.tipo === "entrada" ? "Entrada" : r.tipo === "salida" ? "Salida" : "—",
+            motivo: MOTIVOS[r.motivo] ?? r.motivo,
+            distancia: r.distancia_metros ?? "—",
+            resuelto: r.resuelto ? "Sí" : "No",
+          })),
+        },
+      ]);
+
+      enviarExcel(reply, buffer, `asistencia_${desde}_${hasta}.xlsx`);
     }
   );
 }
