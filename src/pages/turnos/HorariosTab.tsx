@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
@@ -75,6 +75,8 @@ export default function HorariosTab() {
 
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState(emptyForm);
+  const [borrandoId, setBorrandoId] = useState<string | null>(null);
+  const [borrandoPlantillaId, setBorrandoPlantillaId] = useState<string | null>(null);
 
   const [plantillaOpen, setPlantillaOpen] = useState(false);
   const [plantillaForm, setPlantillaForm] = useState(emptyPlantillaForm);
@@ -148,7 +150,12 @@ export default function HorariosTab() {
 
   async function handleBorrar(id: string) {
     if (!confirm("¿Borrar esta franja horaria?")) return;
-    await borrarHorario.mutateAsync(id);
+    setBorrandoId(id);
+    try {
+      await borrarHorario.mutateAsync(id);
+    } finally {
+      setBorrandoId(null);
+    }
   }
 
   async function handleCrearPlantilla(e: FormEvent) {
@@ -171,7 +178,12 @@ export default function HorariosTab() {
 
   async function handleBorrarPlantilla(id: string) {
     if (!confirm("¿Borrar esta plantilla?")) return;
-    await borrarPlantilla.mutateAsync(id);
+    setBorrandoPlantillaId(id);
+    try {
+      await borrarPlantilla.mutateAsync(id);
+    } finally {
+      setBorrandoPlantillaId(null);
+    }
   }
 
   function elegirTemplate(templateId: string) {
@@ -285,8 +297,13 @@ export default function HorariosTab() {
                   <TableCell>{h.tolerancia_min ?? "General"}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1.5">
-                      <IconButton onClick={() => startEdit(h)} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar" />
-                      <IconButton onClick={() => handleBorrar(h.id)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
+                      <IconButton onClick={() => startEdit(h)} disabled={borrandoId === h.id} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar" />
+                      <IconButton
+                        onClick={() => handleBorrar(h.id)}
+                        disabled={borrandoId === h.id}
+                        icon={borrandoId === h.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                        label="Borrar"
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -315,7 +332,12 @@ export default function HorariosTab() {
                 <strong className="font-semibold">{t.nombre}</strong> — {t.hora_inicio}–{t.hora_fin}
                 {t.dias_semana.length > 0 && ` (${t.dias_semana.map((d) => DIAS[d].slice(0, 3)).join(", ")})`}
               </span>
-              <IconButton onClick={() => handleBorrarPlantilla(t.id)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar plantilla" />
+              <IconButton
+                onClick={() => handleBorrarPlantilla(t.id)}
+                disabled={borrandoPlantillaId === t.id}
+                icon={borrandoPlantillaId === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                label="Borrar plantilla"
+              />
             </li>
           ))}
           {templates.length === 0 && <p className="text-[14px] text-text/60">Todavía no hay plantillas.</p>}

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
@@ -46,6 +46,7 @@ export default function EmpleadosPage() {
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [codigoDialog, setCodigoDialog] = useState<{ nombre: string; code: string } | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [accionandoId, setAccionandoId] = useState<string | null>(null);
 
   const loading =
     crear.isPending || editar.isPending || desactivar.isPending || desvincular.isPending || generarCodigo.isPending;
@@ -82,10 +83,13 @@ export default function EmpleadosPage() {
 
   async function handleToggleActivo(emp: Empleado) {
     setError(null);
+    setAccionandoId(emp.id);
     try {
       await editar.mutateAsync({ id: emp.id, patch: { activo: !emp.activo } });
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
+    } finally {
+      setAccionandoId(null);
     }
   }
 
@@ -94,10 +98,13 @@ export default function EmpleadosPage() {
       return;
     }
     setError(null);
+    setAccionandoId(emp.id);
     try {
       await desvincular.mutateAsync(emp.id);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
+    } finally {
+      setAccionandoId(null);
     }
   }
 
@@ -229,10 +236,14 @@ export default function EmpleadosPage() {
                           onClick={() => handleToggleActivo(emp)}
                           disabled={loading}
                           icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 2v6" />
-                              <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
-                            </svg>
+                            accionandoId === emp.id ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 2v6" />
+                                <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
+                              </svg>
+                            )
                           }
                           label={emp.activo ? "Desactivar" : "Activar"}
                         />
@@ -241,10 +252,14 @@ export default function EmpleadosPage() {
                             onClick={() => handleDesvincular(emp)}
                             disabled={loading}
                             icon={
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-                                <line x1="12" y1="2" x2="12" y2="12" />
-                              </svg>
+                              accionandoId === emp.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                                  <line x1="12" y1="2" x2="12" y2="12" />
+                                </svg>
+                              )
                             }
                             label="Desvincular"
                           />

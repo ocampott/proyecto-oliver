@@ -38,16 +38,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export type PlanSlug = "gratis" | "basico" | "pro";
 
-export type Modulo =
-  | "asistencia"
-  | "horas"
-  | "turnos"
-  | "rrhh"
-  | "reportes"
-  | "liquidacion"
-  | "alertas"
-  | "whatsapp"
-  | "ia";
+/**
+ * Módulos que existen HOY en el producto (tienen rutas/UI reales). Tiene
+ * que estar en sincro con el mismo tipo en proyecto-oliver-api/src/lib/planes.ts —
+ * no agregar acá un módulo aspiracional/futuro todavía sin implementar.
+ */
+export type Modulo = "asistencia" | "horas" | "turnos" | "rrhh" | "reportes";
 
 export interface PlanDef {
   slug: PlanSlug;

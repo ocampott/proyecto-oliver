@@ -47,20 +47,29 @@ export function AccountMenu() {
         {org ? iniciales(org.name) : user?.email?.slice(0, 2).toUpperCase() ?? "?"}
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+12px)] w-[232px] rounded-[14px] border border-border-soft bg-white p-2 shadow-[0_16px_40px_rgba(24,24,27,.18),0_3px_10px_rgba(24,24,27,.06)]">
-          <div className="mb-1.5 border-b border-border-soft px-3 pb-3 pt-2.5">
+        <div className="absolute right-0 top-[calc(100%+8px)] w-[212px] rounded-[14px] border border-border-soft bg-white p-1.5 shadow-[0_16px_40px_rgba(24,24,27,.18),0_3px_10px_rgba(24,24,27,.06)]">
+          <div className="mb-1 border-b border-border-soft px-2.5 pb-2 pt-1">
             {org && <p className="m-0 text-[13.5px] font-bold text-text">{org.name}</p>}
-            <p className="m-0.5 text-[12px] text-text-tertiary">{user?.email}</p>
+            <p className="m-0 text-[12px] text-text-tertiary">{user?.email}</p>
           </div>
           <button
+            onClick={() => {
+              setOpen(false);
+              navigate("/plan");
+            }}
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text hover:bg-black/[.03]"
+          >
+            Mi plan
+          </button>
+          <button
             disabled
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium text-text disabled:cursor-not-allowed disabled:opacity-45"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text disabled:cursor-not-allowed disabled:opacity-45"
           >
             Configuración
           </button>
           <button
             onClick={handleCerrarSesion}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] font-medium text-alert hover:bg-black/[.03]"
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] font-medium text-alert hover:bg-black/[.03]"
           >
             Cerrar sesión
           </button>

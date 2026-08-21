@@ -5,29 +5,18 @@ import { Button } from "../../components/ui/button";
 import { useOrgActual } from "../../lib/hooks";
 import { getPlanes, listEmpleados, listSucursales, type PlanDef } from "../../lib/api";
 
+// Solo módulos que existen hoy en el producto. Cuando se agregue uno
+// nuevo, hay que preguntar a qué plan(es) pertenece antes de sumarlo acá
+// (ver Modulo en lib/api.ts).
 const MODULOS_LABEL: Record<string, string> = {
   asistencia: "Asistencia QR + geocerca",
   horas: "Horas trabajadas",
   turnos: "Turnos y cumplimiento",
   rrhh: "RRHH (ausencias)",
   reportes: "Reportes / exportación",
-  liquidacion: "Liquidación de sueldos",
-  alertas: "Alertas en tiempo real",
-  whatsapp: "Canal WhatsApp",
-  ia: "Asistente IA",
 };
 
-const MODULOS_ORDEN = [
-  "asistencia",
-  "horas",
-  "turnos",
-  "rrhh",
-  "reportes",
-  "liquidacion",
-  "alertas",
-  "whatsapp",
-  "ia",
-];
+const MODULOS_ORDEN = ["asistencia", "horas", "turnos", "rrhh", "reportes"];
 
 function fechaLocal(iso: string): string {
   return new Date(iso).toLocaleDateString("es-AR");

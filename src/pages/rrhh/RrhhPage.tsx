@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Plus, Pencil, Trash2, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, Download, X, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
@@ -51,19 +51,32 @@ export default function RrhhPage() {
   const opcionesMotivo = [...categorias.map((c) => ({ value: c, label: c })), { value: OTRO, label: "Otro" }];
 
   const guardarCategorias = useGuardarCategorias();
-  const [categoriasInput, setCategoriasInput] = useState("");
-  const [categoriasGuardadoOk, setCategoriasGuardadoOk] = useState(false);
-  const categoriasActuales = categoriasInput || categorias.join(", ");
+  const [categoriaModalOpen, setCategoriaModalOpen] = useState(false);
+  const [nuevaCategoria, setNuevaCategoria] = useState("");
+  const [errorCategoria, setErrorCategoria] = useState<string | null>(null);
+  const [quitandoCategoria, setQuitandoCategoria] = useState<string | null>(null);
 
-  async function handleGuardarCategorias() {
-    setCategoriasGuardadoOk(false);
-    const nuevas = categoriasActuales
-      .split(",")
-      .map((c) => c.trim())
-      .filter(Boolean);
-    await guardarCategorias.mutateAsync(nuevas);
-    setCategoriasInput("");
-    setCategoriasGuardadoOk(true);
+  async function handleAgregarCategoria(e: FormEvent) {
+    e.preventDefault();
+    const nombre = nuevaCategoria.trim();
+    if (!nombre) return;
+    if (categorias.some((c) => c.toLowerCase() === nombre.toLowerCase())) {
+      setErrorCategoria("Esa categoría ya existe.");
+      return;
+    }
+    setErrorCategoria(null);
+    await guardarCategorias.mutateAsync([...categorias, nombre]);
+    setNuevaCategoria("");
+    setCategoriaModalOpen(false);
+  }
+
+  async function handleQuitarCategoria(nombre: string) {
+    setQuitandoCategoria(nombre);
+    try {
+      await guardarCategorias.mutateAsync(categorias.filter((c) => c !== nombre));
+    } finally {
+      setQuitandoCategoria(null);
+    }
   }
 
   const [desde, setDesde] = useState(inicioDeMesAR());
@@ -109,6 +122,7 @@ export default function RrhhPage() {
 
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<FormState>(emptyForm);
+  const [borrandoId, setBorrandoId] = useState<string | null>(null);
 
   async function handleAlta(e: FormEvent) {
     e.preventDefault();
@@ -169,7 +183,12 @@ export default function RrhhPage() {
 
   async function handleBorrar(id: string) {
     if (!confirm("¿Borrar esta ausencia?")) return;
-    await borrar.mutateAsync(id);
+    setBorrandoId(id);
+    try {
+      await borrar.mutateAsync(id);
+    } finally {
+      setBorrandoId(null);
+    }
   }
 
   return (
@@ -210,24 +229,42 @@ export default function RrhhPage() {
       </div>
 
       <Card className="mt-4">
-        <h2 className="text-[16px] font-extrabold text-text">Categorías de motivo</h2>
-        <p className="mt-1 text-[13.5px] text-text/60">
-          Lista de motivos disponibles al cargar una ausencia, separados por coma.
-        </p>
-        <div className="mt-3 flex items-end gap-3">
-          <Field
-            label="Categorías"
-            value={categoriasActuales}
-            onChange={(e) => {
-              setCategoriasInput(e.target.value);
-              setCategoriasGuardadoOk(false);
-            }}
-            containerClassName="w-full max-w-[520px]"
-          />
-          <Button variant="secondary" onClick={handleGuardarCategorias} disabled={guardarCategorias.isPending}>
-            Guardar
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-[16px] font-extrabold text-text">Categorías de motivo</h2>
+            <p className="mt-1 text-[13.5px] text-text/60">
+              Motivos disponibles al cargar una ausencia.
+            </p>
+          </div>
+          <Button variant="secondary" onClick={() => setCategoriaModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nueva categoría
           </Button>
-          {categoriasGuardadoOk && <span className="text-[13.5px] text-text/60">Guardado.</span>}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {categorias.length === 0 && (
+            <p className="text-[13.5px] text-text/50">Todavía no cargaste ninguna categoría.</p>
+          )}
+          {categorias.map((c) => {
+            const quitando = quitandoCategoria === c;
+            return (
+              <span
+                key={c}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white py-1 pl-3 pr-1.5 text-[13px] text-text"
+              >
+                {c}
+                <button
+                  type="button"
+                  onClick={() => handleQuitarCategoria(c)}
+                  disabled={quitando}
+                  aria-label={`Quitar categoría ${c}`}
+                  className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-text/40 hover:bg-black/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                >
+                  {quitando ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                </button>
+              </span>
+            );
+          })}
         </div>
       </Card>
 
@@ -329,8 +366,13 @@ export default function RrhhPage() {
                   <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1.5">
-                      <IconButton onClick={() => startEdit(a)} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar" />
-                      <IconButton onClick={() => handleBorrar(a.id)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
+                      <IconButton onClick={() => startEdit(a)} disabled={borrandoId === a.id} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar" />
+                      <IconButton
+                        onClick={() => handleBorrar(a.id)}
+                        disabled={borrandoId === a.id}
+                        icon={borrandoId === a.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                        label="Borrar"
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -386,6 +428,31 @@ export default function RrhhPage() {
           </label>
           {error && <p className="text-[15px] text-accent-700">{error}</p>}
           <Button type="submit" variant="primary" block disabled={crear.isPending}>
+            Agregar
+          </Button>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={categoriaModalOpen}
+        onClose={() => {
+          setCategoriaModalOpen(false);
+          setNuevaCategoria("");
+          setErrorCategoria(null);
+        }}
+        title="Nueva categoría"
+      >
+        <form onSubmit={handleAgregarCategoria} className="flex flex-col gap-3">
+          <Field
+            label="Nombre"
+            value={nuevaCategoria}
+            onChange={(e) => setNuevaCategoria(e.target.value)}
+            containerClassName="w-full"
+            autoFocus
+            required
+          />
+          {errorCategoria && <p className="text-[15px] text-accent-700">{errorCategoria}</p>}
+          <Button type="submit" variant="primary" block disabled={guardarCategorias.isPending}>
             Agregar
           </Button>
         </form>

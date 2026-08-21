@@ -30,10 +30,6 @@ const PLAN_REQUERIDO: Record<Modulo, PlanSlug> = {
   turnos: "basico",
   rrhh: "basico",
   reportes: "basico",
-  liquidacion: "pro",
-  alertas: "pro",
-  whatsapp: "pro",
-  ia: "pro",
 };
 
 const PLAN_NOMBRE: Record<PlanSlug, string> = {

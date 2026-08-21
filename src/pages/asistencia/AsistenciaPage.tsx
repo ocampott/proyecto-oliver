@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogIn, LogOut, Download } from "lucide-react";
+import { LogIn, LogOut, Download, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Badge } from "../../components/ui/badge";
@@ -42,6 +42,8 @@ export default function AsistenciaPage() {
   const [error, setError] = useState<string | null>(null);
   const [descargando, setDescargando] = useState(false);
   const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
+  const [borrandoId, setBorrandoId] = useState<string | null>(null);
+  const [resolviendoId, setResolviendoId] = useState<string | null>(null);
 
   async function handleDescargarExcel() {
     setErrorDescarga(null);
@@ -58,19 +60,25 @@ export default function AsistenciaPage() {
   async function handleBorrar(id: string) {
     if (!confirm("¿Borrar este registro?")) return;
     setError(null);
+    setBorrandoId(id);
     try {
       await borrar.mutateAsync(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo borrar el registro.");
+    } finally {
+      setBorrandoId(null);
     }
   }
 
   async function handleResolver(id: string, accion: "aprobar" | "descartar") {
     setError(null);
+    setResolviendoId(id);
     try {
       await resolver.mutateAsync({ id, accion });
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo resolver el intento.");
+    } finally {
+      setResolviendoId(null);
     }
   }
 
@@ -109,10 +117,21 @@ export default function AsistenciaPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
-                      <Button variant="secondary" size="default" onClick={() => handleResolver(r.id, "aprobar")}>
+                      <Button
+                        variant="secondary"
+                        size="default"
+                        onClick={() => handleResolver(r.id, "aprobar")}
+                        disabled={resolviendoId === r.id}
+                      >
+                        {resolviendoId === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                         Aprobar
                       </Button>
-                      <Button variant="secondary" size="default" onClick={() => handleResolver(r.id, "descartar")}>
+                      <Button
+                        variant="secondary"
+                        size="default"
+                        onClick={() => handleResolver(r.id, "descartar")}
+                        disabled={resolviendoId === r.id}
+                      >
                         Descartar
                       </Button>
                     </div>
@@ -184,7 +203,8 @@ export default function AsistenciaPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end">
-                    <Button variant="secondary" size="default" onClick={() => handleBorrar(r.id)}>
+                    <Button variant="secondary" size="default" onClick={() => handleBorrar(r.id)} disabled={borrandoId === r.id}>
+                      {borrandoId === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                       Borrar
                     </Button>
                   </div>
