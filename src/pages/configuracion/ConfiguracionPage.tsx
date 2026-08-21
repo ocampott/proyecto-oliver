@@ -1,0 +1,241 @@
+import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
+import { Plus, Trash2, Loader2, ChevronRight, Briefcase, CalendarDays } from "lucide-react";
+import { Button } from "../../components/ui/button";
+import { Field } from "../../components/ui/field";
+import { Card } from "../../components/ui/card";
+import { Dialog } from "../../components/ui/dialog";
+import { Badge } from "../../components/ui/badge";
+import { IconButton } from "../../components/ui/icon-button";
+import { useToast } from "../../components/ui/toast";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { useAuth } from "../../lib/auth";
+import { useOrgActual } from "../../lib/hooks";
+import type { Miembro, OrgRole } from "../../lib/api";
+import { useActualizarOrg, useMiembros, useInvitarMiembro, useEliminarMiembro } from "./hooks";
+
+const ROL_LABEL: Record<OrgRole, string> = {
+  owner: "Dueño",
+  admin: "Admin",
+  agent: "Agente",
+};
+
+function fechaLocal(iso: string): string {
+  return new Date(iso).toLocaleDateString("es-AR");
+}
+
+export default function ConfiguracionPage() {
+  const { user } = useAuth();
+  const { data: org } = useOrgActual();
+  const { data: miembros = [], isLoading: miembrosLoading } = useMiembros();
+
+  const actualizarOrg = useActualizarOrg();
+  const invitar = useInvitarMiembro();
+  const eliminar = useEliminarMiembro();
+  const toast = useToast();
+
+  const [editOrgOpen, setEditOrgOpen] = useState(false);
+  const [nombreOrg, setNombreOrg] = useState("");
+  const [errorOrg, setErrorOrg] = useState<string | null>(null);
+
+  const [invitarOpen, setInvitarOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [errorInvitar, setErrorInvitar] = useState<string | null>(null);
+
+  const [quitarTarget, setQuitarTarget] = useState<Miembro | null>(null);
+
+  function abrirEditarOrg() {
+    setErrorOrg(null);
+    setNombreOrg(org?.name ?? "");
+    setEditOrgOpen(true);
+  }
+
+  async function handleGuardarOrg(e: FormEvent) {
+    e.preventDefault();
+    setErrorOrg(null);
+    try {
+      await actualizarOrg.mutateAsync(nombreOrg);
+      setEditOrgOpen(false);
+      toast.success("Organización actualizada.");
+    } catch (err) {
+      setErrorOrg(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+    }
+  }
+
+  async function handleInvitar(e: FormEvent) {
+    e.preventDefault();
+    setErrorInvitar(null);
+    try {
+      await invitar.mutateAsync(email);
+      setEmail("");
+      setInvitarOpen(false);
+      toast.success("Invitación enviada.");
+    } catch (err) {
+      setErrorInvitar(err instanceof Error ? err.message : "No se pudo invitar al usuario.");
+    }
+  }
+
+  async function handleEliminar() {
+    if (!quitarTarget) return;
+    try {
+      await eliminar.mutateAsync(quitarTarget.userId);
+      toast.success(`${quitarTarget.email} ya no forma parte de la organización.`);
+      setQuitarTarget(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo quitar al usuario.");
+    }
+  }
+
+  return (
+    <>
+      <h1 className="text-[32px] font-extrabold text-text">Configuración</h1>
+
+      <Card className="mt-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[16px] font-extrabold text-text">Organización</h2>
+            <p className="mt-1 text-[15px] text-text">{org?.name ?? "—"}</p>
+          </div>
+          <Button variant="secondary" onClick={abrirEditarOrg}>
+            Editar
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="mt-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-[16px] font-extrabold text-text">Equipo</h2>
+            <p className="mt-1 text-[13.5px] text-text/60">
+              Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
+              tienen el mismo acceso, sin importar el rol.
+            </p>
+          </div>
+          <Button variant="secondary" onClick={() => { setErrorInvitar(null); setInvitarOpen(true); }}>
+            <Plus className="h-4 w-4" />
+            Invitar
+          </Button>
+        </div>
+
+        <Table containerClassName="mt-3">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Email</TableHead>
+              <TableHead>Rol</TableHead>
+              <TableHead>Desde</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {miembrosLoading && <TableSkeleton cols={4} />}
+            {!miembrosLoading &&
+              miembros.map((m) => (
+                <TableRow key={m.userId}>
+                  <TableCell>
+                    {m.email}
+                    {m.userId === user?.id && <span className="text-text-tertiary"> (vos)</span>}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={m.role === "owner" ? "accent" : "neutral"}>{ROL_LABEL[m.role]}</Badge>
+                  </TableCell>
+                  <TableCell>{fechaLocal(m.createdAt)}</TableCell>
+                  <TableCell className="text-right">
+                    {m.role !== "owner" && (
+                      <IconButton
+                        onClick={() => setQuitarTarget(m)}
+                        icon={<Trash2 className="h-3.5 w-3.5" />}
+                        label="Quitar de la organización"
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            {!miembrosLoading && miembros.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-text/60">
+                  Todavía no hay miembros cargados.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Card className="mt-4">
+        <h2 className="text-[16px] font-extrabold text-text">Otras configuraciones</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <Link
+            to="/rrhh"
+            className="flex items-center gap-3 rounded-[12px] border border-border-soft px-4 py-3 transition-colors hover:bg-black/[.03]"
+          >
+            <Briefcase className="h-[18px] w-[18px] text-accent-700" />
+            <span className="flex-1">
+              <span className="block text-[14px] font-semibold text-text">Categorías de motivo</span>
+              <span className="block text-[12.5px] text-text-secondary">Se administran desde RRHH</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-text/40" />
+          </Link>
+          <Link
+            to="/turnos"
+            className="flex items-center gap-3 rounded-[12px] border border-border-soft px-4 py-3 transition-colors hover:bg-black/[.03]"
+          >
+            <CalendarDays className="h-[18px] w-[18px] text-accent-700" />
+            <span className="flex-1">
+              <span className="block text-[14px] font-semibold text-text">Tolerancia de horarios</span>
+              <span className="block text-[12.5px] text-text-secondary">Se administra desde Turnos</span>
+            </span>
+            <ChevronRight className="h-4 w-4 text-text/40" />
+          </Link>
+        </div>
+      </Card>
+
+      <Dialog open={editOrgOpen} onClose={() => setEditOrgOpen(false)} title="Editar organización">
+        <form onSubmit={handleGuardarOrg} className="flex flex-col gap-3">
+          <Field label="Nombre" required value={nombreOrg} onChange={(e) => setNombreOrg(e.target.value)} containerClassName="w-full" autoFocus />
+          {errorOrg && <p className="text-[15px] text-accent-700">{errorOrg}</p>}
+          <Button type="submit" variant="primary" block disabled={actualizarOrg.isPending}>
+            Guardar
+          </Button>
+        </form>
+      </Dialog>
+
+      <Dialog open={invitarOpen} onClose={() => setInvitarOpen(false)} title="Invitar a la organización">
+        <form onSubmit={handleInvitar} className="flex flex-col gap-3">
+          <p className="-mt-1 text-[13.5px] text-text-secondary">
+            Le mandamos un mail para que arme su contraseña y entre directo a esta organización.
+          </p>
+          <Field
+            label="Email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            containerClassName="w-full"
+            autoFocus
+          />
+          {errorInvitar && <p className="text-[15px] text-accent-700">{errorInvitar}</p>}
+          <Button type="submit" variant="primary" block disabled={invitar.isPending}>
+            {invitar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Invitar
+          </Button>
+        </form>
+      </Dialog>
+
+      <Dialog open={quitarTarget != null} onClose={() => setQuitarTarget(null)} title="Quitar de la organización">
+        <p className="text-[15px] text-text/70">
+          ¿Quitar a <strong>{quitarTarget?.email}</strong> de esta organización? Pierde el acceso al panel
+          de inmediato.
+        </p>
+        <div className="flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setQuitarTarget(null)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleEliminar} disabled={eliminar.isPending}>
+            {eliminar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Quitar
+          </Button>
+        </div>
+      </Dialog>
+    </>
+  );
+}

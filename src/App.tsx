@@ -6,6 +6,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PanelLayout } from "./components/PanelLayout";
 import MarcarPage from "./pages/MarcarPage";
 import LoginPage from "./pages/LoginPage";
+import SetPasswordPage from "./pages/SetPasswordPage";
 import HomePage from "./pages/HomePage";
 import SucursalesPage from "./pages/sucursales/SucursalesPage";
 import EmpleadosPage from "./pages/empleados/EmpleadosPage";
@@ -15,6 +16,7 @@ import TurnosPage from "./pages/turnos/TurnosPage";
 import RrhhPage from "./pages/rrhh/RrhhPage";
 import AdminPage from "./pages/admin/AdminPage";
 import PlanPage from "./pages/plan/PlanPage";
+import ConfiguracionPage from "./pages/configuracion/ConfiguracionPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +36,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/bienvenida" element={<SetPasswordPage />} />
             <Route
               path="/"
               element={
@@ -118,6 +121,16 @@ export default function App() {
                 <ProtectedRoute>
                   <PanelLayout>
                     <PlanPage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/configuracion"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <ConfiguracionPage />
                   </PanelLayout>
                 </ProtectedRoute>
               }

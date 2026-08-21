@@ -66,8 +66,11 @@ export function AccountMenu() {
             Mi plan
           </button>
           <button
-            disabled
-            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text disabled:cursor-not-allowed disabled:opacity-45"
+            onClick={() => {
+              setOpen(false);
+              navigate("/configuracion");
+            }}
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text hover:bg-black/[.03]"
           >
             Configuración
           </button>

@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listOrganizationsAdmin,
   createOrganizationAdmin,
+  updateOrganizationAdmin,
+  getOrgResumenAdmin,
   getSuscripcionesAdmin,
   createSuscripcionAdmin,
   cancelSuscripcionAdmin,
@@ -21,6 +23,18 @@ export function useCrearOrganizacionAdmin() {
     mutationFn: (input: CrearOrganizacionInput) => createOrganizationAdmin(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ORGS_KEY }),
   });
+}
+
+export function useEditarOrganizacionAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => updateOrganizationAdmin(id, name),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ORGS_KEY }),
+  });
+}
+
+export function useOrgResumenAdmin(orgId: string) {
+  return useQuery({ queryKey: ["admin-org-resumen", orgId], queryFn: () => getOrgResumenAdmin(orgId) });
 }
 
 function suscripcionesKey(orgId: string | null) {

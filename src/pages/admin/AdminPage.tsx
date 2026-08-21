@@ -1,16 +1,19 @@
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Dialog } from "../../components/ui/dialog";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
+import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { ApiError, getPlanes, type OrganizationAdmin, type SuscripcionAdmin, type PlanesResponse } from "../../lib/api";
 import {
   useOrganizacionesAdmin,
   useCrearOrganizacionAdmin,
+  useEditarOrganizacionAdmin,
+  useOrgResumenAdmin,
   useSuscripcionesAdmin,
   useCrearSuscripcionAdmin,
   useCancelarSuscripcionAdmin,
@@ -27,6 +30,7 @@ function precioFormateado(n: number): string {
 export default function AdminPage() {
   const { data: organizaciones = [], isLoading, isError, error } = useOrganizacionesAdmin();
   const crear = useCrearOrganizacionAdmin();
+  const editarOrg = useEditarOrganizacionAdmin();
   const { data: catalogo } = useQuery({ queryKey: ["planes"], queryFn: getPlanes });
   const toast = useToast();
 
@@ -36,6 +40,9 @@ export default function AdminPage() {
   const [formError, setFormError] = useState<string | null>(null);
 
   const [gestionOrg, setGestionOrg] = useState<OrganizationAdmin | null>(null);
+  const [editandoOrg, setEditandoOrg] = useState<OrganizationAdmin | null>(null);
+  const [editName, setEditName] = useState("");
+  const [errorEditOrg, setErrorEditOrg] = useState<string | null>(null);
 
   async function handleAlta(e: FormEvent) {
     e.preventDefault();
@@ -48,6 +55,25 @@ export default function AdminPage() {
       toast.success("Organización creada.");
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+    }
+  }
+
+  function abrirEditarOrg(org: OrganizationAdmin) {
+    setErrorEditOrg(null);
+    setEditandoOrg(org);
+    setEditName(org.name);
+  }
+
+  async function handleGuardarOrg(e: FormEvent) {
+    e.preventDefault();
+    if (!editandoOrg) return;
+    setErrorEditOrg(null);
+    try {
+      await editarOrg.mutateAsync({ id: editandoOrg.id, name: editName });
+      setEditandoOrg(null);
+      toast.success("Organización actualizada.");
+    } catch (err) {
+      setErrorEditOrg(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
   }
 
@@ -88,12 +114,13 @@ export default function AdminPage() {
             <TableHead>Slug</TableHead>
             <TableHead>Plan</TableHead>
             <TableHead>Vence</TableHead>
+            <TableHead>Uso</TableHead>
             <TableHead>Alta</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && <TableSkeleton cols={6} />}
+          {isLoading && <TableSkeleton cols={7} />}
           {!isLoading &&
             organizaciones.map((org) => (
               <TableRow key={org.id}>
@@ -103,17 +130,23 @@ export default function AdminPage() {
                 <TableCell>
                   <Vencimiento orgId={org.id} />
                 </TableCell>
+                <TableCell>
+                  <Uso orgId={org.id} />
+                </TableCell>
                 <TableCell>{fechaLocal(org.created_at)}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="secondary" className="h-8 px-2.5 text-[13px]" onClick={() => setGestionOrg(org)}>
-                    Gestionar suscripción
-                  </Button>
+                  <div className="flex justify-end gap-1.5">
+                    <IconButton onClick={() => abrirEditarOrg(org)} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar organización" />
+                    <Button variant="secondary" className="h-8 px-2.5 text-[13px]" onClick={() => setGestionOrg(org)}>
+                      Gestionar suscripción
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           {!isLoading && organizaciones.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-text/60">
+              <TableCell colSpan={7} className="text-text/60">
                 Todavía no hay organizaciones.
               </TableCell>
             </TableRow>
@@ -151,6 +184,28 @@ export default function AdminPage() {
         </form>
       </Dialog>
 
+      <Dialog
+        open={editandoOrg != null}
+        onClose={() => { setEditandoOrg(null); setErrorEditOrg(null); }}
+        title={`Editar ${editandoOrg?.name ?? "organización"}`}
+      >
+        <form onSubmit={handleGuardarOrg} className="flex flex-col gap-3">
+          <Field
+            label="Nombre"
+            required
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            containerClassName="w-full"
+            autoFocus
+          />
+          {errorEditOrg && <p className="text-[15px] text-accent-700">{errorEditOrg}</p>}
+          <Button type="submit" variant="primary" block disabled={editarOrg.isPending}>
+            {editarOrg.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Guardar
+          </Button>
+        </form>
+      </Dialog>
+
       {gestionOrg && (
         <GestionSuscripcionDialog
           org={gestionOrg}
@@ -167,6 +222,16 @@ function Vencimiento({ orgId }: { orgId: string }) {
   const activa = data?.suscripciones.find((s) => s.estado === "activa");
   if (!activa) return <span className="text-text-secondary">—</span>;
   return <span>{fechaLocal(activa.vence_at)}</span>;
+}
+
+function Uso({ orgId }: { orgId: string }) {
+  const { data, isLoading } = useOrgResumenAdmin(orgId);
+  if (isLoading || !data) return <span className="text-text-secondary">—</span>;
+  return (
+    <span className="text-[13px] text-text-secondary">
+      {data.empleadosActivos} emp. · {data.sucursalesActivas} suc. · {data.miembros} miembro{data.miembros === 1 ? "" : "s"}
+    </span>
+  );
 }
 
 interface GestionSuscripcionDialogProps {

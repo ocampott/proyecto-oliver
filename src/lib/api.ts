@@ -86,6 +86,31 @@ export function getOrgActual(): Promise<Organization> {
   return request("/api/org/current");
 }
 
+export function updateOrgActual(name: string): Promise<Organization> {
+  return request("/api/org/current", { method: "PATCH", body: JSON.stringify({ name }) });
+}
+
+export type OrgRole = "owner" | "admin" | "agent";
+
+export interface Miembro {
+  userId: string;
+  email: string;
+  role: OrgRole;
+  createdAt: string;
+}
+
+export function listMiembros(): Promise<Miembro[]> {
+  return request("/api/org/miembros");
+}
+
+export function invitarMiembro(email: string): Promise<Miembro> {
+  return request("/api/org/miembros", { method: "POST", body: JSON.stringify({ email }) });
+}
+
+export function eliminarMiembro(userId: string): Promise<{ ok: true }> {
+  return request(`/api/org/miembros/${userId}`, { method: "DELETE" });
+}
+
 export interface PlanesResponse {
   planes: (PlanDef & {
     precios: { meses: number; descuento: number; precioTotal: number }[];
@@ -356,6 +381,20 @@ export interface OrganizationAdmin {
 
 export function listOrganizationsAdmin(): Promise<OrganizationAdmin[]> {
   return request("/api/admin/organizations");
+}
+
+export function updateOrganizationAdmin(id: string, name: string): Promise<OrganizationAdmin> {
+  return request(`/api/admin/organizations/${id}`, { method: "PATCH", body: JSON.stringify({ name }) });
+}
+
+export interface OrgResumen {
+  empleadosActivos: number;
+  sucursalesActivas: number;
+  miembros: number;
+}
+
+export function getOrgResumenAdmin(id: string): Promise<OrgResumen> {
+  return request(`/api/admin/organizations/${id}/resumen`);
 }
 
 export interface CrearOrganizacionInput {
