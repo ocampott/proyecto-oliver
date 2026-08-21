@@ -216,12 +216,12 @@ export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionPro
         clickable: false,
       });
     }
-  }, [value]);
+  }, [value, cargando]);
 
   // Actualiza el radio del círculo sin tocar nada más.
   useEffect(() => {
     circleRef.current?.setRadius(radioMetros && radioMetros > 0 ? radioMetros : 100);
-  }, [radioMetros, value]);
+  }, [radioMetros, value, cargando]);
 
   // Limpieza del debounce/fetch pendiente al desmontar.
   useEffect(() => {
