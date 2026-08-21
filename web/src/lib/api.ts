@@ -51,6 +51,7 @@ export interface Sucursal {
   lat: number | null;
   lon: number | null;
   radio_metros: number;
+  direccion: string | null;
   activa: boolean;
   created_at: string;
 }
@@ -64,6 +65,7 @@ export interface CrearSucursalInput {
   lat?: number;
   lon?: number;
   radio_metros?: number;
+  direccion?: string;
 }
 
 export function createSucursal(input: CrearSucursalInput): Promise<Sucursal> {
@@ -78,6 +80,7 @@ export interface EditarSucursalInput {
   lat?: number | null;
   lon?: number | null;
   radio_metros?: number;
+  direccion?: string | null;
   activa?: boolean;
 }
 

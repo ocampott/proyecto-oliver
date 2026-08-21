@@ -10,6 +10,7 @@ interface CrearBody {
   lat?: number;
   lon?: number;
   radio_metros?: number;
+  direccion?: string | null;
 }
 
 interface EditarBody {
@@ -17,6 +18,7 @@ interface EditarBody {
   lat?: number | null;
   lon?: number | null;
   radio_metros?: number;
+  direccion?: string | null;
   activa?: boolean;
 }
 
@@ -33,7 +35,7 @@ export async function sucursalesRoutes(app: FastifyInstance): Promise<void> {
     "/api/sucursales",
     { preHandler: [requireAuth, requireOrg] },
     async (request, reply) => {
-      const { nombre, lat, lon, radio_metros } = request.body ?? {};
+      const { nombre, lat, lon, radio_metros, direccion } = request.body ?? {};
       if (!nombre?.trim()) {
         return reply.code(400).send({ error: "El nombre es requerido" });
       }
@@ -42,6 +44,7 @@ export async function sucursalesRoutes(app: FastifyInstance): Promise<void> {
         lat,
         lon,
         radio_metros,
+        direccion,
       });
       return reply.code(201).send(sucursal);
     }
@@ -58,6 +61,7 @@ export async function sucursalesRoutes(app: FastifyInstance): Promise<void> {
       if (body.lat !== undefined) patch.lat = body.lat;
       if (body.lon !== undefined) patch.lon = body.lon;
       if (body.radio_metros !== undefined) patch.radio_metros = body.radio_metros;
+      if (body.direccion !== undefined) patch.direccion = body.direccion;
       if (typeof body.activa === "boolean") patch.activa = body.activa;
 
       return updateSucursal(request.org!.id, id, patch);

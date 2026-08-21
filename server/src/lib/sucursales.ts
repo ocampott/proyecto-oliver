@@ -7,6 +7,7 @@ export interface Sucursal {
   lat: number | null;
   lon: number | null;
   radio_metros: number;
+  direccion: string | null;
   activa: boolean;
   created_at: string;
 }
@@ -24,7 +25,7 @@ export async function listSucursales(orgId: string): Promise<Sucursal[]> {
 
 export async function createSucursal(
   orgId: string,
-  input: { nombre: string; lat?: number; lon?: number; radio_metros?: number }
+  input: { nombre: string; lat?: number; lon?: number; radio_metros?: number; direccion?: string | null }
 ): Promise<Sucursal> {
   const service = createServiceClient();
   const { data, error } = await service
@@ -35,6 +36,7 @@ export async function createSucursal(
       lat: input.lat ?? null,
       lon: input.lon ?? null,
       radio_metros: input.radio_metros ?? 100,
+      direccion: input.direccion ?? null,
     })
     .select()
     .single();
@@ -50,6 +52,7 @@ export async function updateSucursal(
     lat?: number | null;
     lon?: number | null;
     radio_metros?: number;
+    direccion?: string | null;
     activa?: boolean;
   }
 ): Promise<Sucursal> {
