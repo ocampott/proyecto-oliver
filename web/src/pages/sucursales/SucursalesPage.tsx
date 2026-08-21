@@ -7,22 +7,20 @@ import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { MapaUbicacion, type Coordenadas } from "../../components/MapaUbicacion";
 import type { Sucursal } from "../../lib/api";
 import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useDesactivarSucursal } from "./hooks";
 import { useQrBlob } from "./useQrBlob";
-
-interface EditState {
-  nombre: string;
-  lat: string;
-  lon: string;
-  radio: string;
-}
 
 type EstadoFiltro = "todos" | "activos" | "inactivos";
 
 function parseNumero(s: string): number | undefined {
   const n = Number(s);
   return s.trim() !== "" && Number.isFinite(n) ? n : undefined;
+}
+
+function coordsDe(suc: Sucursal): Coordenadas | null {
+  return suc.lat != null && suc.lon != null ? { lat: suc.lat, lon: suc.lon } : null;
 }
 
 export default function SucursalesPage() {
@@ -33,12 +31,15 @@ export default function SucursalesPage() {
   const desactivar = useDesactivarSucursal();
 
   const [nombre, setNombre] = useState("");
-  const [lat, setLat] = useState("");
-  const [lon, setLon] = useState("");
   const [radio, setRadio] = useState("100");
+  const [coords, setCoords] = useState<Coordenadas | null>(null);
+  const [direccion, setDireccion] = useState<string | null>(null);
   const [altaOpen, setAltaOpen] = useState(false);
-  const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [edit, setEdit] = useState<EditState>({ nombre: "", lat: "", lon: "", radio: "100" });
+  const [editando, setEditando] = useState<Sucursal | null>(null);
+  const [editNombre, setEditNombre] = useState("");
+  const [editRadio, setEditRadio] = useState("100");
+  const [editCoords, setEditCoords] = useState<Coordenadas | null>(null);
+  const [editDireccion, setEditDireccion] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
@@ -56,39 +57,56 @@ export default function SucursalesPage() {
     return matchNombre && matchEstado;
   });
 
+  function resetAlta() {
+    setNombre("");
+    setRadio("100");
+    setCoords(null);
+    setDireccion(null);
+  }
+
   async function handleAlta(e: FormEvent) {
     e.preventDefault();
     setError(null);
     try {
       await crear.mutateAsync({
         nombre,
-        lat: parseNumero(lat),
-        lon: parseNumero(lon),
+        lat: coords?.lat,
+        lon: coords?.lon,
         radio_metros: parseNumero(radio),
+        direccion: direccion ?? undefined,
       });
-      setNombre("");
-      setLat("");
-      setLon("");
-      setRadio("100");
+      resetAlta();
       setAltaOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
   }
 
-  async function handleGuardarEdicion(id: string) {
+  function abrirEdicion(suc: Sucursal) {
+    setError(null);
+    setEditando(suc);
+    setEditNombre(suc.nombre);
+    setEditRadio(suc.radio_metros.toString());
+    setEditCoords(coordsDe(suc));
+    setEditDireccion(suc.direccion);
+  }
+
+  async function handleGuardarEdicion(e: FormEvent) {
+    e.preventDefault();
+    if (!editando) return;
     setError(null);
     try {
       await editar.mutateAsync({
-        id,
+        id: editando.id,
         patch: {
-          nombre: edit.nombre,
-          lat: parseNumero(edit.lat) ?? null,
-          lon: parseNumero(edit.lon) ?? null,
-          radio_metros: parseNumero(edit.radio),
+          nombre: editNombre,
+          lat: editCoords?.lat ?? null,
+          lon: editCoords?.lon ?? null,
+          radio_metros: parseNumero(editRadio),
+          direccion: editDireccion,
         },
       });
-      setEditandoId(null);
+      setEditando(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
@@ -140,7 +158,7 @@ export default function SucursalesPage() {
         </Button>
       </div>
 
-      {error && !altaOpen && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+      {error && !altaOpen && !editando && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -157,111 +175,50 @@ export default function SucursalesPage() {
           {!isLoading &&
             sucursalesFiltradas.map((suc) => (
               <TableRow key={suc.id} className={suc.activa ? "" : "text-text/40"}>
+                <TableCell>{suc.nombre}</TableCell>
                 <TableCell>
-                  {editandoId === suc.id ? (
-                    <Field
-                      label="Nombre"
-                      value={edit.nombre}
-                      onChange={(e) => setEdit({ ...edit, nombre: e.target.value })}
-                    />
-                  ) : (
-                    suc.nombre
-                  )}
+                  {suc.lat != null && suc.lon != null ? `${suc.lat}, ${suc.lon}` : "Sin configurar"}
                 </TableCell>
-                <TableCell>
-                  {editandoId === suc.id ? (
-                    <div className="flex gap-1">
-                      <Field
-                        label="Lat"
-                        value={edit.lat}
-                        onChange={(e) => setEdit({ ...edit, lat: e.target.value })}
-                        containerClassName="w-28"
-                      />
-                      <Field
-                        label="Lon"
-                        value={edit.lon}
-                        onChange={(e) => setEdit({ ...edit, lon: e.target.value })}
-                        containerClassName="w-28"
-                      />
-                    </div>
-                  ) : suc.lat != null && suc.lon != null ? (
-                    `${suc.lat}, ${suc.lon}`
-                  ) : (
-                    "Sin configurar"
-                  )}
-                </TableCell>
-                <TableCell>
-                  {editandoId === suc.id ? (
-                    <Field
-                      label="Radio"
-                      value={edit.radio}
-                      onChange={(e) => setEdit({ ...edit, radio: e.target.value })}
-                      containerClassName="w-20"
-                    />
-                  ) : (
-                    `${suc.radio_metros} m`
-                  )}
-                </TableCell>
+                <TableCell>{`${suc.radio_metros} m`}</TableCell>
                 <TableCell>
                   <Status tone={suc.activa ? "success" : "neutral"}>{suc.activa ? "Activa" : "Inactiva"}</Status>
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-1.5">
-                    {editandoId === suc.id ? (
-                      <>
-                        <Button variant="ghost" onClick={() => handleGuardarEdicion(suc.id)} disabled={loading}>
-                          Guardar
-                        </Button>
-                        <Button variant="ghost" onClick={() => setEditandoId(null)}>
-                          Cancelar
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <IconButton
-                          onClick={() => {
-                            setEditandoId(suc.id);
-                            setEdit({
-                              nombre: suc.nombre,
-                              lat: suc.lat?.toString() ?? "",
-                              lon: suc.lon?.toString() ?? "",
-                              radio: suc.radio_metros.toString(),
-                            });
-                          }}
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                            </svg>
-                          }
-                          label="Editar"
-                        />
-                        <IconButton
-                          onClick={() => handleToggleActiva(suc)}
-                          disabled={loading}
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 2v6" />
-                              <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
-                            </svg>
-                          }
-                          label={suc.activa ? "Desactivar" : "Activar"}
-                        />
-                        <IconButton
-                          onClick={() => setQrId(suc.id)}
-                          icon={
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="3" width="7" height="7" />
-                              <rect x="14" y="3" width="7" height="7" />
-                              <rect x="3" y="14" width="7" height="7" />
-                              <path d="M14 14h3v3" />
-                              <path d="M14 21h7v-4" />
-                              <path d="M21 14v3" />
-                            </svg>
-                          }
-                          label="Ver QR"
-                        />
-                      </>
-                    )}
+                    <IconButton
+                      onClick={() => abrirEdicion(suc)}
+                      icon={
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                        </svg>
+                      }
+                      label="Editar"
+                    />
+                    <IconButton
+                      onClick={() => handleToggleActiva(suc)}
+                      disabled={loading}
+                      icon={
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2v6" />
+                          <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
+                        </svg>
+                      }
+                      label={suc.activa ? "Desactivar" : "Activar"}
+                    />
+                    <IconButton
+                      onClick={() => setQrId(suc.id)}
+                      icon={
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="7" height="7" />
+                          <rect x="14" y="3" width="7" height="7" />
+                          <rect x="3" y="14" width="7" height="7" />
+                          <path d="M14 14h3v3" />
+                          <path d="M14 21h7v-4" />
+                          <path d="M21 14v3" />
+                        </svg>
+                      }
+                      label="Ver QR"
+                    />
                   </div>
                 </TableCell>
               </TableRow>
@@ -287,9 +244,11 @@ export default function SucursalesPage() {
         open={altaOpen}
         onClose={() => {
           setAltaOpen(false);
+          resetAlta();
           setError(null);
         }}
         title="Nueva sucursal"
+        className="max-w-[560px]"
       >
         <form onSubmit={handleAlta} className="flex flex-col gap-3">
           <Field
@@ -300,29 +259,61 @@ export default function SucursalesPage() {
             containerClassName="w-full"
           />
           <Field
-            label="Latitud"
-            value={lat}
-            onChange={(e) => setLat(e.target.value)}
-            containerClassName="w-full"
-          />
-          <Field
-            label="Longitud"
-            value={lon}
-            onChange={(e) => setLon(e.target.value)}
-            containerClassName="w-full"
-          />
-          <Field
             label="Radio (m)"
             value={radio}
             onChange={(e) => setRadio(e.target.value)}
             containerClassName="w-full"
           />
-          <p className="text-[13.5px] text-text/60">
-            Sacá las coordenadas de Google Maps: click derecho sobre el local → copiar los números.
-          </p>
+          <MapaUbicacion
+            value={coords}
+            onChange={(c, d) => {
+              setCoords(c);
+              setDireccion(d);
+            }}
+            radioMetros={parseNumero(radio)}
+          />
           {error && <p className="text-[15px] text-accent-700">{error}</p>}
           <Button type="submit" variant="primary" block disabled={loading}>
             Agregar
+          </Button>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={editando != null}
+        onClose={() => {
+          setEditando(null);
+          setError(null);
+        }}
+        title={`Editar ${editando?.nombre ?? "sucursal"}`}
+        className="max-w-[560px]"
+      >
+        <form onSubmit={handleGuardarEdicion} className="flex flex-col gap-3">
+          <Field
+            label="Nombre"
+            required
+            value={editNombre}
+            onChange={(e) => setEditNombre(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Radio (m)"
+            value={editRadio}
+            onChange={(e) => setEditRadio(e.target.value)}
+            containerClassName="w-full"
+          />
+          <MapaUbicacion
+            value={editCoords}
+            onChange={(c, d) => {
+              setEditCoords(c);
+              setEditDireccion(d);
+            }}
+            radioMetros={parseNumero(editRadio)}
+            direccionInicial={editando?.direccion ?? null}
+          />
+          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          <Button type="submit" variant="primary" block disabled={loading}>
+            Guardar
           </Button>
         </form>
       </Dialog>
