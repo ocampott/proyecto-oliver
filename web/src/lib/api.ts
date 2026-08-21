@@ -54,7 +54,7 @@ export interface Sucursal {
   direccion: string | null;
   activa: boolean;
   created_at: string;
-  tiene_asistencia?: boolean;
+  tiene_asistencia: boolean;
 }
 
 export function listSucursales(): Promise<Sucursal[]> {

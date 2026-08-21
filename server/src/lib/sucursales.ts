@@ -21,12 +21,12 @@ export async function listSucursales(orgId: string): Promise<(Sucursal & { tiene
     .order("nombre");
   if (error) throw error;
 
-  const { data: asistenciaRows, error: asistenciaError } = await service
-    .from("asistencia")
-    .select("sucursal_id")
-    .eq("org_id", orgId);
-  if (asistenciaError) throw asistenciaError;
-  const conAsistencia = new Set((asistenciaRows ?? []).map((r) => r.sucursal_id));
+  // Solo hace falta saber esto para las inactivas (es lo único que usa el
+  // botón de eliminar) — evita traer toda la tabla de asistencia del org,
+  // que con Supabase se corta en 1000 filas y daba falsos negativos.
+  const inactivas = data.filter((s) => !s.activa);
+  const flags = await Promise.all(inactivas.map((s) => tieneAsistencia(orgId, s.id)));
+  const conAsistencia = new Set(inactivas.filter((_, i) => flags[i]).map((s) => s.id));
 
   return data.map((s) => ({ ...s, tiene_asistencia: conAsistencia.has(s.id) }));
 }

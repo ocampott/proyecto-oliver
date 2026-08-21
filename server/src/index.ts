@@ -17,8 +17,9 @@ const app = Fastify({ logger: true });
 
 await app.register(cors, {
   // En dev el puerto de Vite puede variar si 5173 está ocupado: aceptamos
-  // cualquier localhost. En producción se usa solo CORS_ORIGIN.
-  origin: env.nodeEnv === "development" ? [env.corsOrigin, /^http:\/\/localhost:\d+$/] : env.corsOrigin,
+  // cualquier localhost, pero solo si se habilita a propósito — no por
+  // NODE_ENV, que en el deploy real nunca queda seteado a "production".
+  origin: process.env.CORS_ALLOW_LOCALHOST === "true" ? [env.corsOrigin, /^http:\/\/localhost:\d+$/] : env.corsOrigin,
   credentials: true,
   methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"],
 });
