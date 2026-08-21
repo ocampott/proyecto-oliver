@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
@@ -12,6 +12,7 @@ import type { Ausencia } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
 import { useAusencias, useCrearAusencia, useEditarAusencia, useBorrarAusencia, useRrhhCategorias, useGuardarCategorias } from "./hooks";
+import { exportarAusencias } from "../../lib/api";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 const OTRO = "__otro__";
@@ -69,6 +70,25 @@ export default function RrhhPage() {
   const [hasta, setHasta] = useState(hoyAR());
   const [sucursalFiltro, setSucursalFiltro] = useState("");
   const [motivoFiltro, setMotivoFiltro] = useState("");
+  const [descargando, setDescargando] = useState(false);
+  const [errorDescarga, setErrorDescarga] = useState<string | null>(null);
+
+  async function handleDescargarExcel() {
+    setErrorDescarga(null);
+    setDescargando(true);
+    try {
+      await exportarAusencias({
+        desde,
+        hasta,
+        sucursalId: sucursalFiltro || undefined,
+        motivo: motivoFiltro || undefined,
+      });
+    } catch {
+      setErrorDescarga("No se pudo descargar el archivo.");
+    } finally {
+      setDescargando(false);
+    }
+  }
 
   const { data, isLoading } = useAusencias({
     desde,
@@ -228,11 +248,19 @@ export default function RrhhPage() {
           options={[{ value: "", label: "Todos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
           containerClassName="w-48"
         />
-        <Button variant="primary" className="ml-auto" onClick={() => setAltaOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Nueva ausencia
-        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button variant="secondary" onClick={handleDescargarExcel} disabled={descargando}>
+            <Download className="h-4 w-4" />
+            {descargando ? "Generando…" : "Descargar Excel"}
+          </Button>
+          <Button variant="primary" onClick={() => setAltaOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nueva ausencia
+          </Button>
+        </div>
       </div>
+
+      {errorDescarga && <p className="mt-2 text-[15px] text-accent-700">{errorDescarga}</p>}
 
       {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
 
