@@ -6,7 +6,8 @@
     "node": ">=22.5.0"
   },
   "scripts": {
-    "dev:all": "concurrently -n server,web -c green,magenta \"npm run dev --prefix server\" \"npm run dev --prefix web\""
+    "dev:all": "concurrently -n server,web -c green,magenta \"npm run dev --prefix server\" \"npm run dev --prefix web\"",
+    "start": "npm run dev:all"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3"

@@ -13,7 +13,11 @@ planes de implementación en `docs/superpowers/plans/`.
 ## Requisitos
 
 - Node.js >= 22.5.0
-- Docker corriendo (para el stack local de Supabase)
+- **No hace falta Docker ni Supabase local.** El proyecto corre contra un
+  proyecto Supabase remoto compartido (no hay stack local ni `supabase
+  start`/`db reset`) — pedile a quien te invitó las variables de entorno
+  reales (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+  `GOOGLE_MAPS_API_KEY`).
 
 ## Setup rápido
 
@@ -23,39 +27,40 @@ npm install
 npm install --prefix server
 npm install --prefix web
 
-# 2. Levantar el stack local de Supabase (Postgres + Auth + API + Studio)
-npx supabase start
-
-# 3. Crear los archivos de variables de entorno con las keys locales
-#    (las imprime `npx supabase status` -o env)
-cp .env.example .env.local
+# 2. Crear los archivos de variables de entorno
 cp server/.env.example server/.env.local
 cp web/.env.example web/.env.local
-# Editá los tres .env.local con los valores del paso anterior
+# Completar los dos .env.local con los valores reales del proyecto
+# (te los pasa quien te invitó) — apuntan al mismo Supabase remoto
+# compartido, no hay que crear ni migrar ninguna base propia.
 
-# 4. Aplicar las migraciones (esto también borra todo dato existente)
-npx supabase db reset
-
-# 5. Crear el usuario/org/sucursal/empleado de prueba (idempotente)
-node scripts/seed-demo.js
-
-# 6. Levantar todo
-npm run dev:all
+# 3. Levantar todo (server + web juntos)
+npm start
 ```
 
-Después entrá a `http://localhost:5173`. Si tu usuario tiene rol de
-platform admin (ver "Probar el panel de superadmin" más abajo), el panel
-de superadmin está en `http://localhost:5173/admin` — sin link en el nav,
+Después entrá a `http://localhost:5173` y logueate con una de las
+**cuentas de prueba** de la sección de abajo. Si tu usuario tiene rol de
+platform admin (la cuenta `qa-superadmin`, ver más abajo), el panel de
+superadmin está en `http://localhost:5173/admin` — sin link en el nav,
 acceso directo por URL.
 
-Studio de Supabase (UI de la base local): http://127.0.0.1:54323
+## Cuentas de prueba
+
+La base remota compartida tiene 4 cuentas listas para probar cada nivel
+de plan, contraseña `qa123456` para todas:
+
+| Email | Plan | Qué podés probar |
+|---|---|---|
+| `qa-gratis@test.local` | Gratis | Solo el módulo de Asistencia — el resto (Horas, RRHH, Turnos) debería estar bloqueado |
+| `qa-basico@test.local` | Básico | Asistencia + Horas + Turnos + RRHH + Reportes |
+| `qa-pro@test.local` | Pro | Todo lo del plan Básico + límites ilimitados de sucursales/empleados |
+| `qa-superadmin@test.local` | — (superadmin) | Acceso total sin límites de ningún plan, más el panel `/admin` para gestionar organizaciones y suscripciones |
+
+Cada una es dueña de su propia organización (un usuario pertenece a una
+sola org), así que no hace falta invitar ni cambiar de cuenta para probar
+el resto del panel — usá la que corresponda a lo que estés probando.
 
 ## Variables de entorno
-
-| Variable | Descripción |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | URL de la API de Supabase (`http://127.0.0.1:54321` en local) — nombre heredado de cuando el proyecto era Next.js; hoy la lee `scripts/seed-demo.js` desde `.env.local` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Key de service role (solo servidor, salta RLS) — la lee `scripts/seed-demo.js` |
 
 `server/.env.local` y `web/.env.local` tienen sus propias variables — ver
 `server/.env.example` y `web/.env.example`. `web/.env.local` es
@@ -66,14 +71,15 @@ lo que rompe toda la SPA.
 ## Correr todo en dev
 
 ```bash
-# Con Supabase local corriendo (npx supabase start):
-npm run dev:all
+npm start
 ```
 
-Levanta Fastify (`:3001`, la API) y Vite (`:5173`, el panel de
-organización completo, el panel de superadmin y el flujo público
-`/marcar`). También se pueden levantar por separado con `npm run dev
---prefix server` y `npm run dev --prefix web`.
+Levanta Fastify (la API, puerto de `server/.env.local`) y Vite (el panel
+de organización completo, el panel de superadmin y el flujo público
+`/marcar`, puerto de `web/.env.local`) juntos, con logs de ambos
+intercalados. También se pueden levantar por separado con `npm run dev
+--prefix server` y `npm run dev --prefix web`, o correr solo el script sin
+el alias con `npm run dev:all`.
 
 ## Probar el marcado de asistencia localmente
 
@@ -95,17 +101,11 @@ organización completo, el panel de superadmin y el flujo público
 
 ## Probar el panel de superadmin localmente
 
-`/admin` requiere que tu usuario esté en la tabla `platform_admins`. Para
-dártelo de alta en local, abrí el Studio de Supabase
-(http://127.0.0.1:54323) → SQL Editor, y corré:
-
-```sql
-insert into platform_admins (user_id)
-select id from auth.users where email = 'demo@test.local';
-```
-
-Entrá a `http://localhost:5173/admin` — vas a ver el listado de
-organizaciones y un form para dar de alta una nueva.
+`/admin` requiere que tu usuario esté en la tabla `platform_admins`. La
+cuenta `qa-superadmin@test.local` (ver "Cuentas de prueba" más arriba) ya
+la tiene — entrá con esa cuenta a `http://localhost:5173/admin` y vas a
+ver el listado de organizaciones, alta de organizaciones nuevas y gestión
+de suscripciones.
 
 ## Estado del refactor
 
