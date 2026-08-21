@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Field } from "../components/ui/field";
+import { PasswordField } from "../components/ui/password-field";
 import { Card } from "../components/ui/card";
 import { supabase } from "../lib/supabase";
 
@@ -46,9 +47,8 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          <Field
+          <PasswordField
             label="Contraseña"
-            type="password"
             required
             autoComplete="current-password"
             value={password}

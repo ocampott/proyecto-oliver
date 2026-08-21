@@ -13,7 +13,7 @@ import {
   useEmpleados,
   useCrearEmpleado,
   useEditarEmpleado,
-  useDesactivarEmpleado,
+  useEliminarEmpleado,
   useDesvincularDispositivo,
   useGenerarOtp,
 } from "./hooks";
@@ -35,7 +35,7 @@ export default function EmpleadosPage() {
   const { data: org } = useOrgActual();
   const crear = useCrearEmpleado();
   const editar = useEditarEmpleado();
-  const desactivar = useDesactivarEmpleado();
+  const eliminar = useEliminarEmpleado();
   const desvincular = useDesvincularDispositivo();
   const generarCodigo = useGenerarOtp();
   const toast = useToast();
@@ -50,11 +50,12 @@ export default function EmpleadosPage() {
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [codigoDialog, setCodigoDialog] = useState<{ nombre: string; code: string } | null>(null);
   const [desvincularTarget, setDesvincularTarget] = useState<Empleado | null>(null);
+  const [eliminarTarget, setEliminarTarget] = useState<Empleado | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [accionandoId, setAccionandoId] = useState<string | null>(null);
 
   const loading =
-    crear.isPending || editar.isPending || desactivar.isPending || desvincular.isPending || generarCodigo.isPending;
+    crear.isPending || editar.isPending || eliminar.isPending || desvincular.isPending || generarCodigo.isPending;
 
   const ent = org?.entitlements;
   const activosCount = empleados.filter((e) => e.activo).length;
@@ -128,6 +129,18 @@ export default function EmpleadosPage() {
     }
   }
 
+  async function handleEliminar() {
+    if (!eliminarTarget) return;
+    setError(null);
+    try {
+      await eliminar.mutateAsync(eliminarTarget.id);
+      toast.success("Empleado eliminado.");
+      setEliminarTarget(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
+    }
+  }
+
   async function handleGenerarCodigo(emp: Empleado) {
     setAccionandoId(emp.id);
     try {
@@ -195,7 +208,7 @@ export default function EmpleadosPage() {
         </Button>
       </div>
 
-      {error && !altaOpen && !editando && (
+      {error && !altaOpen && !editando && !eliminarTarget && (
         <ErrorPlan error={error} className="mt-2">
           <p className="mt-2 text-[15px] text-accent-700">{error.message}</p>
         </ErrorPlan>
@@ -295,6 +308,22 @@ export default function EmpleadosPage() {
                           )
                         }
                         label={emp.otp ? "Código nuevo" : "Generar código"}
+                      />
+                    )}
+                    {gestionable && !emp.activo && !emp.tiene_asistencia && (
+                      <IconButton
+                        onClick={() => setEliminarTarget(emp)}
+                        disabled={loading}
+                        icon={
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
+                        }
+                        label="Eliminar"
                       />
                     )}
                   </div>
@@ -422,6 +451,39 @@ export default function EmpleadosPage() {
           <Button variant="primary" onClick={handleDesvincular} disabled={desvincular.isPending}>
             {desvincular.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Desvincular
+          </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
+        open={eliminarTarget != null}
+        onClose={() => {
+          setEliminarTarget(null);
+          setError(null);
+        }}
+        title="Eliminar empleado"
+      >
+        <p className="text-[15px] text-text/70">
+          ¿Eliminar <strong>{eliminarTarget?.nombre}</strong>? Esta acción no se puede deshacer.
+        </p>
+        {error && (
+          <ErrorPlan error={error}>
+            <p className="text-[15px] text-accent-700">{error.message}</p>
+          </ErrorPlan>
+        )}
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setEliminarTarget(null);
+              setError(null);
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleEliminar} disabled={loading}>
+            {eliminar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            Eliminar
           </Button>
         </div>
       </Dialog>

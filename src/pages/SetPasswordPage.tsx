@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
-import { Field } from "../components/ui/field";
+import { PasswordField } from "../components/ui/password-field";
 import { Card } from "../components/ui/card";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
@@ -68,17 +68,15 @@ export default function SetPasswordPage() {
           <p className="text-[15px] text-text/60">
             Ya podés entrar con {session.user.email}. Elegí una contraseña para tu cuenta.
           </p>
-          <Field
+          <PasswordField
             label="Contraseña"
-            type="password"
             required
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <Field
+          <PasswordField
             label="Confirmar contraseña"
-            type="password"
             required
             autoComplete="new-password"
             value={confirmar}

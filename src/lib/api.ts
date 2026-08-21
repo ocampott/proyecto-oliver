@@ -250,6 +250,7 @@ export interface Empleado {
   activo: boolean;
   created_at: string;
   otp: EmpleadoOtp | null;
+  tiene_asistencia: boolean;
 }
 
 export function listEmpleados(): Promise<Empleado[]> {
@@ -281,7 +282,7 @@ export function updateEmpleado(id: string, patch: EditarEmpleadoInput): Promise<
   });
 }
 
-export function deactivateEmpleado(id: string): Promise<{ ok: true }> {
+export function eliminarEmpleado(id: string): Promise<{ ok: true }> {
   return request(`/api/empleados/${id}`, { method: "DELETE" });
 }
 

@@ -3,7 +3,7 @@ import {
   listEmpleados,
   createEmpleado,
   updateEmpleado,
-  deactivateEmpleado,
+  eliminarEmpleado,
   desvincularDispositivo,
   generarOtp,
   type CrearEmpleadoInput,
@@ -32,10 +32,10 @@ export function useEditarEmpleado() {
   });
 }
 
-export function useDesactivarEmpleado() {
+export function useEliminarEmpleado() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deactivateEmpleado(id),
+    mutationFn: (id: string) => eliminarEmpleado(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }
