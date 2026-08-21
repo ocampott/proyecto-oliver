@@ -11,7 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSke
 import type { Ausencia } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
-import { useAusencias, useCrearAusencia, useEditarAusencia, useBorrarAusencia, useRrhhCategorias } from "./hooks";
+import { useAusencias, useCrearAusencia, useEditarAusencia, useBorrarAusencia, useRrhhCategorias, useGuardarCategorias } from "./hooks";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 const OTRO = "__otro__";
@@ -48,6 +48,22 @@ export default function RrhhPage() {
   const { data: categoriasData } = useRrhhCategorias();
   const categorias = categoriasData?.categorias ?? [];
   const opcionesMotivo = [...categorias.map((c) => ({ value: c, label: c })), { value: OTRO, label: "Otro" }];
+
+  const guardarCategorias = useGuardarCategorias();
+  const [categoriasInput, setCategoriasInput] = useState("");
+  const [categoriasGuardadoOk, setCategoriasGuardadoOk] = useState(false);
+  const categoriasActuales = categoriasInput || categorias.join(", ");
+
+  async function handleGuardarCategorias() {
+    setCategoriasGuardadoOk(false);
+    const nuevas = categoriasActuales
+      .split(",")
+      .map((c) => c.trim())
+      .filter(Boolean);
+    await guardarCategorias.mutateAsync(nuevas);
+    setCategoriasInput("");
+    setCategoriasGuardadoOk(true);
+  }
 
   const [desde, setDesde] = useState(inicioDeMesAR());
   const [hasta, setHasta] = useState(hoyAR());
@@ -173,6 +189,28 @@ export default function RrhhPage() {
         </Card>
       </div>
 
+      <Card className="mt-4">
+        <h2 className="text-[16px] font-extrabold text-text">Categorías de motivo</h2>
+        <p className="mt-1 text-[13.5px] text-text/60">
+          Lista de motivos disponibles al cargar una ausencia, separados por coma.
+        </p>
+        <div className="mt-3 flex items-end gap-3">
+          <Field
+            label="Categorías"
+            value={categoriasActuales}
+            onChange={(e) => {
+              setCategoriasInput(e.target.value);
+              setCategoriasGuardadoOk(false);
+            }}
+            containerClassName="w-full max-w-[520px]"
+          />
+          <Button variant="secondary" onClick={handleGuardarCategorias} disabled={guardarCategorias.isPending}>
+            Guardar
+          </Button>
+          {categoriasGuardadoOk && <span className="text-[13.5px] text-text/60">Guardado.</span>}
+        </div>
+      </Card>
+
       <div className="mt-4 flex flex-wrap items-end gap-4">
         <Field label="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-40" />
         <Field label="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-40" />
@@ -238,6 +276,15 @@ export default function RrhhPage() {
                       )}
                       <Field label="Detalle" value={editForm.detalle} onChange={(e) => setEditForm({ ...editForm, detalle: e.target.value })} containerClassName="w-40" />
                       <Field label="Contacto" value={editForm.contacto} onChange={(e) => setEditForm({ ...editForm, contacto: e.target.value })} containerClassName="w-40" />
+                      <label className="flex items-center gap-2 text-[14px] text-text">
+                        <input
+                          type="checkbox"
+                          checked={editForm.certificado_pendiente}
+                          onChange={(e) => setEditForm({ ...editForm, certificado_pendiente: e.target.checked })}
+                          className="h-4 w-4 rounded border-border accent-accent"
+                        />
+                        Certificado pendiente
+                      </label>
                       <div className="flex items-center gap-2">
                         <Button variant="ghost" onClick={() => handleGuardarEdicion(a.id)}>Guardar</Button>
                         <Button variant="ghost" onClick={() => setEditandoId(null)}>Cancelar</Button>

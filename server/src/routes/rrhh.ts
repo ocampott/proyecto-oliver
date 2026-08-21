@@ -108,7 +108,12 @@ export async function rrhhRoutes(app: FastifyInstance): Promise<void> {
       if (body.sucursal_id !== undefined) patch.sucursal_id = body.sucursal_id;
       if (body.fecha_desde !== undefined) patch.fecha_desde = body.fecha_desde;
       if (body.fecha_hasta !== undefined) patch.fecha_hasta = body.fecha_hasta;
-      if (body.motivo !== undefined) patch.motivo = body.motivo;
+      if (body.motivo !== undefined) {
+        if (!body.motivo.trim()) {
+          return reply.code(400).send({ error: "Faltan datos de la ausencia" });
+        }
+        patch.motivo = body.motivo.trim();
+      }
       if (body.detalle !== undefined) patch.detalle = body.detalle;
       if (body.contacto !== undefined) patch.contacto = body.contacto;
       if (body.certificado_pendiente !== undefined) patch.certificado_pendiente = body.certificado_pendiente;
