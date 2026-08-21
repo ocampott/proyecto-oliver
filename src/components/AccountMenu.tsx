@@ -12,7 +12,7 @@ function iniciales(nombre: string): string {
 
 export function AccountMenu() {
   const { user } = useAuth();
-  const { data: org } = useOrgActual();
+  const { data: org, isLoading } = useOrgActual();
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -36,6 +36,10 @@ export function AccountMenu() {
   async function handleCerrarSesion() {
     await supabase.auth.signOut();
     navigate("/login", { replace: true });
+  }
+
+  if (isLoading) {
+    return <span className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-text/10" aria-hidden="true" />;
   }
 
   return (

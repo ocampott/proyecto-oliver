@@ -5,8 +5,8 @@ import { AccountMenu } from "./AccountMenu";
 import { IconButton } from "./ui/icon-button";
 import { Badge } from "./ui/badge";
 import { cn } from "../lib/utils";
-import { useEntitlements, tieneModulo } from "../lib/hooks";
-import type { Modulo, PlanSlug } from "../lib/api";
+import { useOrgActual, tieneModulo } from "../lib/hooks";
+import type { Modulo, PlanSlug, Entitlements } from "../lib/api";
 
 interface NavItem {
   href: string;
@@ -46,10 +46,15 @@ const desktopLinkClass = ({ isActive }: { isActive: boolean }) =>
       : "text-text-secondary hover:bg-black/[.03] hover:text-text"
   );
 
+// Anchos aproximados de cada label, para que el skeleton no se vea como
+// una fila de barras todas iguales mientras carga.
+const SKELETON_WIDTHS = ["w-14", "w-24", "w-20", "w-24", "w-14", "w-16", "w-12"];
+
 export function PanelNav() {
   const [open, setOpen] = React.useState(false);
   const navRef = React.useRef<HTMLElement>(null);
-  const ent = useEntitlements();
+  const { data: org, isLoading } = useOrgActual();
+  const ent = org?.entitlements ?? null;
 
   React.useEffect(() => {
     if (!open) return;
@@ -75,11 +80,22 @@ export function PanelNav() {
       <div className="flex items-center">
         <span className="text-[17px] font-extrabold tracking-tight text-text">oliver</span>
         <div className="ml-auto flex items-center gap-2">
-          <div className="hidden items-center gap-0.5 md:flex">
-            {LINKS.map((item) => (
-              <NavLinkItem key={item.href} item={item} ent={ent} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="hidden items-center gap-4 px-1 md:flex" aria-hidden="true">
+              {LINKS.map((item, i) => (
+                <span
+                  key={item.href}
+                  className={cn("h-[13px] animate-pulse rounded-full bg-text/10", SKELETON_WIDTHS[i])}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="hidden items-center gap-0.5 md:flex">
+              {LINKS.map((item) => (
+                <NavLinkItem key={item.href} item={item} ent={ent} />
+              ))}
+            </div>
+          )}
           <AccountMenu />
           <IconButton
             className="md:hidden"
@@ -96,9 +112,15 @@ export function PanelNav() {
         )}
       >
         <div className="flex flex-col gap-0.5 overflow-hidden">
-          {LINKS.map((item) => (
-            <NavLinkItem key={item.href} item={item} ent={ent} mobile onClick={() => setOpen(false)} />
-          ))}
+          {isLoading
+            ? LINKS.map((item, i) => (
+                <span key={item.href} className="flex items-center px-3 py-2.5">
+                  <span className={cn("h-[13px] animate-pulse rounded-full bg-text/10", SKELETON_WIDTHS[i])} />
+                </span>
+              ))
+            : LINKS.map((item) => (
+                <NavLinkItem key={item.href} item={item} ent={ent} mobile onClick={() => setOpen(false)} />
+              ))}
         </div>
       </div>
     </nav>
@@ -112,7 +134,7 @@ function NavLinkItem({
   onClick,
 }: {
   item: NavItem;
-  ent: ReturnType<typeof useEntitlements>;
+  ent: Entitlements | null;
   mobile?: boolean;
   onClick?: () => void;
 }) {
