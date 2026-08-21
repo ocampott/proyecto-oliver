@@ -21,15 +21,10 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# supabase local
 .env.test.local
-supabase/.branches
-supabase/.temp
 
 # worktrees
 .worktrees/
-server/.env.local
-server/dist
 web/.env.local
 web/dist
 tsconfig.tsbuildinfo
