@@ -10,9 +10,11 @@ export interface Coordenadas {
 interface MapaUbicacionProps {
   /** Ubicación seleccionada, o null si todavía no se eligió ninguna. */
   value: Coordenadas | null;
-  onChange: (coords: Coordenadas) => void;
+  onChange: (coords: Coordenadas, direccion: string | null) => void;
   /** Radio de cobertura en metros: se dibuja como círculo alrededor del pin. */
   radioMetros?: number;
+  /** Dirección ya guardada (edición): precarga el input de búsqueda. */
+  direccionInicial?: string | null;
 }
 
 // Centro por defecto cuando no hay geolocalización disponible (Buenos Aires).
@@ -81,7 +83,7 @@ async function fetchSugerencias(
  * deja elegir el punto manualmente (buscador de direcciones, click en el mapa
  * o arrastrando el pin).
  */
-export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionProps) {
+export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }: MapaUbicacionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
@@ -90,12 +92,11 @@ export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionPro
   onChangeRef.current = onChange;
   const [cargando, setCargando] = useState(true);
   const [buscandoGeo, setBuscandoGeo] = useState(value == null);
-  const [sinGeo, setSinGeo] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [direccion, setDireccion] = useState<string | null>(null);
 
-  // Buscador de direcciones.
-  const [query, setQuery] = useState("");
+  // Buscador de direcciones. Si es edición (value ya viene con datos),
+  // arranca precargado con la dirección guardada.
+  const [query, setQuery] = useState(direccionInicial ?? "");
   const [sugerencias, setSugerencias] = useState<Sugerencia[]>([]);
   const [sugerenciasAbiertas, setSugerenciasAbiertas] = useState(false);
   const [indiceActivo, setIndiceActivo] = useState(-1);
@@ -138,8 +139,7 @@ export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionPro
       });
       map.addListener("click", (e: google.maps.MapMouseEvent) => {
         if (!e.latLng) return;
-        setDireccion(null);
-        onChangeRef.current({ lat: e.latLng.lat(), lon: e.latLng.lng() });
+        onChangeRef.current({ lat: e.latLng.lat(), lon: e.latLng.lng() }, null);
       });
       mapRef.current = map;
       setCargando(false);
@@ -149,7 +149,6 @@ export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionPro
       if (value == null) {
         if (!navigator.geolocation) {
           setBuscandoGeo(false);
-          setSinGeo(true);
         } else {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -159,11 +158,10 @@ export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionPro
               const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
               map.setCenter({ lat: coords.lat, lng: coords.lon });
               map.setZoom(ZOOM_UBICACION);
-              onChangeRef.current(coords);
+              onChangeRef.current(coords, null);
             },
             () => {
               setBuscandoGeo(false);
-              setSinGeo(true);
             },
             { timeout: 8000, maximumAge: 60000 }
           );
@@ -197,8 +195,7 @@ export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionPro
       marker.addListener("dragend", () => {
         const p = marker.getPosition();
         if (!p) return;
-        setDireccion(null);
-        onChangeRef.current({ lat: p.lat(), lon: p.lng() });
+        onChangeRef.current({ lat: p.lat(), lon: p.lng() }, null);
       });
       markerRef.current = marker;
     }
@@ -286,13 +283,13 @@ export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionPro
         return;
       }
       const coords = { lat: detalle.lat, lon: detalle.lng };
-      setDireccion(detalle.formattedAddress ?? sug.texto);
+      const direccion = detalle.formattedAddress ?? sug.texto;
       const map = mapRef.current;
       if (map) {
         map.setCenter({ lat: coords.lat, lng: coords.lon });
         map.setZoom(ZOOM_UBICACION);
       }
-      onChangeRef.current(coords);
+      onChangeRef.current(coords, direccion);
     } catch {
       setErrorBusqueda("No pudimos obtener esa dirección. Probá de nuevo.");
     }
@@ -363,19 +360,6 @@ export function MapaUbicacion({ value, onChange, radioMetros }: MapaUbicacionPro
           </div>
         )}
       </div>
-      {value ? (
-        <p className="text-[13.5px] text-text/60">
-          {direccion ? `${direccion} · ` : ""}
-          {value.lat.toFixed(6)}, {value.lon.toFixed(6)}.
-          Podés arrastrar el pin o tocar el mapa para corregirla.
-        </p>
-      ) : (
-        <p className="text-[13.5px] text-text/60">
-          {sinGeo
-            ? "No pudimos obtener tu ubicación automáticamente. Buscá la dirección o tocá el mapa."
-            : "Buscá la dirección o tocá el mapa para seleccionar la ubicación de la sucursal."}
-        </p>
-      )}
     </div>
   );
 }
