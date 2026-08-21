@@ -1,12 +1,12 @@
 # Oliver
 
 Plataforma multi-tenant (SaaS) para control de asistencia. Este repo tiene
-el **frontend** (`web/`, Vite + React). 
-El **backend** (Node + Express +
-TypeScript) vive en el repo hermano
-[`proyecto-oliver-api`](../proyecto-oliver-api), conectado a Supabase
-(Postgres con Row Level Security + Supabase Auth). Cada cliente tiene su
-propia organización con datos completamente aislados.
+el **frontend** (Vite + React + TypeScript + Tailwind v4), en la raíz del
+repo. El **backend** (Node + Express + TypeScript) vive en el repo hermano
+[`proyecto-oliver-api`](https://github.com/ocampott/proyecto-oliver-api),
+conectado a Supabase (Postgres con Row Level Security + Supabase Auth).
+Cada cliente tiene su propia organización con datos completamente
+aislados.
 
 ## Requisitos
 
@@ -18,12 +18,10 @@ propia organización con datos completamente aislados.
 
 ```bash
 # 1. Instalar dependencias
-npm install --prefix web
+npm install
 
 # 2. Crear el archivo de variables de entorno
-.env.local
-.env
-
+cp .env.example .env.local
 # Completar con los valores reales
 # VITE_API_URL debe apuntar al backend de proyecto-oliver-api
 # (http://localhost:3001 por default)
@@ -31,7 +29,7 @@ npm install --prefix web
 # 3. Levantar el backend en paralelo (ver README de proyecto-oliver-api)
 
 # 4. Levantar el frontend
-npm run dev --prefix web
+npm run dev
 ```
 
 Después entrá a `http://localhost:5173` y logueate con una de las
@@ -61,6 +59,6 @@ propio `npm run dev`:
 # En proyecto-oliver-api/
 npm run dev
 
-# En proyecto-oliver/web/ (este repo)
+# En este repo
 npm run dev
 ```
