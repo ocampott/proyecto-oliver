@@ -2,7 +2,8 @@ import type { FastifyInstance } from "fastify";
 import QRCode from "qrcode";
 import { requireAuth } from "../plugins/auth.js";
 import { requireOrg } from "../plugins/require-org.js";
-import { listSucursales, createSucursal, updateSucursal, getSucursal, tieneAsistencia, deleteSucursal } from "../lib/sucursales.js";
+import { listSucursales, createSucursal, updateSucursal, getSucursal, tieneAsistencia, deleteSucursal, countSucursalesActivas } from "../lib/sucursales.js";
+import { getEntitlements, puedeCrearSucursal } from "../lib/planes.js";
 import { env } from "../env.js";
 
 interface CrearBody {
@@ -39,6 +40,17 @@ export async function sucursalesRoutes(app: FastifyInstance): Promise<void> {
       if (!nombre?.trim()) {
         return reply.code(400).send({ error: "El nombre es requerido" });
       }
+
+      const ent = await getEntitlements(request.org!.id);
+      const activas = await countSucursalesActivas(request.org!.id);
+      if (!puedeCrearSucursal(ent, activas)) {
+        return reply.code(403).send({
+          error: "limite_plan",
+          recurso: "sucursales",
+          max: ent.maxSucursales,
+        });
+      }
+
       const sucursal = await createSucursal(request.org!.id, {
         nombre: nombre.trim(),
         lat,

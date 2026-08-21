@@ -38,20 +38,18 @@ export function AccountMenu() {
     navigate("/login", { replace: true });
   }
 
-  if (!org) return null;
-
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-accent text-[12px] font-bold text-white"
+        className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-accent text-[12px] font-bold text-white"
       >
-        {iniciales(org.name)}
+        {org ? iniciales(org.name) : user?.email?.slice(0, 2).toUpperCase() ?? "?"}
       </button>
       {open && (
         <div className="absolute right-0 top-[calc(100%+12px)] w-[232px] rounded-[14px] border border-border-soft bg-white p-2 shadow-[0_16px_40px_rgba(24,24,27,.18),0_3px_10px_rgba(24,24,27,.06)]">
           <div className="mb-1.5 border-b border-border-soft px-3 pb-3 pt-2.5">
-            <p className="m-0 text-[13.5px] font-bold text-text">{org.name}</p>
+            {org && <p className="m-0 text-[13.5px] font-bold text-text">{org.name}</p>}
             <p className="m-0.5 text-[12px] text-text-tertiary">{user?.email}</p>
           </div>
           <button

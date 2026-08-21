@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../plugins/auth.js";
 import { requireOrg } from "../plugins/require-org.js";
+import { requireModulo } from "../plugins/require-modulo.js";
 import { calcularHoras } from "../lib/asistencia.js";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
@@ -28,7 +29,7 @@ interface ResumenEmpleado {
 export async function horasRoutes(app: FastifyInstance): Promise<void> {
   app.get<{ Querystring: HorasQuery }>(
     "/api/horas",
-    { preHandler: [requireAuth, requireOrg] },
+    { preHandler: [requireAuth, requireOrg, requireModulo("horas")] },
     async (request) => {
       const { sucursalId } = request.query;
       const desde = request.query.desde || inicioDeMesAR();

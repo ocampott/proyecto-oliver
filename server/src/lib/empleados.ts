@@ -53,6 +53,17 @@ export async function updateEmpleado(
   return data;
 }
 
+export async function countEmpleadosActivos(orgId: string): Promise<number> {
+  const service = createServiceClient();
+  const { count, error } = await service
+    .from("empleados")
+    .select("id", { count: "exact", head: true })
+    .eq("org_id", orgId)
+    .eq("activo", true);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function setEmpleadoActivo(orgId: string, id: string, activo: boolean): Promise<void> {
   const service = createServiceClient();
   const { error } = await service

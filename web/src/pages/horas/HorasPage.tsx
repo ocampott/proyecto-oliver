@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Field } from "../../components/ui/field";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { ErrorPlan } from "../../components/ErrorPlan";
 import { useHoras } from "./hooks";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
@@ -28,7 +29,7 @@ export default function HorasPage() {
   const [desde, setDesde] = useState(inicioDeMesAR());
   const [hasta, setHasta] = useState(hoyAR());
 
-  const { data, isLoading, isError } = useHoras(desde, hasta);
+  const { data, isLoading, isError, error } = useHoras(desde, hasta);
   const turnos = data?.turnos ?? [];
   const resumen = data?.resumen ?? [];
 
@@ -54,9 +55,11 @@ export default function HorasPage() {
       </div>
 
       {isError && (
-        <p className="mt-2 text-[15px] text-accent-700">
-          No se pudieron cargar los datos. Probá de nuevo.
-        </p>
+        <div className="mt-2">
+          <ErrorPlan error={error instanceof Error ? error : null}>
+            <p className="text-[15px] text-accent-700">No se pudieron cargar los datos. Probá de nuevo.</p>
+          </ErrorPlan>
+        </div>
       )}
 
       {resumen.length > 0 && (

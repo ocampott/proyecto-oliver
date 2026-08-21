@@ -13,6 +13,7 @@ import { adminRoutes } from "./routes/admin.js";
 import { turnosRoutes } from "./routes/turnos.js";
 import { rrhhRoutes } from "./routes/rrhh.js";
 import { placesRoutes } from "./routes/places.js";
+import { planesRoutes } from "./routes/planes.js";
 
 const app = Fastify({ logger: true });
 
@@ -38,6 +39,7 @@ await app.register(horasRoutes);
 await app.register(turnosRoutes);
 await app.register(rrhhRoutes);
 await app.register(adminRoutes);
+await app.register(planesRoutes);
 await app.register(placesRoutes);
 
 app.setErrorHandler((error, request, reply) => {

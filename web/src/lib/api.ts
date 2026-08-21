@@ -4,10 +4,12 @@ const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  body: unknown;
+  constructor(message: string, status: number, body: unknown = null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.body = body;
   }
 }
 
@@ -28,9 +30,44 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new ApiError(body?.error ?? "Algo salió mal. Probá de nuevo.", res.status);
+    throw new ApiError(body?.error ?? "Algo salió mal. Probá de nuevo.", res.status, body);
   }
   return body as T;
+}
+
+export type PlanSlug = "gratis" | "basico" | "pro";
+
+export type Modulo =
+  | "asistencia"
+  | "horas"
+  | "turnos"
+  | "rrhh"
+  | "reportes"
+  | "liquidacion"
+  | "alertas"
+  | "whatsapp"
+  | "ia";
+
+export interface PlanDef {
+  slug: PlanSlug;
+  nombre: string;
+  maxSucursales: number | null;
+  maxEmpleados: number | null;
+  modulos: Modulo[];
+  precioMensual: number | null;
+}
+
+export interface Suscripcion {
+  venceAt: string;
+  periodoMeses: number;
+}
+
+export interface Entitlements {
+  plan: PlanDef;
+  suscripcion: Suscripcion | null;
+  maxSucursales: number | null;
+  maxEmpleados: number | null;
+  modulos: Modulo[];
 }
 
 export interface Organization {
@@ -38,10 +75,21 @@ export interface Organization {
   name: string;
   slug: string;
   plan: string;
+  entitlements: Entitlements;
 }
 
 export function getOrgActual(): Promise<Organization> {
   return request("/api/org/current");
+}
+
+export interface PlanesResponse {
+  planes: (PlanDef & {
+    precios: { meses: number; descuento: number; precioTotal: number }[];
+  })[];
+}
+
+export function getPlanes(): Promise<PlanesResponse> {
+  return request("/api/planes");
 }
 
 export interface Sucursal {
@@ -535,4 +583,45 @@ export function getRrhhCategorias(): Promise<{ categorias: string[] }> {
 
 export function setRrhhCategorias(categorias: string[]): Promise<{ ok: true }> {
   return request("/api/settings/rrhh-categorias", { method: "PATCH", body: JSON.stringify({ categorias }) });
+}
+
+export interface SuscripcionAdmin {
+  id: string;
+  org_id: string;
+  plan: "basico" | "pro";
+  periodo_meses: number;
+  precio_total: number | null;
+  inicia_at: string;
+  vence_at: string;
+  estado: "activa" | "vencida" | "cancelada";
+  notas: string | null;
+  created_at: string;
+}
+
+export interface CrearSuscripcionAdminInput {
+  plan: "basico" | "pro";
+  periodoMeses: number;
+  precioTotal?: number;
+  notas?: string;
+}
+
+export function getSuscripcionesAdmin(orgId: string): Promise<{ suscripciones: SuscripcionAdmin[] }> {
+  return request(`/api/admin/organizations/${orgId}/suscripciones`);
+}
+
+export function createSuscripcionAdmin(
+  orgId: string,
+  input: CrearSuscripcionAdminInput
+): Promise<SuscripcionAdmin> {
+  return request(`/api/admin/organizations/${orgId}/suscripciones`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function cancelSuscripcionAdmin(id: string): Promise<{ ok: true }> {
+  return request(`/api/admin/suscripciones/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ estado: "cancelada" }),
+  });
 }

@@ -7,7 +7,9 @@ import {
   updateEmpleado,
   setEmpleadoActivo,
   desvincularDispositivo,
+  countEmpleadosActivos,
 } from "../lib/empleados.js";
+import { getEntitlements, puedeCrearEmpleado } from "../lib/planes.js";
 import { getOtpVigente, generarOtp } from "../lib/otp.js";
 
 interface CrearBody {
@@ -45,6 +47,17 @@ export async function empleadosRoutes(app: FastifyInstance): Promise<void> {
       if (!nombre?.trim()) {
         return reply.code(400).send({ error: "El nombre es requerido" });
       }
+
+      const ent = await getEntitlements(request.org!.id);
+      const activos = await countEmpleadosActivos(request.org!.id);
+      if (!puedeCrearEmpleado(ent, activos)) {
+        return reply.code(403).send({
+          error: "limite_plan",
+          recurso: "empleados",
+          max: ent.maxEmpleados,
+        });
+      }
+
       const empleado = await createEmpleado(request.org!.id, {
         nombre: nombre.trim(),
         celular: celular?.trim() || undefined,

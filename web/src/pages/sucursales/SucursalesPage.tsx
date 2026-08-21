@@ -11,6 +11,7 @@ import { MapaUbicacion, type Coordenadas } from "../../components/MapaUbicacion"
 import type { Sucursal } from "../../lib/api";
 import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useEliminarSucursal } from "./hooks";
 import { useQrBlob } from "./useQrBlob";
+import { ErrorPlan } from "../../components/ErrorPlan";
 
 type EstadoFiltro = "todos" | "activos" | "inactivos";
 
@@ -44,7 +45,7 @@ export default function SucursalesPage() {
   const [eliminarTarget, setEliminarTarget] = useState<Sucursal | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const qrUrl = useQrBlob(qrId);
   const qrSucursal = sucursales.find((s) => s.id === qrId) ?? null;
@@ -79,7 +80,7 @@ export default function SucursalesPage() {
       resetAlta();
       setAltaOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -109,7 +110,7 @@ export default function SucursalesPage() {
       });
       setEditando(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -118,7 +119,7 @@ export default function SucursalesPage() {
     try {
       await editar.mutateAsync({ id: suc.id, patch: { activa: !suc.activa } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -129,7 +130,7 @@ export default function SucursalesPage() {
       await eliminar.mutateAsync(eliminarTarget.id);
       setEliminarTarget(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -171,7 +172,9 @@ export default function SucursalesPage() {
       </div>
 
       {error && !altaOpen && !editando && !eliminarTarget && (
-        <p className="mt-2 text-[15px] text-accent-700">{error}</p>
+        <ErrorPlan error={error} className="mt-2">
+          <p className="mt-2 text-[15px] text-accent-700">{error.message}</p>
+        </ErrorPlan>
       )}
 
       <Table containerClassName="mt-4">
@@ -302,7 +305,11 @@ export default function SucursalesPage() {
             }}
             radioMetros={parseNumero(radio)}
           />
-          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          {error && (
+            <ErrorPlan error={error}>
+              <p className="text-[15px] text-accent-700">{error.message}</p>
+            </ErrorPlan>
+          )}
           <Button type="submit" variant="primary" block disabled={loading}>
             Agregar
           </Button>
@@ -341,7 +348,11 @@ export default function SucursalesPage() {
             radioMetros={parseNumero(editRadio)}
             direccionInicial={editando?.direccion ?? null}
           />
-          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          {error && (
+            <ErrorPlan error={error}>
+              <p className="text-[15px] text-accent-700">{error.message}</p>
+            </ErrorPlan>
+          )}
           <Button type="submit" variant="primary" block disabled={loading}>
             Guardar
           </Button>
@@ -380,7 +391,11 @@ export default function SucursalesPage() {
         <p className="text-[15px] text-text/70">
           ¿Eliminar <strong>{eliminarTarget?.nombre}</strong>? Esta acción no se puede deshacer.
         </p>
-        {error && <p className="text-[15px] text-accent-700">{error}</p>}
+        {error && (
+          <ErrorPlan error={error}>
+            <p className="text-[15px] text-accent-700">{error.message}</p>
+          </ErrorPlan>
+        )}
         <div className="flex justify-end gap-2">
           <Button
             variant="secondary"

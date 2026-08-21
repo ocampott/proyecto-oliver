@@ -16,6 +16,7 @@ import {
   useDesvincularDispositivo,
   useGenerarOtp,
 } from "./hooks";
+import { ErrorPlan } from "../../components/ErrorPlan";
 
 function formatCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
@@ -44,7 +45,7 @@ export default function EmpleadosPage() {
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [codigoDialog, setCodigoDialog] = useState<{ nombre: string; code: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const loading =
     crear.isPending || editar.isPending || desactivar.isPending || desvincular.isPending || generarCodigo.isPending;
@@ -65,7 +66,7 @@ export default function EmpleadosPage() {
       setCelular("");
       setAltaOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -75,7 +76,7 @@ export default function EmpleadosPage() {
       await editar.mutateAsync({ id, patch: { nombre: editNombre, celular: editCelular || null } });
       setEditandoId(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -84,7 +85,7 @@ export default function EmpleadosPage() {
     try {
       await editar.mutateAsync({ id: emp.id, patch: { activo: !emp.activo } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -96,7 +97,7 @@ export default function EmpleadosPage() {
     try {
       await desvincular.mutateAsync(emp.id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -106,7 +107,7 @@ export default function EmpleadosPage() {
       const otp = await generarCodigo.mutateAsync(emp.id);
       setCodigoDialog({ nombre: emp.nombre, code: formatCode(otp.code) });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+      setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
   }
 
@@ -147,7 +148,11 @@ export default function EmpleadosPage() {
         </Button>
       </div>
 
-      {error && !altaOpen && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+      {error && !altaOpen && (
+        <ErrorPlan error={error} className="mt-2">
+          <p className="mt-2 text-[15px] text-accent-700">{error.message}</p>
+        </ErrorPlan>
+      )}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -301,7 +306,11 @@ export default function EmpleadosPage() {
             onChange={(e) => setCelular(e.target.value)}
             containerClassName="w-full"
           />
-          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          {error && (
+            <ErrorPlan error={error}>
+              <p className="text-[15px] text-accent-700">{error.message}</p>
+            </ErrorPlan>
+          )}
           <Button type="submit" variant="primary" block disabled={loading}>
             Agregar
           </Button>

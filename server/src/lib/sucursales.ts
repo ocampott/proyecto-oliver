@@ -99,6 +99,17 @@ export async function tieneAsistencia(orgId: string, id: string): Promise<boolea
   return (count ?? 0) > 0;
 }
 
+export async function countSucursalesActivas(orgId: string): Promise<number> {
+  const service = createServiceClient();
+  const { count, error } = await service
+    .from("sucursales")
+    .select("id", { count: "exact", head: true })
+    .eq("org_id", orgId)
+    .eq("activa", true);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function deleteSucursal(orgId: string, id: string): Promise<void> {
   const service = createServiceClient();
   const { error } = await service.from("sucursales").delete().eq("org_id", orgId).eq("id", id);

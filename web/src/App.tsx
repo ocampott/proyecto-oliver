@@ -13,6 +13,7 @@ import HorasPage from "./pages/horas/HorasPage";
 import TurnosPage from "./pages/turnos/TurnosPage";
 import RrhhPage from "./pages/rrhh/RrhhPage";
 import AdminPage from "./pages/admin/AdminPage";
+import PlanPage from "./pages/plan/PlanPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,6 +107,16 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/plan"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <PlanPage />
+                  </PanelLayout>
                 </ProtectedRoute>
               }
             />
