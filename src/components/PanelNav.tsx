@@ -5,7 +5,7 @@ import { AccountMenu } from "./AccountMenu";
 import { IconButton } from "./ui/icon-button";
 import { Badge } from "./ui/badge";
 import { cn } from "../lib/utils";
-import { useEntitlements } from "../lib/hooks";
+import { useEntitlements, tieneModulo } from "../lib/hooks";
 import type { Modulo, PlanSlug } from "../lib/api";
 
 interface NavItem {
@@ -120,7 +120,7 @@ function NavLinkItem({
   mobile?: boolean;
   onClick?: () => void;
 }) {
-  const bloqueado = item.modulo && ent ? !ent.modulos.includes(item.modulo) : false;
+  const bloqueado = item.modulo ? !tieneModulo(ent, item.modulo) : false;
   const planReq = item.modulo ? PLAN_REQUERIDO[item.modulo] : null;
   const aviso = bloqueado && planReq
     ? `Disponible con el plan ${PLAN_NOMBRE[planReq]}. Hacé click para ver los planes.`

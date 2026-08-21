@@ -3,7 +3,7 @@ import { CalendarClock, Clock, Users, MapPin, ChevronRight, CalendarDays, Briefc
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { useOrgActual, useEntitlements } from "../lib/hooks";
+import { useOrgActual, useEntitlements, tieneModulo } from "../lib/hooks";
 import { ApiError } from "../lib/api";
 import type { Modulo, PlanSlug } from "../lib/api";
 
@@ -114,7 +114,7 @@ export default function HomePage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {ACCESOS.map((a) => {
           const Icon = a.icon;
-          const bloqueado = a.modulo && ent ? !ent.modulos.includes(a.modulo) : false;
+          const bloqueado = a.modulo ? !tieneModulo(ent, a.modulo) : false;
           const planReq = a.planRequerido;
           const aviso = bloqueado && planReq
             ? `Disponible con el plan ${PLAN_NOMBRE[planReq]}. Hacé click para ver los planes.`

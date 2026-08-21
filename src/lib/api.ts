@@ -69,6 +69,13 @@ export interface Entitlements {
   maxSucursales: number | null;
   maxEmpleados: number | null;
   modulos: Modulo[];
+  /**
+   * true solo para platform_admins (superadmin). No tiene plan ni
+   * vencimiento — puede hacer todo, sin límites. Cualquier chequeo de
+   * `modulos`/límites en el frontend tiene que mirar esto primero (ver
+   * tieneModulo en ./hooks).
+   */
+  ilimitado: boolean;
 }
 
 export interface Organization {
