@@ -41,6 +41,7 @@ export default function SucursalesPage() {
   const [editCoords, setEditCoords] = useState<Coordenadas | null>(null);
   const [editDireccion, setEditDireccion] = useState<string | null>(null);
   const [qrId, setQrId] = useState<string | null>(null);
+  const [eliminarTarget, setEliminarTarget] = useState<Sucursal | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [error, setError] = useState<string | null>(null);
@@ -121,11 +122,12 @@ export default function SucursalesPage() {
     }
   }
 
-  async function handleEliminar(suc: Sucursal) {
-    if (!confirm(`¿Eliminar "${suc.nombre}"? Esta acción no se puede deshacer.`)) return;
+  async function handleEliminar() {
+    if (!eliminarTarget) return;
     setError(null);
     try {
-      await eliminar.mutateAsync(suc.id);
+      await eliminar.mutateAsync(eliminarTarget.id);
+      setEliminarTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
@@ -168,7 +170,9 @@ export default function SucursalesPage() {
         </Button>
       </div>
 
-      {error && !altaOpen && !editando && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+      {error && !altaOpen && !editando && !eliminarTarget && (
+        <p className="mt-2 text-[15px] text-accent-700">{error}</p>
+      )}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -231,7 +235,7 @@ export default function SucursalesPage() {
                     />
                     {!suc.activa && !suc.tiene_asistencia && (
                       <IconButton
-                        onClick={() => handleEliminar(suc)}
+                        onClick={() => setEliminarTarget(suc)}
                         disabled={loading}
                         icon={
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -363,6 +367,34 @@ export default function SucursalesPage() {
             </a>
           </Button>
         )}
+      </Dialog>
+
+      <Dialog
+        open={eliminarTarget != null}
+        onClose={() => {
+          setEliminarTarget(null);
+          setError(null);
+        }}
+        title="Eliminar sucursal"
+      >
+        <p className="text-[15px] text-text/70">
+          ¿Eliminar <strong>{eliminarTarget?.nombre}</strong>? Esta acción no se puede deshacer.
+        </p>
+        {error && <p className="text-[15px] text-accent-700">{error}</p>}
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setEliminarTarget(null);
+              setError(null);
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleEliminar} disabled={loading}>
+            Eliminar
+          </Button>
+        </div>
       </Dialog>
     </>
   );
