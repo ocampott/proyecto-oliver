@@ -1,22 +1,39 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./lib/auth";
 import { ToastProvider } from "./components/ui/toast";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PanelLayout } from "./components/PanelLayout";
-import MarcarPage from "./pages/MarcarPage";
-import LoginPage from "./pages/LoginPage";
-import SetPasswordPage from "./pages/SetPasswordPage";
-import HomePage from "./pages/HomePage";
-import SucursalesPage from "./pages/sucursales/SucursalesPage";
-import EmpleadosPage from "./pages/empleados/EmpleadosPage";
-import AsistenciaPage from "./pages/asistencia/AsistenciaPage";
-import HorasPage from "./pages/horas/HorasPage";
-import TurnosPage from "./pages/turnos/TurnosPage";
-import RrhhPage from "./pages/rrhh/RrhhPage";
-import AdminPage from "./pages/admin/AdminPage";
-import PlanPage from "./pages/plan/PlanPage";
-import ConfiguracionPage from "./pages/configuracion/ConfiguracionPage";
+
+// Cada página es su propio chunk: /marcar (empleados marcando desde el
+// celular, sin login) no tiene por qué descargar el bundle entero del
+// panel admin (mapas, export a Excel, etc.) solo para poder cargar.
+const MarcarPage = lazy(() => import("./pages/MarcarPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SetPasswordPage = lazy(() => import("./pages/SetPasswordPage"));
+const HomePage = lazy(() => import("./pages/HomePage"));
+const SucursalesPage = lazy(() => import("./pages/sucursales/SucursalesPage"));
+const EmpleadosPage = lazy(() => import("./pages/empleados/EmpleadosPage"));
+const AsistenciaPage = lazy(() => import("./pages/asistencia/AsistenciaPage"));
+const HorasPage = lazy(() => import("./pages/horas/HorasPage"));
+const TurnosPage = lazy(() => import("./pages/turnos/TurnosPage"));
+const RrhhPage = lazy(() => import("./pages/rrhh/RrhhPage"));
+const AdminPage = lazy(() => import("./pages/admin/AdminPage"));
+const PlanPage = lazy(() => import("./pages/plan/PlanPage"));
+const ConfiguracionPage = lazy(() => import("./pages/configuracion/ConfiguracionPage"));
+
+function PageFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-[3px] border-text/15 border-t-accent"
+        role="status"
+        aria-label="Cargando"
+      />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +51,7 @@ export default function App() {
       <ToastProvider>
       <AuthProvider>
         <BrowserRouter>
+          <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/bienvenida" element={<SetPasswordPage />} />
@@ -138,6 +156,7 @@ export default function App() {
             <Route path="/marcar/:org/:sucursal" element={<MarcarPage />} />
             <Route path="*" element={<div className="p-8">Página no encontrada.</div>} />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
       </ToastProvider>
