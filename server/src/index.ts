@@ -14,7 +14,9 @@ import { adminRoutes } from "./routes/admin.js";
 const app = Fastify({ logger: true });
 
 await app.register(cors, {
-  origin: env.corsOrigin,
+  // En dev el puerto de Vite puede variar si 5173 está ocupado: aceptamos
+  // cualquier localhost. En producción se usa solo CORS_ORIGIN.
+  origin: env.nodeEnv === "development" ? [env.corsOrigin, /^http:\/\/localhost:\d+$/] : env.corsOrigin,
   credentials: true,
   methods: ["GET", "HEAD", "POST", "PATCH", "DELETE"],
 });
