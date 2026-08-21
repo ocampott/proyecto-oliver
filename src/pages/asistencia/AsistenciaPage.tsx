@@ -9,7 +9,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSke
 import type { MotivoRechazo, AsistenciaRegistro } from "../../lib/api";
 import { useAsistencia, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
 import { exportarAsistencia } from "../../lib/api";
-import { useEntitlements, tieneModulo } from "../../lib/hooks";
+import { useEntitlements, useOrgActual, tieneModulo, puedeGestionar } from "../../lib/hooks";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -45,6 +45,8 @@ export default function AsistenciaPage() {
   const toast = useToast();
   const ent = useEntitlements();
   const sinReportes = !tieneModulo(ent, "reportes");
+  const { data: org } = useOrgActual();
+  const gestionable = puedeGestionar(org ?? null);
   const [descargando, setDescargando] = useState(false);
   const [resolviendoId, setResolviendoId] = useState<string | null>(null);
   const [borrarTarget, setBorrarTarget] = useState<AsistenciaRegistro | null>(null);
@@ -165,8 +167,14 @@ export default function AsistenciaPage() {
             variant="secondary"
             className="ml-auto"
             onClick={handleDescargarExcel}
-            disabled={descargando || sinReportes}
-            title={sinReportes ? "Exportar es una función del plan Básico. Pasate a un plan superior para usarla." : undefined}
+            disabled={descargando || sinReportes || !gestionable}
+            title={
+              !gestionable
+                ? "Tu rol no tiene acceso a exportar."
+                : sinReportes
+                  ? "Exportar es una función del plan Básico. Pasate a un plan superior para usarla."
+                  : undefined
+            }
           >
             <Download className="h-4 w-4" />
             {descargando ? "Generando…" : "Descargar Excel"}
@@ -209,9 +217,11 @@ export default function AsistenciaPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end">
-                    <Button variant="secondary" size="default" onClick={() => setBorrarTarget(r)}>
-                      Borrar
-                    </Button>
+                    {gestionable && (
+                      <Button variant="secondary" size="default" onClick={() => setBorrarTarget(r)}>
+                        Borrar
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

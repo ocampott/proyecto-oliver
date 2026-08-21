@@ -13,6 +13,7 @@ import type { Sucursal } from "../../lib/api";
 import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useEliminarSucursal } from "./hooks";
 import { useQrBlob } from "./useQrBlob";
 import { ErrorPlan } from "../../components/ErrorPlan";
+import { puedeGestionar } from "../../lib/hooks";
 
 type EstadoFiltro = "todos" | "activos" | "inactivos";
 
@@ -58,6 +59,7 @@ export default function SucursalesPage() {
   const ent = org?.entitlements;
   const activasCount = sucursales.filter((s) => s.activa).length;
   const alTope = !!ent && !ent.ilimitado && ent.maxSucursales !== null && activasCount >= ent.maxSucursales;
+  const gestionable = puedeGestionar(org ?? null);
 
   const sucursalesFiltradas = sucursales.filter((s) => {
     const matchNombre = s.nombre.toLowerCase().includes(busqueda.toLowerCase());
@@ -174,8 +176,14 @@ export default function SucursalesPage() {
         <Button
           variant="primary"
           className="ml-auto"
-          disabled={alTope}
-          title={alTope ? `Llegaste al máximo de ${ent!.maxSucursales} sucursales de tu plan. Pasate a un plan superior para sumar más.` : undefined}
+          disabled={alTope || !gestionable}
+          title={
+            !gestionable
+              ? "Tu rol no tiene acceso a crear sucursales."
+              : alTope
+                ? `Llegaste al máximo de ${ent!.maxSucursales} sucursales de tu plan. Pasate a un plan superior para sumar más.`
+                : undefined
+          }
           onClick={() => {
             setError(null);
             setAltaOpen(true);
@@ -219,6 +227,8 @@ export default function SucursalesPage() {
                   <div className="flex justify-end gap-1.5">
                     <IconButton
                       onClick={() => abrirEdicion(suc)}
+                      disabled={!gestionable}
+                      title={!gestionable ? "Tu rol no tiene acceso a editar sucursales." : undefined}
                       icon={
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -228,7 +238,8 @@ export default function SucursalesPage() {
                     />
                     <IconButton
                       onClick={() => handleToggleActiva(suc)}
-                      disabled={loading}
+                      disabled={loading || !gestionable}
+                      title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
                       icon={
                         accionandoId === suc.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -255,7 +266,7 @@ export default function SucursalesPage() {
                       }
                       label="Ver QR"
                     />
-                    {!suc.activa && !suc.tiene_asistencia && (
+                    {gestionable && !suc.activa && !suc.tiene_asistencia && (
                       <IconButton
                         onClick={() => setEliminarTarget(suc)}
                         disabled={loading}

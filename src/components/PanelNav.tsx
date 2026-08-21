@@ -5,13 +5,15 @@ import { AccountMenu } from "./AccountMenu";
 import { IconButton } from "./ui/icon-button";
 import { Badge } from "./ui/badge";
 import { cn } from "../lib/utils";
-import { useOrgActual, tieneModulo } from "../lib/hooks";
-import type { Modulo, PlanSlug, Entitlements } from "../lib/api";
+import { useOrgActual, tieneModulo, tieneRol } from "../lib/hooks";
+import type { Modulo, PlanSlug, Entitlements, Organization } from "../lib/api";
 
 interface NavItem {
   href: string;
   label: string;
   modulo?: Modulo;
+  /** true si solo owner/admin pueden acceder (agent queda afuera). */
+  soloGestion?: boolean;
 }
 
 const LINKS: NavItem[] = [
@@ -19,9 +21,9 @@ const LINKS: NavItem[] = [
   { href: "/asistencia", label: "Asistencia", modulo: "asistencia" },
   { href: "/empleados", label: "Empleados" },
   { href: "/sucursales", label: "Sucursales" },
-  { href: "/horas", label: "Horas", modulo: "horas" },
-  { href: "/turnos", label: "Turnos", modulo: "turnos" },
-  { href: "/rrhh", label: "RRHH", modulo: "rrhh" },
+  { href: "/horas", label: "Horas", modulo: "horas", soloGestion: true },
+  { href: "/turnos", label: "Turnos", modulo: "turnos", soloGestion: true },
+  { href: "/rrhh", label: "RRHH", modulo: "rrhh", soloGestion: true },
 ];
 
 const PLAN_REQUERIDO: Record<Modulo, PlanSlug> = {
@@ -55,6 +57,7 @@ export function PanelNav() {
   const navRef = React.useRef<HTMLElement>(null);
   const { data: org, isLoading } = useOrgActual();
   const ent = org?.entitlements ?? null;
+  const orgOrNull = org ?? null;
 
   React.useEffect(() => {
     if (!open) return;
@@ -92,7 +95,7 @@ export function PanelNav() {
           ) : (
             <div className="hidden items-center gap-0.5 md:flex">
               {LINKS.map((item) => (
-                <NavLinkItem key={item.href} item={item} ent={ent} />
+                <NavLinkItem key={item.href} item={item} ent={ent} org={orgOrNull} />
               ))}
             </div>
           )}
@@ -119,7 +122,7 @@ export function PanelNav() {
                 </span>
               ))
             : LINKS.map((item) => (
-                <NavLinkItem key={item.href} item={item} ent={ent} mobile onClick={() => setOpen(false)} />
+                <NavLinkItem key={item.href} item={item} ent={ent} org={orgOrNull} mobile onClick={() => setOpen(false)} />
               ))}
         </div>
       </div>
@@ -130,19 +133,39 @@ export function PanelNav() {
 function NavLinkItem({
   item,
   ent,
+  org,
   mobile,
   onClick,
 }: {
   item: NavItem;
   ent: Entitlements | null;
+  org: Organization | null;
   mobile?: boolean;
   onClick?: () => void;
 }) {
+  const sinPermiso = item.soloGestion ? !tieneRol(org, ["owner", "admin"]) : false;
   const bloqueado = item.modulo ? !tieneModulo(ent, item.modulo) : false;
   const planReq = item.modulo ? PLAN_REQUERIDO[item.modulo] : null;
   const aviso = bloqueado && planReq
     ? `Disponible con el plan ${PLAN_NOMBRE[planReq]}. Hacé click para ver los planes.`
     : undefined;
+
+  if (sinPermiso) {
+    return (
+      <span
+        title="Tu rol no tiene acceso a esta sección."
+        aria-disabled="true"
+        className={cn(
+          "cursor-not-allowed select-none opacity-40",
+          mobile
+            ? "block rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary"
+            : cn(desktopLinkClass({ isActive: false }), "hover:bg-transparent")
+        )}
+      >
+        {item.label}
+      </span>
+    );
+  }
 
   if (bloqueado && planReq) {
     return (

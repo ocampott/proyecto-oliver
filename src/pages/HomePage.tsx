@@ -3,7 +3,7 @@ import { CalendarClock, Clock, Users, MapPin, ChevronRight, CalendarDays, Briefc
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { useOrgActual, useEntitlements, tieneModulo } from "../lib/hooks";
+import { useOrgActual, useEntitlements, tieneModulo, tieneRol } from "../lib/hooks";
 import { ApiError } from "../lib/api";
 import type { Modulo, PlanSlug } from "../lib/api";
 
@@ -14,6 +14,8 @@ interface Acceso {
   icon: React.ComponentType<{ className?: string }>;
   modulo?: Modulo;
   planRequerido?: PlanSlug;
+  /** true si solo owner/admin pueden acceder (agent queda afuera). */
+  soloGestion?: boolean;
 }
 
 const ACCESOS: Acceso[] = [
@@ -43,6 +45,7 @@ const ACCESOS: Acceso[] = [
     icon: Clock,
     modulo: "horas",
     planRequerido: "basico",
+    soloGestion: true,
   },
   {
     href: "/turnos",
@@ -51,6 +54,7 @@ const ACCESOS: Acceso[] = [
     icon: CalendarDays,
     modulo: "turnos",
     planRequerido: "basico",
+    soloGestion: true,
   },
   {
     href: "/rrhh",
@@ -59,6 +63,7 @@ const ACCESOS: Acceso[] = [
     icon: Briefcase,
     modulo: "rrhh",
     planRequerido: "basico",
+    soloGestion: true,
   },
 ];
 
@@ -114,11 +119,29 @@ export default function HomePage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {ACCESOS.map((a) => {
           const Icon = a.icon;
+          const sinPermiso = a.soloGestion ? !tieneRol(org, ["owner", "admin"]) : false;
           const bloqueado = a.modulo ? !tieneModulo(ent, a.modulo) : false;
           const planReq = a.planRequerido;
-          const aviso = bloqueado && planReq
-            ? `Disponible con el plan ${PLAN_NOMBRE[planReq]}. Hacé click para ver los planes.`
-            : undefined;
+          const aviso = sinPermiso
+            ? "Tu rol no tiene acceso a esta sección."
+            : bloqueado && planReq
+              ? `Disponible con el plan ${PLAN_NOMBRE[planReq]}. Hacé click para ver los planes.`
+              : undefined;
+
+          if (sinPermiso) {
+            return (
+              <div key={a.href} title={aviso} className="block h-full cursor-not-allowed opacity-40">
+                <Card className="relative h-full">
+                  <div className="flex items-start gap-2">
+                    <Icon className="mb-1 h-[22px] w-[22px] text-accent-700" />
+                  </div>
+                  <h2 className="text-[17px] font-extrabold text-text">{a.label}</h2>
+                  <p className="mt-1 text-[13px] text-text/80">{a.detalle}</p>
+                </Card>
+              </div>
+            );
+          }
+
           const destino = bloqueado ? "/plan" : a.href;
 
           return (

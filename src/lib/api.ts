@@ -74,12 +74,20 @@ export interface Entitlements {
   ilimitado: boolean;
 }
 
+export type OrgRole = "owner" | "admin" | "agent";
+
 export interface Organization {
   id: string;
   name: string;
   slug: string;
   plan: string;
   entitlements: Entitlements;
+  /**
+   * Rol del usuario autenticado dentro de esta organización. Un
+   * platform_admin (superadmin) bypasea los chequeos de rol igual que
+   * bypasea los de plan (ver ilimitado) — ver tieneRol en ./hooks.
+   */
+  role?: OrgRole;
 }
 
 export function getOrgActual(): Promise<Organization> {
@@ -89,8 +97,6 @@ export function getOrgActual(): Promise<Organization> {
 export function updateOrgActual(name: string): Promise<Organization> {
   return request("/api/org/current", { method: "PATCH", body: JSON.stringify({ name }) });
 }
-
-export type OrgRole = "owner" | "admin" | "agent";
 
 export interface Miembro {
   userId: string;

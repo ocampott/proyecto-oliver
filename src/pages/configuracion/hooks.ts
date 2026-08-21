@@ -9,8 +9,8 @@ export function useActualizarOrg() {
   });
 }
 
-export function useMiembros() {
-  return useQuery({ queryKey: ["miembros"], queryFn: listMiembros });
+export function useMiembros(enabled = true) {
+  return useQuery({ queryKey: ["miembros"], queryFn: listMiembros, enabled });
 }
 
 export function useInvitarMiembro() {

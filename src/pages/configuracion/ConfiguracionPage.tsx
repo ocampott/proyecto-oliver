@@ -10,7 +10,7 @@ import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { useAuth } from "../../lib/auth";
-import { useOrgActual } from "../../lib/hooks";
+import { useOrgActual, tieneRol } from "../../lib/hooks";
 import type { Miembro, OrgRole } from "../../lib/api";
 import { useActualizarOrg, useMiembros, useInvitarMiembro, useEliminarMiembro } from "./hooks";
 
@@ -27,7 +27,9 @@ function fechaLocal(iso: string): string {
 export default function ConfiguracionPage() {
   const { user } = useAuth();
   const { data: org } = useOrgActual();
-  const { data: miembros = [], isLoading: miembrosLoading } = useMiembros();
+  const esOwner = tieneRol(org ?? null, ["owner"]);
+  const puedeVerEquipo = tieneRol(org ?? null, ["owner", "admin"]);
+  const { data: miembros = [], isLoading: miembrosLoading } = useMiembros(puedeVerEquipo);
 
   const actualizarOrg = useActualizarOrg();
   const invitar = useInvitarMiembro();
@@ -96,70 +98,79 @@ export default function ConfiguracionPage() {
             <h2 className="text-[16px] font-extrabold text-text">Organización</h2>
             <p className="mt-1 text-[15px] text-text">{org?.name ?? "—"}</p>
           </div>
-          <Button variant="secondary" onClick={abrirEditarOrg}>
+          <Button
+            variant="secondary"
+            onClick={abrirEditarOrg}
+            disabled={!esOwner}
+            title={!esOwner ? "Solo el dueño de la organización puede editar este dato." : undefined}
+          >
             Editar
           </Button>
         </div>
       </Card>
 
-      <Card className="mt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-[16px] font-extrabold text-text">Equipo</h2>
-            <p className="mt-1 text-[13.5px] text-text/60">
-              Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
-              tienen el mismo acceso, sin importar el rol.
-            </p>
+      {puedeVerEquipo && (
+        <Card className="mt-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-[16px] font-extrabold text-text">Equipo</h2>
+              <p className="mt-1 text-[13.5px] text-text/60">
+                Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
+                tienen el mismo acceso, sin importar el rol.
+              </p>
+            </div>
+            {esOwner && (
+              <Button variant="secondary" onClick={() => { setErrorInvitar(null); setInvitarOpen(true); }}>
+                <Plus className="h-4 w-4" />
+                Invitar
+              </Button>
+            )}
           </div>
-          <Button variant="secondary" onClick={() => { setErrorInvitar(null); setInvitarOpen(true); }}>
-            <Plus className="h-4 w-4" />
-            Invitar
-          </Button>
-        </div>
 
-        <Table containerClassName="mt-3">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Desde</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {miembrosLoading && <TableSkeleton cols={4} />}
-            {!miembrosLoading &&
-              miembros.map((m) => (
-                <TableRow key={m.userId}>
-                  <TableCell>
-                    {m.email}
-                    {m.userId === user?.id && <span className="text-text-tertiary"> (vos)</span>}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={m.role === "owner" ? "accent" : "neutral"}>{ROL_LABEL[m.role]}</Badge>
-                  </TableCell>
-                  <TableCell>{fechaLocal(m.createdAt)}</TableCell>
-                  <TableCell className="text-right">
-                    {m.role !== "owner" && (
-                      <IconButton
-                        onClick={() => setQuitarTarget(m)}
-                        icon={<Trash2 className="h-3.5 w-3.5" />}
-                        label="Quitar de la organización"
-                      />
-                    )}
+          <Table containerClassName="mt-3">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Email</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead>Desde</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {miembrosLoading && <TableSkeleton cols={4} />}
+              {!miembrosLoading &&
+                miembros.map((m) => (
+                  <TableRow key={m.userId}>
+                    <TableCell>
+                      {m.email}
+                      {m.userId === user?.id && <span className="text-text-tertiary"> (vos)</span>}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={m.role === "owner" ? "accent" : "neutral"}>{ROL_LABEL[m.role]}</Badge>
+                    </TableCell>
+                    <TableCell>{fechaLocal(m.createdAt)}</TableCell>
+                    <TableCell className="text-right">
+                      {esOwner && m.role !== "owner" && (
+                        <IconButton
+                          onClick={() => setQuitarTarget(m)}
+                          icon={<Trash2 className="h-3.5 w-3.5" />}
+                          label="Quitar de la organización"
+                        />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              {!miembrosLoading && miembros.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-text/60">
+                    Todavía no hay miembros cargados.
                   </TableCell>
                 </TableRow>
-              ))}
-            {!miembrosLoading && miembros.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-text/60">
-                  Todavía no hay miembros cargados.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+              )}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
       <Card className="mt-4">
         <h2 className="text-[16px] font-extrabold text-text">Otras configuraciones</h2>

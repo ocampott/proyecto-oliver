@@ -18,7 +18,7 @@ import {
   useGenerarOtp,
 } from "./hooks";
 import { ErrorPlan } from "../../components/ErrorPlan";
-import { useOrgActual } from "../../lib/hooks";
+import { useOrgActual, puedeGestionar } from "../../lib/hooks";
 
 function formatCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
@@ -59,6 +59,7 @@ export default function EmpleadosPage() {
   const ent = org?.entitlements;
   const activosCount = empleados.filter((e) => e.activo).length;
   const alTope = !!ent && !ent.ilimitado && ent.maxEmpleados !== null && activosCount >= ent.maxEmpleados;
+  const gestionable = puedeGestionar(org ?? null);
 
   const empleadosFiltrados = empleados.filter((emp) => {
     const matchNombre = emp.nombre.toLowerCase().includes(busqueda.toLowerCase());
@@ -176,8 +177,14 @@ export default function EmpleadosPage() {
         <Button
           variant="primary"
           className="ml-auto"
-          disabled={alTope}
-          title={alTope ? `Llegaste al máximo de ${ent!.maxEmpleados} empleados de tu plan. Pasate a un plan superior para sumar más.` : undefined}
+          disabled={alTope || !gestionable}
+          title={
+            !gestionable
+              ? "Tu rol no tiene acceso a crear empleados."
+              : alTope
+                ? `Llegaste al máximo de ${ent!.maxEmpleados} empleados de tu plan. Pasate a un plan superior para sumar más.`
+                : undefined
+          }
           onClick={() => {
             setError(null);
             setAltaOpen(true);
@@ -231,7 +238,8 @@ export default function EmpleadosPage() {
                   <div className="flex justify-end gap-1.5">
                     <IconButton
                       onClick={() => abrirEdicion(emp)}
-                      disabled={loading}
+                      disabled={loading || !gestionable}
+                      title={!gestionable ? "Tu rol no tiene acceso a editar empleados." : undefined}
                       icon={
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -241,7 +249,8 @@ export default function EmpleadosPage() {
                     />
                     <IconButton
                       onClick={() => handleToggleActivo(emp)}
-                      disabled={loading}
+                      disabled={loading || !gestionable}
+                      title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
                       icon={
                         accionandoId === emp.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -254,7 +263,7 @@ export default function EmpleadosPage() {
                       }
                       label={emp.activo ? "Desactivar" : "Activar"}
                     />
-                    {emp.device_token ? (
+                    {gestionable && emp.device_token && (
                       <IconButton
                         onClick={() => setDesvincularTarget(emp)}
                         disabled={loading}
@@ -270,7 +279,8 @@ export default function EmpleadosPage() {
                         }
                         label="Desvincular"
                       />
-                    ) : (
+                    )}
+                    {gestionable && !emp.device_token && (
                       <IconButton
                         onClick={() => handleGenerarCodigo(emp)}
                         disabled={loading}
