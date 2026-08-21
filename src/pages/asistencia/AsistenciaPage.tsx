@@ -2,14 +2,19 @@ import { useState } from "react";
 import { LogIn, LogOut, Download, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
+import { Select } from "../../components/ui/select";
 import { Badge } from "../../components/ui/badge";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import type { MotivoRechazo, AsistenciaRegistro } from "../../lib/api";
+import type { MotivoRechazo, AsistenciaRegistro, TipoMarca } from "../../lib/api";
 import { useAsistencia, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
 import { exportarAsistencia } from "../../lib/api";
+import { useEmpleados } from "../empleados/hooks";
+import { useSucursales } from "../sucursales/hooks";
 import { useEntitlements, useOrgActual, tieneModulo, puedeGestionar } from "../../lib/hooks";
+
+type TipoFiltro = "todos" | TipoMarca;
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -40,6 +45,8 @@ export default function AsistenciaPage() {
 
   const { data: registros = [], isLoading, isError } = useAsistencia(desde, hasta);
   const { data: rechazadas = [] } = useRechazadas();
+  const { data: empleados = [] } = useEmpleados();
+  const { data: sucursales = [] } = useSucursales();
   const borrar = useBorrarAsistencia();
   const resolver = useResolverRechazada();
   const toast = useToast();
@@ -50,6 +57,16 @@ export default function AsistenciaPage() {
   const [descargando, setDescargando] = useState(false);
   const [resolviendoId, setResolviendoId] = useState<string | null>(null);
   const [borrarTarget, setBorrarTarget] = useState<AsistenciaRegistro | null>(null);
+  const [empleadoFiltro, setEmpleadoFiltro] = useState("todos");
+  const [sucursalFiltro, setSucursalFiltro] = useState("todos");
+  const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>("todos");
+
+  const registrosFiltrados = registros.filter((r) => {
+    const matchEmpleado = empleadoFiltro === "todos" || r.empleado_id === empleadoFiltro;
+    const matchSucursal = sucursalFiltro === "todos" || r.sucursal_id === sucursalFiltro;
+    const matchTipo = tipoFiltro === "todos" || r.tipo === tipoFiltro;
+    return matchEmpleado && matchSucursal && matchTipo;
+  });
 
   async function handleDescargarExcel() {
     setDescargando(true);
@@ -163,6 +180,37 @@ export default function AsistenciaPage() {
             onChange={(e) => setHasta(e.target.value)}
             containerClassName="w-40"
           />
+          <Select
+            label="Empleado"
+            value={empleadoFiltro}
+            onChange={(e) => setEmpleadoFiltro(e.target.value)}
+            options={[
+              { value: "todos", label: "Todos" },
+              ...empleados.map((emp) => ({ value: emp.id, label: emp.nombre })),
+            ]}
+            containerClassName="w-48"
+          />
+          <Select
+            label="Sucursal"
+            value={sucursalFiltro}
+            onChange={(e) => setSucursalFiltro(e.target.value)}
+            options={[
+              { value: "todos", label: "Todos" },
+              ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre })),
+            ]}
+            containerClassName="w-48"
+          />
+          <Select
+            label="Tipo"
+            value={tipoFiltro}
+            onChange={(e) => setTipoFiltro(e.target.value as TipoFiltro)}
+            options={[
+              { value: "todos", label: "Todos" },
+              { value: "entrada", label: "Entrada" },
+              { value: "salida", label: "Salida" },
+            ]}
+            containerClassName="w-40"
+          />
           <Button
             variant="secondary"
             className="ml-auto"
@@ -199,7 +247,7 @@ export default function AsistenciaPage() {
           </TableHeader>
           <TableBody>
             {isLoading && <TableSkeleton cols={5} />}
-            {registros.map((r) => (
+            {registrosFiltrados.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>{horaLocal(r.created_at)}</TableCell>
                 <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
@@ -226,7 +274,7 @@ export default function AsistenciaPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {!isLoading && registros.length === 0 && (
+            {!isLoading && registrosFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-text/60">
                   No hay registros en este rango.

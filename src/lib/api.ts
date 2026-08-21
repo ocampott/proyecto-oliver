@@ -103,6 +103,7 @@ export interface Miembro {
   email: string;
   role: OrgRole;
   createdAt: string;
+  activo: boolean;
 }
 
 export function listMiembros(): Promise<Miembro[]> {
