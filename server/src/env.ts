@@ -11,5 +11,8 @@ export const env = {
   supabaseUrl: required("SUPABASE_URL"),
   supabaseAnonKey: required("SUPABASE_ANON_KEY"),
   supabaseServiceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY"),
+  // Key de servidor para Places API (New), restringida por IP. Opcional al
+  // boot para no romper dev sin mapas; el endpoint falla con mensaje claro.
+  googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY ?? "",
   nodeEnv: process.env.NODE_ENV ?? "development",
 };
