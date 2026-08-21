@@ -9,7 +9,7 @@ import { Dialog } from "../../components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { MapaUbicacion, type Coordenadas } from "../../components/MapaUbicacion";
 import type { Sucursal } from "../../lib/api";
-import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useDesactivarSucursal } from "./hooks";
+import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useEliminarSucursal } from "./hooks";
 import { useQrBlob } from "./useQrBlob";
 
 type EstadoFiltro = "todos" | "activos" | "inactivos";
@@ -28,7 +28,7 @@ export default function SucursalesPage() {
   const { data: org } = useOrgActual();
   const crear = useCrearSucursal();
   const editar = useEditarSucursal();
-  const desactivar = useDesactivarSucursal();
+  const eliminar = useEliminarSucursal();
 
   const [nombre, setNombre] = useState("");
   const [radio, setRadio] = useState("100");
@@ -48,7 +48,7 @@ export default function SucursalesPage() {
   const qrUrl = useQrBlob(qrId);
   const qrSucursal = sucursales.find((s) => s.id === qrId) ?? null;
 
-  const loading = crear.isPending || editar.isPending || desactivar.isPending;
+  const loading = crear.isPending || editar.isPending || eliminar.isPending;
 
   const sucursalesFiltradas = sucursales.filter((s) => {
     const matchNombre = s.nombre.toLowerCase().includes(busqueda.toLowerCase());
@@ -116,6 +116,16 @@ export default function SucursalesPage() {
     setError(null);
     try {
       await editar.mutateAsync({ id: suc.id, patch: { activa: !suc.activa } });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
+    }
+  }
+
+  async function handleEliminar(suc: Sucursal) {
+    if (!confirm(`¿Eliminar "${suc.nombre}"? Esta acción no se puede deshacer.`)) return;
+    setError(null);
+    try {
+      await eliminar.mutateAsync(suc.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     }
@@ -219,6 +229,22 @@ export default function SucursalesPage() {
                       }
                       label="Ver QR"
                     />
+                    {!suc.activa && !suc.tiene_asistencia && (
+                      <IconButton
+                        onClick={() => handleEliminar(suc)}
+                        disabled={loading}
+                        icon={
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
+                        }
+                        label="Eliminar"
+                      />
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

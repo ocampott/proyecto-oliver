@@ -3,7 +3,7 @@ import {
   listSucursales,
   createSucursal,
   updateSucursal,
-  deactivateSucursal,
+  deleteSucursal,
   type CrearSucursalInput,
   type EditarSucursalInput,
 } from "../../lib/api";
@@ -32,10 +32,10 @@ export function useEditarSucursal() {
   });
 }
 
-export function useDesactivarSucursal() {
+export function useEliminarSucursal() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deactivateSucursal(id),
+    mutationFn: (id: string) => deleteSucursal(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }

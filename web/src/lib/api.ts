@@ -54,6 +54,7 @@ export interface Sucursal {
   direccion: string | null;
   activa: boolean;
   created_at: string;
+  tiene_asistencia?: boolean;
 }
 
 export function listSucursales(): Promise<Sucursal[]> {
@@ -91,7 +92,7 @@ export function updateSucursal(id: string, patch: EditarSucursalInput): Promise<
   });
 }
 
-export function deactivateSucursal(id: string): Promise<{ ok: true }> {
+export function deleteSucursal(id: string): Promise<{ ok: true }> {
   return request(`/api/sucursales/${id}`, { method: "DELETE" });
 }
 
