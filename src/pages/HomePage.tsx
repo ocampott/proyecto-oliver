@@ -3,6 +3,7 @@ import { CalendarClock, Clock, Users, MapPin, ChevronRight, CalendarDays, Briefc
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import { PulsoOperativo } from "../components/dashboard/PulsoOperativo";
 import { useOrgActual, useEntitlements, tieneModulo, tieneRol } from "../lib/hooks";
 import { ApiError } from "../lib/api";
 import type { Modulo, PlanSlug } from "../lib/api";
@@ -116,6 +117,7 @@ export default function HomePage() {
   return (
     <>
       <h1 className="text-[32px] font-extrabold text-text">{org.name}</h1>
+      {tieneRol(org, ["owner", "admin"]) && <PulsoOperativo orgId={org.id} />}
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {ACCESOS.map((a) => {
           const Icon = a.icon;
