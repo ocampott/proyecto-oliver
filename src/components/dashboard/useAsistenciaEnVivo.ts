@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAsistencia } from "../../pages/asistencia/hooks";
 import { supabase } from "../../lib/supabase";
-import type { AsistenciaRegistro } from "../../lib/api";
+import type { AsistenciaRegistro, TipoMarca } from "../../lib/api";
 
 function hoyAR(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
@@ -18,6 +18,27 @@ interface SucursalGrupo {
   sucursalId: string;
   sucursalNombre: string;
   empleados: EmpleadoAdentro[];
+}
+
+interface Marca {
+  id: string;
+  empleadoNombre: string;
+  sucursalNombre: string;
+  tipo: TipoMarca;
+  hora: string;
+}
+
+function derivarUltimosMarcados(registros: AsistenciaRegistro[]): Marca[] {
+  return [...registros]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 3)
+    .map((r) => ({
+      id: r.id,
+      empleadoNombre: r.empleado_nombre ?? "Empleado",
+      sucursalNombre: r.sucursal_nombre ?? "Sin sucursal",
+      tipo: r.tipo,
+      hora: r.created_at,
+    }));
 }
 
 function derivarAdentro(registros: AsistenciaRegistro[]): SucursalGrupo[] {
@@ -72,6 +93,7 @@ export function useAsistenciaEnVivo(orgId: string) {
   }, [orgId, hoy, queryClient, instanceId]);
 
   const porSucursal = useMemo(() => derivarAdentro(data ?? []), [data]);
+  const ultimosMarcados = useMemo(() => derivarUltimosMarcados(data ?? []), [data]);
 
-  return { isLoading, isError, porSucursal, conectado };
+  return { isLoading, isError, porSucursal, conectado, ultimosMarcados };
 }

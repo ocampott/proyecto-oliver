@@ -3,8 +3,6 @@ import { Status } from "../ui/status";
 import { useAsistenciaEnVivo } from "./useAsistenciaEnVivo";
 import { useOlvidaronSalida } from "./useOlvidaronSalida";
 import { useAusenciasHoy } from "./useAusenciasHoy";
-import { useEmpleados } from "../../pages/empleados/hooks";
-import { useSucursales } from "../../pages/sucursales/hooks";
 import { useEntitlements, tieneModulo } from "../../lib/hooks";
 
 function horaLocal(iso: string): string {
@@ -19,8 +17,9 @@ function fechaLocal(iso: string): string {
   return new Date(iso).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
 }
 
-function CardAdentroAhora({ orgId }: { orgId: string }) {
-  const enVivo = useAsistenciaEnVivo(orgId);
+type EnVivo = ReturnType<typeof useAsistenciaEnVivo>;
+
+function CardAdentroAhora({ enVivo }: { enVivo: EnVivo }) {
   const totalAdentro = enVivo.porSucursal.reduce((acc, g) => acc + g.empleados.length, 0);
 
   return (
@@ -34,22 +33,32 @@ function CardAdentroAhora({ orgId }: { orgId: string }) {
       {enVivo.isLoading && <p className="mt-3 text-[13px] text-text/60">Cargando…</p>}
       {enVivo.isError && <p className="mt-3 text-[13px] text-alert">No pudimos cargar asistencia.</p>}
       {!enVivo.isLoading && !enVivo.isError && (
-        <>
-          <p className="mt-2 text-[28px] font-extrabold text-text">{totalAdentro}</p>
-          <ul className="mt-3 space-y-2">
-            {enVivo.porSucursal.map((g) => (
-              <li key={g.sucursalId} className="text-[13px] text-text/80">
-                <span className="font-semibold text-text">{g.sucursalNombre}:</span>{" "}
-                {g.empleados
-                  .map((e) => `${e.empleadoNombre} (desde ${horaLocal(e.desde)})`)
-                  .join(", ")}
-              </li>
-            ))}
-            {enVivo.porSucursal.length === 0 && (
-              <li className="text-[13px] text-text/60">Nadie marcado por ahora.</li>
-            )}
-          </ul>
-        </>
+        <p className="mt-2 text-[28px] font-extrabold text-text">{totalAdentro}</p>
+      )}
+    </Card>
+  );
+}
+
+function CardUltimosMarcados({ enVivo }: { enVivo: EnVivo }) {
+  const marcas = enVivo.ultimosMarcados;
+
+  return (
+    <Card>
+      <h2 className="text-[15px] font-bold text-text">Últimos en marcar</h2>
+      {enVivo.isLoading && <p className="mt-3 text-[13px] text-text/60">Cargando…</p>}
+      {enVivo.isError && <p className="mt-3 text-[13px] text-alert">No pudimos cargar asistencia.</p>}
+      {!enVivo.isLoading && !enVivo.isError && (
+        <ul className="mt-3 space-y-2">
+          {marcas.map((m) => (
+            <li key={m.id} className="text-[13px] text-text/80">
+              <span className="font-semibold text-text">{m.empleadoNombre}</span> —{" "}
+              {m.tipo === "entrada" ? "Entrada" : "Salida"} a las {horaLocal(m.hora)}, {m.sucursalNombre}
+            </li>
+          ))}
+          {marcas.length === 0 && (
+            <li className="text-[13px] text-text/60">Sin marcas hoy todavía.</li>
+          )}
+        </ul>
       )}
     </Card>
   );
@@ -109,38 +118,16 @@ function CardAusenciasHoy() {
   );
 }
 
-function CardResumen() {
-  const { data: empleados = [] } = useEmpleados();
-  const { data: sucursales = [] } = useSucursales();
-  const empleadosActivos = empleados.filter((e) => e.activo).length;
-  const sucursalesActivas = sucursales.filter((s) => s.activa).length;
-
-  return (
-    <Card>
-      <h2 className="text-[15px] font-bold text-text">Resumen</h2>
-      <div className="mt-3 space-y-2 text-[13px] text-text/80">
-        <p>
-          <span className="font-semibold text-text">{empleadosActivos}</span> / {empleados.length} empleados
-          activos
-        </p>
-        <p>
-          <span className="font-semibold text-text">{sucursalesActivas}</span> / {sucursales.length} sucursales
-          activas
-        </p>
-      </div>
-    </Card>
-  );
-}
-
 export function PulsoOperativo({ orgId }: { orgId: string }) {
   const ent = useEntitlements();
+  const enVivo = useAsistenciaEnVivo(orgId);
 
   return (
     <div className="mt-6 mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <CardAdentroAhora orgId={orgId} />
+      <CardAdentroAhora enVivo={enVivo} />
+      <CardUltimosMarcados enVivo={enVivo} />
       {tieneModulo(ent, "horas") && <CardOlvidaronSalida />}
       {tieneModulo(ent, "rrhh") && <CardAusenciasHoy />}
-      <CardResumen />
     </div>
   );
 }
