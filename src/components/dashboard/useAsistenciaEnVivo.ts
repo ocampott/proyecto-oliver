@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAsistencia } from "../../pages/asistencia/hooks";
 import { supabase } from "../../lib/supabase";
@@ -52,10 +52,11 @@ export function useAsistenciaEnVivo(orgId: string) {
   const { data, isLoading, isError } = useAsistencia(hoy, hoy);
   const queryClient = useQueryClient();
   const [conectado, setConectado] = useState(false);
+  const instanceId = useId();
 
   useEffect(() => {
     const channel = supabase
-      .channel(`asistencia-org-${orgId}`)
+      .channel(`asistencia-org-${orgId}-${instanceId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "asistencia", filter: `org_id=eq.${orgId}` },
@@ -68,7 +69,7 @@ export function useAsistenciaEnVivo(orgId: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [orgId, hoy, queryClient]);
+  }, [orgId, hoy, queryClient, instanceId]);
 
   const porSucursal = useMemo(() => derivarAdentro(data ?? []), [data]);
 
