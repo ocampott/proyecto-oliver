@@ -10,11 +10,11 @@ export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ icon, label, side = "top", className, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props }, forwardedRef) => {
-    const { triggerProps, Tooltip } = useHoverTooltip<HTMLButtonElement>(side);
+    const { triggerProps, tooltipNode } = useHoverTooltip<HTMLButtonElement>(label, side);
 
     const setRefs = React.useCallback(
       (node: HTMLButtonElement | null) => {
-        (triggerProps.ref as React.RefObject<HTMLButtonElement | null>).current = node;
+        triggerProps.ref.current = node;
         if (typeof forwardedRef === "function") forwardedRef(node);
         else if (forwardedRef) (forwardedRef as React.RefObject<HTMLButtonElement | null>).current = node;
       },
@@ -50,7 +50,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         >
           {icon}
         </button>
-        <Tooltip label={label} />
+        {tooltipNode}
       </>
     );
   }

@@ -13,7 +13,7 @@ interface TriggerProps<T extends HTMLElement> {
   onBlur: () => void;
 }
 
-export function useHoverTooltip<T extends HTMLElement>(side: "top" | "right" = "top") {
+export function useHoverTooltip<T extends HTMLElement>(label: string, side: "top" | "right" = "top") {
   const triggerRef = React.useRef<T>(null);
   const tooltipRef = React.useRef<HTMLSpanElement>(null);
   const timeoutRef = React.useRef<number | undefined>(undefined);
@@ -41,8 +41,8 @@ export function useHoverTooltip<T extends HTMLElement>(side: "top" | "right" = "
     const th = tip.offsetHeight;
 
     if (side === "right") {
-      const left = Math.min(t.right + GAP, window.innerWidth - tw - MARGIN);
-      const top = t.top + t.height / 2 - th / 2;
+      const left = Math.min(Math.max(t.right + GAP, MARGIN), window.innerWidth - tw - MARGIN);
+      const top = Math.min(Math.max(t.top + t.height / 2 - th / 2, MARGIN), window.innerHeight - th - MARGIN);
       setStyle({ left, top });
       return;
     }
@@ -62,20 +62,25 @@ export function useHoverTooltip<T extends HTMLElement>(side: "top" | "right" = "
     onBlur: hide,
   };
 
-  function Tooltip({ label }: { label: string }) {
-    if (!visible) return null;
-    return createPortal(
-      <span
-        ref={tooltipRef}
-        role="tooltip"
-        style={style}
-        className="pointer-events-none fixed z-50 whitespace-nowrap rounded-md bg-text px-2 py-1 text-[11.5px] font-medium text-white"
-      >
-        {label}
-      </span>,
-      document.body
-    );
-  }
+  // tooltipNode es un VALOR (React.ReactNode), no un componente — nunca
+  // definir una función-componente acá adentro. Una función anidada
+  // definida en cada corrida del hook cambia de identidad en cada render,
+  // lo que hace que React desmonte/remonte el <span> portaleado en
+  // cualquier re-render del componente que llama al hook mientras el
+  // tooltip está visible, no solo cuando cambia el estado hover.
+  const tooltipNode: React.ReactNode = visible
+    ? createPortal(
+        <span
+          ref={tooltipRef}
+          role="tooltip"
+          style={style}
+          className="pointer-events-none fixed z-50 whitespace-nowrap rounded-md bg-text px-2 py-1 text-[11.5px] font-medium text-white"
+        >
+          {label}
+        </span>,
+        document.body
+      )
+    : null;
 
-  return { triggerProps, Tooltip };
+  return { triggerProps, tooltipNode };
 }
