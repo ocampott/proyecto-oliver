@@ -109,7 +109,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
             onClick={() => setCollapsed((v) => !v)}
             aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
             style={{ left: togglePos.left, top: togglePos.top }}
-            className="fixed z-30 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white text-text-secondary shadow-sm transition-[left] duration-200 hover:bg-black/[.03] md:flex"
+            className="fixed z-30 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-white text-text-secondary shadow-sm transition-[left] duration-200 hover:bg-black/[.03] md:flex"
           >
             {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>,
