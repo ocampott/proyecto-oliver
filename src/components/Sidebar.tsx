@@ -86,7 +86,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
       )}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[220px] flex-col border-r border-border-soft bg-white transition-transform duration-200 md:static md:z-auto md:translate-x-0 md:transition-[width]",
+          "fixed inset-y-0 left-0 z-40 flex w-[220px] shrink-0 flex-col border-r border-border-soft bg-white transition-transform duration-200 md:static md:z-auto md:translate-x-0 md:transition-[width]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "md:w-16" : "md:w-[220px]"
         )}
@@ -106,8 +106,11 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
           {isLoading
             ? LINKS.map((item) => (
-                <span key={item.href} className="flex items-center gap-2.5 px-3 py-2.5">
-                  <span className="h-[13px] w-24 animate-pulse rounded-full bg-text/10" />
+                <span
+                  key={item.href}
+                  className={cn("flex items-center gap-2.5 px-3 py-2.5", collapsed && "md:justify-center md:px-0")}
+                >
+                  <span className={cn("h-[13px] animate-pulse rounded-full bg-text/10", collapsed ? "w-6" : "w-24")} />
                 </span>
               ))
             : LINKS.map((item) => (
@@ -153,6 +156,7 @@ function SidebarFooterLink({
         className={({ isActive }) =>
           cn(
             "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
+            collapsed && "md:justify-center md:px-0",
             isActive ? "bg-accent-100 font-semibold text-accent-700" : "text-text-secondary hover:bg-black/[.03] hover:text-text"
           )
         }
@@ -182,7 +186,10 @@ function SidebarFooterAnchor({
       <a
         {...triggerProps}
         href={href}
-        className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text"
+        className={cn(
+          "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text",
+          collapsed && "md:justify-center md:px-0"
+        )}
       >
         <Icon className="h-[18px] w-[18px] shrink-0" />
         <span className={cn(collapsed && "md:hidden")}>{label}</span>
@@ -223,7 +230,10 @@ function SidebarNavLink({
           {...disabledTooltip.triggerProps}
           title={collapsed ? undefined : "Tu rol no tiene acceso a esta sección."}
           aria-disabled="true"
-          className="flex cursor-not-allowed select-none items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary opacity-40"
+          className={cn(
+            "flex cursor-not-allowed select-none items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary opacity-40",
+            collapsed && "md:justify-center md:px-0"
+          )}
         >
           <Icon className="h-[18px] w-[18px] shrink-0" />
           <span className={cn(collapsed && "md:hidden")}>{item.label}</span>
@@ -241,7 +251,10 @@ function SidebarNavLink({
           to="/plan"
           onClick={onClick}
           title={collapsed ? undefined : aviso}
-          className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text"
+          className={cn(
+            "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text",
+            collapsed && "md:justify-center md:px-0"
+          )}
         >
           <Icon className="h-[18px] w-[18px] shrink-0" />
           <span className={cn("flex items-center gap-1.5", collapsed && "md:hidden")}>
@@ -266,6 +279,7 @@ function SidebarNavLink({
         className={({ isActive }) =>
           cn(
             "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
+            collapsed && "md:justify-center md:px-0",
             isActive ? "bg-accent-100 font-semibold text-accent-700" : "text-text-secondary hover:bg-black/[.03] hover:text-text"
           )
         }

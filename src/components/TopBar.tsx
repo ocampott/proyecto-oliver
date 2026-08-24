@@ -5,7 +5,7 @@ import { IconButton } from "./ui/icon-button";
 
 export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   return (
-    <header className="sticky top-0 z-20 flex items-center bg-white/90 px-4 py-3.5 shadow-[0_1px_0_rgba(24,24,27,0.07)] backdrop-blur-sm md:px-6">
+    <header className="z-20 flex items-center bg-white/90 px-4 py-3.5 shadow-[0_1px_0_rgba(24,24,27,0.07)] backdrop-blur-sm md:px-6">
       <IconButton
         className="mr-2 md:hidden"
         onClick={onMenuClick}
