@@ -13,7 +13,7 @@ export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
         icon={<Menu className="h-[18px] w-[18px]" />}
       />
       <span className="text-[17px] font-extrabold tracking-tight text-text">oliver</span>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex items-center gap-4">
         <NotificationBell />
         <AccountMenu />
       </div>
