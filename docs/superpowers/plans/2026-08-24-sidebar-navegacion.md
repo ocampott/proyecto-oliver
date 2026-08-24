@@ -566,13 +566,9 @@ function SidebarFooterLink({
   return (
     <>
       <NavLink
-        ref={triggerProps.ref}
+        {...triggerProps}
         to={href}
         onClick={onClick}
-        onMouseEnter={triggerProps.onMouseEnter}
-        onMouseLeave={triggerProps.onMouseLeave}
-        onFocus={triggerProps.onFocus}
-        onBlur={triggerProps.onBlur}
         className={({ isActive }) =>
           cn(
             "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
@@ -603,12 +599,8 @@ function SidebarFooterAnchor({
   return (
     <>
       <a
-        ref={triggerProps.ref}
+        {...triggerProps}
         href={href}
-        onMouseEnter={triggerProps.onMouseEnter}
-        onMouseLeave={triggerProps.onMouseLeave}
-        onFocus={triggerProps.onFocus}
-        onBlur={triggerProps.onBlur}
         className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text"
       >
         <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -651,11 +643,7 @@ function SidebarNavLink({
     return (
       <>
         <span
-          ref={disabledTooltip.triggerProps.ref}
-          onMouseEnter={disabledTooltip.triggerProps.onMouseEnter}
-          onMouseLeave={disabledTooltip.triggerProps.onMouseLeave}
-          onFocus={disabledTooltip.triggerProps.onFocus}
-          onBlur={disabledTooltip.triggerProps.onBlur}
+          {...disabledTooltip.triggerProps}
           title={collapsed ? undefined : "Tu rol no tiene acceso a esta sección."}
           aria-disabled="true"
           className="flex cursor-not-allowed select-none items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary opacity-40"
@@ -672,13 +660,9 @@ function SidebarNavLink({
     return (
       <>
         <NavLink
-          ref={lockedTooltip.triggerProps.ref}
+          {...lockedTooltip.triggerProps}
           to="/plan"
           onClick={onClick}
-          onMouseEnter={lockedTooltip.triggerProps.onMouseEnter}
-          onMouseLeave={lockedTooltip.triggerProps.onMouseLeave}
-          onFocus={lockedTooltip.triggerProps.onFocus}
-          onBlur={lockedTooltip.triggerProps.onBlur}
           title={collapsed ? undefined : aviso}
           className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text"
         >
@@ -698,14 +682,10 @@ function SidebarNavLink({
   return (
     <>
       <NavLink
-        ref={normalTooltip.triggerProps.ref}
+        {...normalTooltip.triggerProps}
         to={item.href}
         end
         onClick={onClick}
-        onMouseEnter={normalTooltip.triggerProps.onMouseEnter}
-        onMouseLeave={normalTooltip.triggerProps.onMouseLeave}
-        onFocus={normalTooltip.triggerProps.onFocus}
-        onBlur={normalTooltip.triggerProps.onBlur}
         className={({ isActive }) =>
           cn(
             "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
