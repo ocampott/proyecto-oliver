@@ -6,7 +6,7 @@
 
 **Architecture:** `PanelLayout.tsx` pasa de `<PanelNav/> + <main>` a un app-shell de dos niveles: `TopBar` (fila fija, ancho completo) arriba de un `flex` con `Sidebar` (columna fija, colapsable en desktop, drawer off-canvas en mobile) + `<main>` scrolleable. Toda la lógica de gating de plan/rol que hoy vive en `PanelNav.tsx` se traslada intacta a `Sidebar.tsx`. La lógica de tooltip con portal que ya tiene `IconButton` se extrae a un hook compartido para que el rail colapsado del sidebar la reuse con `side="right"`.
 
-**Tech Stack:** React 19 + TypeScript, react-router-dom v6 (`NavLink`), Tailwind v4 (tokens en `src/index.css`), lucide-react (íconos), sin test runner configurado — verificación manual en `npm run dev` + `tsc -b` + `oxlint`.
+**Tech Stack:** React 19 + TypeScript, react-router-dom v7 (`NavLink`), Tailwind v4 (tokens en `src/index.css`), lucide-react (íconos), sin test runner configurado — verificación manual en `npm run dev` + `tsc -b` + `oxlint`.
 
 **Spec:** `docs/superpowers/specs/2026-08-24-sidebar-navegacion-design.md`
 
