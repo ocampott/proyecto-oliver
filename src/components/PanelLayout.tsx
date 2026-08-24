@@ -8,7 +8,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
       <TopBar onMenuClick={() => setMobileOpen(true)} />
-      <div className="z-[21] flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1">
         <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1440px] px-8 py-8">{children}</div>

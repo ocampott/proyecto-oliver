@@ -1,5 +1,6 @@
 // src/components/Sidebar.tsx
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { NavLink } from "react-router-dom";
 import {
   Home,
@@ -79,25 +80,49 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
     return () => window.removeEventListener("keydown", handleKey);
   }, [mobileOpen, onMobileClose]);
 
+  const asideRef = React.useRef<HTMLElement>(null);
+  const [togglePos, setTogglePos] = React.useState<{ left: number; top: number } | null>(null);
+
+  React.useLayoutEffect(() => {
+    function updateTogglePos() {
+      const el = asideRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setTogglePos({ left: rect.right, top: rect.top });
+    }
+    updateTogglePos();
+    window.addEventListener("resize", updateTogglePos);
+    return () => window.removeEventListener("resize", updateTogglePos);
+  }, [collapsed]);
+
   return (
     <>
       {mobileOpen && (
         <div className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={onMobileClose} aria-hidden="true" />
       )}
+      {/* Portaleado a document.body: escapa del stacking/overflow del layout
+          (topbar/sidebar/main) por completo, en vez de pelear con sus
+          z-index — el mismo problema que resuelve useHoverTooltip. */}
+      {togglePos &&
+        createPortal(
+          <button
+            onClick={() => setCollapsed((v) => !v)}
+            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+            style={{ left: togglePos.left, top: togglePos.top }}
+            className="fixed z-30 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white text-text-secondary shadow-sm transition-[left] duration-200 hover:bg-black/[.03] md:flex"
+          >
+            {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+          </button>,
+          document.body
+        )}
       <aside
+        ref={asideRef}
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-[220px] shrink-0 flex-col border-r border-border-soft bg-white transition-transform duration-200 md:relative md:z-auto md:translate-x-0 md:transition-[width]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "md:w-16" : "md:w-[220px]"
         )}
       >
-        <button
-          onClick={() => setCollapsed((v) => !v)}
-          aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-          className="absolute -right-3 top-0 z-10 hidden h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-white text-text-secondary shadow-sm hover:bg-black/[.03] md:flex"
-        >
-          {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-        </button>
         <div className="flex items-center justify-end px-3 py-3 md:hidden">
           <button onClick={onMobileClose} aria-label="Cerrar menú" className="rounded-lg p-1.5 hover:bg-black/[.03]">
             <X className="h-[18px] w-[18px]" />
