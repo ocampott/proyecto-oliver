@@ -29,6 +29,7 @@ function minutosRestantes(expiresAt: string): number {
 }
 
 type EstadoFiltro = "todos" | "activos" | "inactivos";
+type DispositivoFiltro = "todos" | "vinculado" | "otp_pendiente" | "sin_vincular";
 
 export default function EmpleadosPage() {
   const { data: empleados = [], isLoading } = useEmpleados();
@@ -48,6 +49,7 @@ export default function EmpleadosPage() {
   const [editCelular, setEditCelular] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
+  const [dispositivoFiltro, setDispositivoFiltro] = useState<DispositivoFiltro>("todos");
   const [codigoDialog, setCodigoDialog] = useState<{ nombre: string; code: string } | null>(null);
   const [desvincularTarget, setDesvincularTarget] = useState<Empleado | null>(null);
   const [eliminarTarget, setEliminarTarget] = useState<Empleado | null>(null);
@@ -66,7 +68,14 @@ export default function EmpleadosPage() {
     const matchNombre = emp.nombre.toLowerCase().includes(busqueda.toLowerCase());
     const matchEstado =
       estadoFiltro === "todos" || (estadoFiltro === "activos" ? emp.activo : !emp.activo);
-    return matchNombre && matchEstado;
+    const matchDispositivo =
+      dispositivoFiltro === "todos" ||
+      (dispositivoFiltro === "vinculado"
+        ? !!emp.device_token
+        : dispositivoFiltro === "otp_pendiente"
+          ? !emp.device_token && !!emp.otp
+          : !emp.device_token && !emp.otp);
+    return matchNombre && matchEstado && matchDispositivo;
   });
 
   async function handleAlta(e: FormEvent) {
@@ -184,6 +193,18 @@ export default function EmpleadosPage() {
             { value: "todos", label: "Todos" },
             { value: "activos", label: "Activos" },
             { value: "inactivos", label: "Inactivos" },
+          ]}
+          containerClassName="w-40"
+        />
+        <Select
+          label="Dispositivo"
+          value={dispositivoFiltro}
+          onChange={(e) => setDispositivoFiltro(e.target.value as DispositivoFiltro)}
+          options={[
+            { value: "todos", label: "Todos" },
+            { value: "vinculado", label: "Vinculado" },
+            { value: "otp_pendiente", label: "OTP pendiente" },
+            { value: "sin_vincular", label: "Sin vincular" },
           ]}
           containerClassName="w-40"
         />

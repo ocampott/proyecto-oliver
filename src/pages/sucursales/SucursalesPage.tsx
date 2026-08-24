@@ -204,6 +204,7 @@ export default function SucursalesPage() {
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
+            <TableHead>Dirección</TableHead>
             <TableHead>Coordenadas</TableHead>
             <TableHead>Radio</TableHead>
             <TableHead>Activa</TableHead>
@@ -211,11 +212,12 @@ export default function SucursalesPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && <TableSkeleton cols={5} />}
+          {isLoading && <TableSkeleton cols={6} />}
           {!isLoading &&
             sucursalesFiltradas.map((suc) => (
               <TableRow key={suc.id} className={suc.activa ? "" : "text-text/40"}>
                 <TableCell>{suc.nombre}</TableCell>
+                <TableCell>{suc.direccion ?? "—"}</TableCell>
                 <TableCell>
                   {suc.lat != null && suc.lon != null ? `${suc.lat}, ${suc.lon}` : "Sin configurar"}
                 </TableCell>
@@ -288,14 +290,14 @@ export default function SucursalesPage() {
             ))}
           {!isLoading && sucursales.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-text/60">
+              <TableCell colSpan={6} className="text-text/60">
                 Todavía no hay sucursales cargadas.
               </TableCell>
             </TableRow>
           )}
           {!isLoading && sucursales.length > 0 && sucursalesFiltradas.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-text/60">
+              <TableCell colSpan={6} className="text-text/60">
                 Ninguna sucursal coincide con el filtro.
               </TableCell>
             </TableRow>

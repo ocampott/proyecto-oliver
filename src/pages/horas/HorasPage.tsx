@@ -1,13 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
+import { MultiSelect } from "../../components/ui/multi-select";
+import { Select } from "../../components/ui/select";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { useToast } from "../../components/ui/toast";
 import { useHoras } from "./hooks";
-import { exportarHoras } from "../../lib/api";
+import { useEmpleados } from "../empleados/hooks";
+import { useSucursales } from "../sucursales/hooks";
+import { exportarHoras, type ResumenEmpleado, type Turno } from "../../lib/api";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -29,11 +33,26 @@ function fechaHoraLocal(iso: string): string {
   });
 }
 
+function calcularResumen(turnos: Turno[]): ResumenEmpleado[] {
+  const porEmpleado = new Map<string, ResumenEmpleado>();
+  for (const t of turnos) {
+    const actual = porEmpleado.get(t.empleado_id) ?? { nombre: t.nombre, totalHoras: 0, enCurso: false };
+    actual.totalHoras += t.horas ?? 0;
+    if (t.salida_at === null) actual.enCurso = true;
+    porEmpleado.set(t.empleado_id, actual);
+  }
+  return Array.from(porEmpleado.values());
+}
+
 export default function HorasPage() {
   const [desde, setDesde] = useState(inicioDeMesAR());
   const [hasta, setHasta] = useState(hoyAR());
+  const [empleadosSel, setEmpleadosSel] = useState<string[]>([]);
+  const [sucursalSel, setSucursalSel] = useState("");
 
   const { data, isLoading, isError, error } = useHoras(desde, hasta);
+  const { data: empleados = [] } = useEmpleados();
+  const { data: sucursales = [] } = useSucursales();
   const toast = useToast();
   const [descargando, setDescargando] = useState(false);
 
@@ -49,8 +68,29 @@ export default function HorasPage() {
     }
   }
 
-  const turnos = data?.turnos ?? [];
-  const resumen = data?.resumen ?? [];
+  const turnosTodos = data?.turnos ?? [];
+  const resumenTodos = data?.resumen ?? [];
+
+  const hayFiltroEmpleados = empleadosSel.length > 0;
+  const hayFiltroSucursal = sucursalSel !== "";
+
+  const turnos = useMemo(
+    () =>
+      turnosTodos.filter(
+        (t) =>
+          (!hayFiltroEmpleados || empleadosSel.includes(t.empleado_id)) &&
+          (!hayFiltroSucursal || t.sucursal_id === sucursalSel)
+      ),
+    [turnosTodos, empleadosSel, sucursalSel, hayFiltroEmpleados, hayFiltroSucursal]
+  );
+
+  // El resumen que trae el backend es un agregado global (sin desglose por
+  // sucursal ni empleado_id), así que si hay algún filtro activo lo
+  // recalculamos en el cliente a partir de los turnos ya filtrados.
+  const resumen = useMemo(() => {
+    if (!hayFiltroEmpleados && !hayFiltroSucursal) return resumenTodos;
+    return calcularResumen(turnos);
+  }, [hayFiltroEmpleados, hayFiltroSucursal, resumenTodos, turnos]);
 
   return (
     <>
@@ -70,6 +110,21 @@ export default function HorasPage() {
           value={hasta}
           onChange={(e) => setHasta(e.target.value)}
           containerClassName="w-40"
+        />
+        <MultiSelect
+          label="Empleados"
+          value={empleadosSel}
+          onChange={setEmpleadosSel}
+          options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
+          placeholder="Todos"
+          containerClassName="w-56"
+        />
+        <Select
+          label="Sucursal"
+          value={sucursalSel}
+          onChange={(e) => setSucursalSel(e.target.value)}
+          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+          containerClassName="w-48"
         />
         <Button variant="secondary" className="ml-auto" onClick={handleDescargarExcel} disabled={descargando}>
           <Download className="h-4 w-4" />

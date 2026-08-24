@@ -6,6 +6,7 @@ import { Field } from "../../components/ui/field";
 import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
 import { Badge } from "../../components/ui/badge";
+import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
@@ -132,12 +133,13 @@ export default function ConfiguracionPage() {
               <TableRow>
                 <TableHead>Email</TableHead>
                 <TableHead>Rol</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead>Desde</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {miembrosLoading && <TableSkeleton cols={4} />}
+              {miembrosLoading && <TableSkeleton cols={5} />}
               {!miembrosLoading &&
                 miembros.map((m) => (
                   <TableRow key={m.userId}>
@@ -147,6 +149,9 @@ export default function ConfiguracionPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={m.role === "owner" ? "accent" : "neutral"}>{ROL_LABEL[m.role]}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Status tone={m.activo ? "success" : "warning"}>{m.activo ? "Activo" : "Pendiente"}</Status>
                     </TableCell>
                     <TableCell>{fechaLocal(m.createdAt)}</TableCell>
                     <TableCell className="text-right">
@@ -162,7 +167,7 @@ export default function ConfiguracionPage() {
                 ))}
               {!miembrosLoading && miembros.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-text/60">
+                  <TableCell colSpan={5} className="text-text/60">
                     Todavía no hay miembros cargados.
                   </TableCell>
                 </TableRow>

@@ -22,6 +22,7 @@ const RrhhPage = lazy(() => import("./pages/rrhh/RrhhPage"));
 const AdminPage = lazy(() => import("./pages/admin/AdminPage"));
 const PlanPage = lazy(() => import("./pages/plan/PlanPage"));
 const ConfiguracionPage = lazy(() => import("./pages/configuracion/ConfiguracionPage"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
 function PageFallback() {
   return (
@@ -154,7 +155,7 @@ export default function App() {
               }
             />
             <Route path="/marcar/:org/:sucursal" element={<MarcarPage />} />
-            <Route path="*" element={<div className="p-8">Página no encontrada.</div>} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           </Suspense>
         </BrowserRouter>

@@ -26,6 +26,12 @@ function inicioDeMesAR(): string {
   return `${hoyAR().slice(0, 7)}-01`;
 }
 
+function finDeMesAR(periodo: string): string {
+  const [anio, mes] = periodo.split("-").map(Number);
+  const ultimoDia = new Date(anio, mes, 0).getDate();
+  return `${periodo}-${String(ultimoDia).padStart(2, "0")}`;
+}
+
 const emptyForm = {
   empleado_id: "",
   sucursal_id: "",
@@ -91,9 +97,18 @@ export default function RrhhPage() {
 
   const [desde, setDesde] = useState(inicioDeMesAR());
   const [hasta, setHasta] = useState(hoyAR());
+  const [periodo, setPeriodo] = useState(hoyAR().slice(0, 7));
   const [sucursalFiltro, setSucursalFiltro] = useState("");
   const [motivoFiltro, setMotivoFiltro] = useState("");
   const [descargando, setDescargando] = useState(false);
+
+  function handlePeriodoChange(nuevoPeriodo: string) {
+    setPeriodo(nuevoPeriodo);
+    if (nuevoPeriodo) {
+      setDesde(`${nuevoPeriodo}-01`);
+      setHasta(finDeMesAR(nuevoPeriodo));
+    }
+  }
 
   async function handleDescargarExcel() {
     setDescargando(true);
@@ -285,6 +300,13 @@ export default function RrhhPage() {
       </Card>
 
       <div className="mt-4 flex flex-wrap items-end gap-4">
+        <Field
+          label="Período"
+          type="month"
+          value={periodo}
+          onChange={(e) => handlePeriodoChange(e.target.value)}
+          containerClassName="w-40"
+        />
         <Field label="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-40" />
         <Field label="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-40" />
         <Select
