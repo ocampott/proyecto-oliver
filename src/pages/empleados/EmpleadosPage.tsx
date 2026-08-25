@@ -19,6 +19,7 @@ import {
 } from "./hooks";
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { useOrgActual, puedeGestionar } from "../../lib/hooks";
+import { useSucursales } from "../sucursales/hooks";
 
 function formatCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
@@ -34,6 +35,7 @@ type DispositivoFiltro = "todos" | "vinculado" | "otp_pendiente" | "sin_vincular
 export default function EmpleadosPage() {
   const { data: empleados = [], isLoading } = useEmpleados();
   const { data: org } = useOrgActual();
+  const { data: sucursales = [] } = useSucursales();
   const crear = useCrearEmpleado();
   const editar = useEditarEmpleado();
   const eliminar = useEliminarEmpleado();
@@ -42,11 +44,20 @@ export default function EmpleadosPage() {
   const toast = useToast();
 
   const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
   const [celular, setCelular] = useState("");
+  const [cuil, setCuil] = useState("");
+  const [fechaIngreso, setFechaIngreso] = useState("");
+  const [sucursalId, setSucursalId] = useState("");
   const [altaOpen, setAltaOpen] = useState(false);
   const [editando, setEditando] = useState<Empleado | null>(null);
   const [editNombre, setEditNombre] = useState("");
+  const [editApellido, setEditApellido] = useState("");
   const [editCelular, setEditCelular] = useState("");
+  const [editCuil, setEditCuil] = useState("");
+  const [editFechaIngreso, setEditFechaIngreso] = useState("");
+  const [editSucursalId, setEditSucursalId] = useState("");
+  const [editEstado, setEditEstado] = useState<Empleado["estado"]>("activo");
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [dispositivoFiltro, setDispositivoFiltro] = useState<DispositivoFiltro>("todos");
@@ -60,14 +71,14 @@ export default function EmpleadosPage() {
     crear.isPending || editar.isPending || eliminar.isPending || desvincular.isPending || generarCodigo.isPending;
 
   const ent = org?.entitlements;
-  const activosCount = empleados.filter((e) => e.activo).length;
+  const activosCount = empleados.filter((e) => e.estado !== "baja").length;
   const alTope = !!ent && !ent.ilimitado && ent.maxEmpleados !== null && activosCount >= ent.maxEmpleados;
   const gestionable = puedeGestionar(org ?? null);
 
   const empleadosFiltrados = empleados.filter((emp) => {
     const matchNombre = emp.nombre.toLowerCase().includes(busqueda.toLowerCase());
     const matchEstado =
-      estadoFiltro === "todos" || (estadoFiltro === "activos" ? emp.activo : !emp.activo);
+      estadoFiltro === "todos" || (estadoFiltro === "activos" ? emp.estado !== "baja" : emp.estado === "baja");
     const matchDispositivo =
       dispositivoFiltro === "todos" ||
       (dispositivoFiltro === "vinculado"
@@ -82,11 +93,22 @@ export default function EmpleadosPage() {
     e.preventDefault();
     setError(null);
     try {
-      await crear.mutateAsync({ nombre, celular: celular || undefined });
+      await crear.mutateAsync({
+        nombre,
+        apellido,
+        celular: celular || undefined,
+        cuil: cuil || undefined,
+        fecha_ingreso: fechaIngreso || undefined,
+        sucursal_id: sucursalId || undefined,
+      });
       setNombre("");
+      setApellido("");
       setCelular("");
+      setCuil("");
+      setFechaIngreso("");
+      setSucursalId("");
       setAltaOpen(false);
-      toast.success(`${nombre.trim()} fue agregado a la nómina.`);
+      toast.success(`${apellido}, ${nombre} fue agregado a la nómina.`);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
@@ -96,7 +118,12 @@ export default function EmpleadosPage() {
     setError(null);
     setEditando(emp);
     setEditNombre(emp.nombre);
+    setEditApellido(emp.apellido ?? "");
     setEditCelular(emp.celular ?? "");
+    setEditCuil(emp.cuil ?? "");
+    setEditFechaIngreso(emp.fecha_ingreso ?? "");
+    setEditSucursalId(emp.sucursal_id ?? "");
+    setEditEstado(emp.estado);
   }
 
   async function handleGuardarEdicion(e: FormEvent) {
@@ -104,7 +131,18 @@ export default function EmpleadosPage() {
     if (!editando) return;
     setError(null);
     try {
-      await editar.mutateAsync({ id: editando.id, patch: { nombre: editNombre, celular: editCelular || null } });
+      await editar.mutateAsync({
+        id: editando.id,
+        patch: {
+          nombre: editNombre,
+          apellido: editApellido || undefined,
+          celular: editCelular || null,
+          cuil: editCuil || null,
+          fecha_ingreso: editFechaIngreso || null,
+          sucursal_id: editSucursalId || null,
+          estado: editEstado,
+        },
+      });
       setEditando(null);
       toast.success("Empleado actualizado.");
     } catch (err) {
@@ -112,11 +150,11 @@ export default function EmpleadosPage() {
     }
   }
 
-  async function handleToggleActivo(emp: Empleado) {
+  async function handleCambiarEstado(emp: Empleado, nuevoEstado: Empleado["estado"]) {
     setAccionandoId(emp.id);
     try {
-      await editar.mutateAsync({ id: emp.id, patch: { activo: !emp.activo } });
-      toast.success(emp.activo ? `${emp.nombre} fue desactivado.` : `${emp.nombre} fue activado.`);
+      await editar.mutateAsync({ id: emp.id, patch: { estado: nuevoEstado } });
+      toast.success(`${emp.nombre} pasó a estado "${nuevoEstado}".`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     } finally {
@@ -240,18 +278,20 @@ export default function EmpleadosPage() {
           <TableRow>
             <TableHead>Nombre</TableHead>
             <TableHead>Celular</TableHead>
+            <TableHead>Sucursal</TableHead>
             <TableHead>Dispositivo</TableHead>
-            <TableHead>Activo</TableHead>
+            <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && <TableSkeleton cols={5} />}
+          {isLoading && <TableSkeleton cols={6} />}
           {!isLoading &&
             empleadosFiltrados.map((emp) => (
-              <TableRow key={emp.id} className={emp.activo ? "" : "text-text/40"}>
-                <TableCell>{emp.nombre}</TableCell>
+              <TableRow key={emp.id} className={emp.estado === "baja" ? "text-text/40" : ""}>
+                <TableCell>{emp.apellido ? `${emp.apellido}, ${emp.nombre}` : emp.nombre}</TableCell>
                 <TableCell>{emp.celular ?? "—"}</TableCell>
+                <TableCell>{sucursales.find((s) => s.id === emp.sucursal_id)?.nombre ?? "—"}</TableCell>
                 <TableCell>
                   {emp.device_token ? (
                     <Status tone="success">Vinculado</Status>
@@ -266,7 +306,9 @@ export default function EmpleadosPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <Status tone={emp.activo ? "success" : "neutral"}>{emp.activo ? "Activo" : "Inactivo"}</Status>
+                  <Status tone={emp.estado === "activo" ? "success" : emp.estado === "baja" ? "neutral" : "warning"}>
+                    {{ activo: "Activo", de_licencia: "De licencia", suspendido: "Suspendido", baja: "Baja" }[emp.estado]}
+                  </Status>
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-1.5">
@@ -282,7 +324,7 @@ export default function EmpleadosPage() {
                       label="Editar"
                     />
                     <IconButton
-                      onClick={() => handleToggleActivo(emp)}
+                      onClick={() => handleCambiarEstado(emp, emp.estado === "baja" ? "activo" : "baja")}
                       disabled={loading || !gestionable}
                       title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
                       icon={
@@ -295,7 +337,7 @@ export default function EmpleadosPage() {
                           </svg>
                         )
                       }
-                      label={emp.activo ? "Desactivar" : "Activar"}
+                      label={emp.estado === "baja" ? "Activar" : "Dar de baja"}
                     />
                     {gestionable && emp.device_token && (
                       <IconButton
@@ -331,7 +373,7 @@ export default function EmpleadosPage() {
                         label={emp.otp ? "Código nuevo" : "Generar código"}
                       />
                     )}
-                    {gestionable && !emp.activo && !emp.tiene_asistencia && (
+                    {gestionable && emp.estado === "baja" && !emp.tiene_asistencia && (
                       <IconButton
                         onClick={() => setEliminarTarget(emp)}
                         disabled={loading}
@@ -353,14 +395,14 @@ export default function EmpleadosPage() {
             ))}
           {!isLoading && empleados.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-text/60">
+              <TableCell colSpan={6} className="text-text/60">
                 Todavía no hay empleados cargados.
               </TableCell>
             </TableRow>
           )}
           {!isLoading && empleados.length > 0 && empleadosFiltrados.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-text/60">
+              <TableCell colSpan={6} className="text-text/60">
                 Ningún empleado coincide con el filtro.
               </TableCell>
             </TableRow>
@@ -385,9 +427,37 @@ export default function EmpleadosPage() {
             containerClassName="w-full"
           />
           <Field
+            label="Apellido"
+            required
+            value={apellido}
+            onChange={(e) => setApellido(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
             label="Celular (opcional)"
             value={celular}
             onChange={(e) => setCelular(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="CUIL (opcional)"
+            placeholder="20-12345678-6"
+            value={cuil}
+            onChange={(e) => setCuil(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Fecha de ingreso (opcional)"
+            type="date"
+            value={fechaIngreso}
+            onChange={(e) => setFechaIngreso(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Select
+            label="Sucursal (opcional)"
+            value={sucursalId}
+            onChange={(e) => setSucursalId(e.target.value)}
+            options={[{ value: "", label: "Sin asignar" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
             containerClassName="w-full"
           />
           {error && (
@@ -418,9 +488,49 @@ export default function EmpleadosPage() {
             containerClassName="w-full"
           />
           <Field
+            label="Apellido"
+            required
+            value={editApellido}
+            onChange={(e) => setEditApellido(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
             label="Celular (opcional)"
             value={editCelular}
             onChange={(e) => setEditCelular(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="CUIL (opcional)"
+            placeholder="20-12345678-6"
+            value={editCuil}
+            onChange={(e) => setEditCuil(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Field
+            label="Fecha de ingreso (opcional)"
+            type="date"
+            value={editFechaIngreso}
+            onChange={(e) => setEditFechaIngreso(e.target.value)}
+            containerClassName="w-full"
+          />
+          <Select
+            label="Sucursal (opcional)"
+            value={editSucursalId}
+            onChange={(e) => setEditSucursalId(e.target.value)}
+            options={[{ value: "", label: "Sin asignar" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+            containerClassName="w-full"
+          />
+          <Select
+            label="Estado"
+            value={editEstado}
+            onChange={(e) => setEditEstado(e.target.value as Empleado["estado"])}
+            options={[
+              { value: "activo", label: "Activo" },
+              { value: "de_licencia", label: "De licencia" },
+              { value: "suspendido", label: "Suspendido" },
+              { value: "baja", label: "Baja" },
+            ]}
             containerClassName="w-full"
           />
           {error && (
