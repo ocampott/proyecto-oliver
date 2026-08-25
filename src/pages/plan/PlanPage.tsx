@@ -63,7 +63,7 @@ export default function PlanPage() {
     );
   }
 
-  const empleadosActivos = empleados.filter((e) => e.activo).length;
+  const empleadosActivos = empleados.filter((e) => e.estado !== "baja").length;
   const sucursalesActivas = sucursales.filter((s) => s.activa).length;
 
   return (

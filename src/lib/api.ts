@@ -242,13 +242,19 @@ export interface EmpleadoOtp {
   expires_at: string;
 }
 
+export type EstadoEmpleado = "activo" | "de_licencia" | "suspendido" | "baja";
+
 export interface Empleado {
   id: string;
   org_id: string;
   nombre: string;
+  apellido: string | null;
   celular: string | null;
+  cuil: string | null;
+  fecha_ingreso: string | null;
+  sucursal_id: string | null;
   device_token: string | null;
-  activo: boolean;
+  estado: EstadoEmpleado;
   created_at: string;
   otp: EmpleadoOtp | null;
   tiene_asistencia: boolean;
@@ -260,7 +266,11 @@ export function listEmpleados(): Promise<Empleado[]> {
 
 export interface CrearEmpleadoInput {
   nombre: string;
+  apellido: string;
   celular?: string;
+  cuil?: string;
+  fecha_ingreso?: string;
+  sucursal_id?: string;
 }
 
 export function createEmpleado(input: CrearEmpleadoInput): Promise<Empleado> {
@@ -272,8 +282,12 @@ export function createEmpleado(input: CrearEmpleadoInput): Promise<Empleado> {
 
 export interface EditarEmpleadoInput {
   nombre?: string;
+  apellido?: string;
   celular?: string | null;
-  activo?: boolean;
+  cuil?: string | null;
+  fecha_ingreso?: string | null;
+  sucursal_id?: string | null;
+  estado?: EstadoEmpleado;
 }
 
 export function updateEmpleado(id: string, patch: EditarEmpleadoInput): Promise<Empleado | { ok: true }> {
