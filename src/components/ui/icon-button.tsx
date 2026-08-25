@@ -1,58 +1,25 @@
 import * as React from "react";
-import { createPortal } from "react-dom";
 import { cn } from "../../lib/utils";
+import { useHoverTooltip } from "./tooltip";
 
 export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon: React.ReactNode;
   label: string;
+  side?: "top" | "right";
 }
 
-const GAP = 6;
-const MARGIN = 8;
-const SHOW_DELAY = 300;
-
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ icon, label, className, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props }, forwardedRef) => {
-    const triggerRef = React.useRef<HTMLButtonElement | null>(null);
-    const tooltipRef = React.useRef<HTMLSpanElement>(null);
-    const timeoutRef = React.useRef<number | undefined>(undefined);
-    const [visible, setVisible] = React.useState(false);
-    const [style, setStyle] = React.useState<React.CSSProperties>({});
+  ({ icon, label, side = "top", className, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props }, forwardedRef) => {
+    const { triggerProps, tooltipNode } = useHoverTooltip<HTMLButtonElement>(label, side);
 
     const setRefs = React.useCallback(
       (node: HTMLButtonElement | null) => {
-        triggerRef.current = node;
+        triggerProps.ref.current = node;
         if (typeof forwardedRef === "function") forwardedRef(node);
         else if (forwardedRef) (forwardedRef as React.RefObject<HTMLButtonElement | null>).current = node;
       },
-      [forwardedRef]
+      [forwardedRef, triggerProps.ref]
     );
-
-    function show() {
-      window.clearTimeout(timeoutRef.current);
-      timeoutRef.current = window.setTimeout(() => setVisible(true), SHOW_DELAY);
-    }
-    function hide() {
-      window.clearTimeout(timeoutRef.current);
-      setVisible(false);
-    }
-
-    React.useEffect(() => () => window.clearTimeout(timeoutRef.current), []);
-
-    React.useLayoutEffect(() => {
-      if (!visible) return;
-      const trigger = triggerRef.current;
-      const tip = tooltipRef.current;
-      if (!trigger || !tip) return;
-      const t = trigger.getBoundingClientRect();
-      const tw = tip.offsetWidth;
-      const th = tip.offsetHeight;
-      const placeAbove = t.top >= th + GAP + MARGIN;
-      let left = t.left + t.width / 2 - tw / 2;
-      left = Math.min(Math.max(left, MARGIN), window.innerWidth - tw - MARGIN);
-      const top = placeAbove ? t.top - th - GAP : t.bottom + GAP;
-      setStyle({ left, top });
-    }, [visible]);
 
     return (
       <>
@@ -60,19 +27,19 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
           ref={setRefs}
           aria-label={label}
           onMouseEnter={(e) => {
-            show();
+            triggerProps.onMouseEnter();
             onMouseEnter?.(e);
           }}
           onMouseLeave={(e) => {
-            hide();
+            triggerProps.onMouseLeave();
             onMouseLeave?.(e);
           }}
           onFocus={(e) => {
-            show();
+            triggerProps.onFocus();
             onFocus?.(e);
           }}
           onBlur={(e) => {
-            hide();
+            triggerProps.onBlur();
             onBlur?.(e);
           }}
           className={cn(
@@ -83,18 +50,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         >
           {icon}
         </button>
-        {visible &&
-          createPortal(
-            <span
-              ref={tooltipRef}
-              role="tooltip"
-              style={style}
-              className="pointer-events-none fixed z-50 whitespace-nowrap rounded-md bg-text px-2 py-1 text-[11.5px] font-medium text-white"
-            >
-              {label}
-            </span>,
-            document.body
-          )}
+        {tooltipNode}
       </>
     );
   }

@@ -6,7 +6,7 @@
 
 **Architecture:** `PanelLayout.tsx` pasa de `<PanelNav/> + <main>` a un app-shell de dos niveles: `TopBar` (fila fija, ancho completo) arriba de un `flex` con `Sidebar` (columna fija, colapsable en desktop, drawer off-canvas en mobile) + `<main>` scrolleable. Toda la lógica de gating de plan/rol que hoy vive en `PanelNav.tsx` se traslada intacta a `Sidebar.tsx`. La lógica de tooltip con portal que ya tiene `IconButton` se extrae a un hook compartido para que el rail colapsado del sidebar la reuse con `side="right"`.
 
-**Tech Stack:** React 19 + TypeScript, react-router-dom v6 (`NavLink`), Tailwind v4 (tokens en `src/index.css`), lucide-react (íconos), sin test runner configurado — verificación manual en `npm run dev` + `tsc -b` + `oxlint`.
+**Tech Stack:** React 19 + TypeScript, react-router-dom v7 (`NavLink`), Tailwind v4 (tokens en `src/index.css`), lucide-react (íconos), sin test runner configurado — verificación manual en `npm run dev` + `tsc -b` + `oxlint`.
 
 **Spec:** `docs/superpowers/specs/2026-08-24-sidebar-navegacion-design.md`
 
@@ -28,7 +28,7 @@
 - Modify: `src/components/ui/icon-button.tsx` (refactor completo, mismo comportamiento visible)
 
 **Interfaces:**
-- Produces: `useHoverTooltip<T extends HTMLElement>(side?: "top" | "right")` → `{ triggerProps: { ref, onMouseEnter, onMouseLeave, onFocus, onBlur }, Tooltip: (props: { label: string }) => JSX.Element | null }`. `Tooltip` renderiza `null` si no está visible; si está visible, hace `createPortal` de un `<span role="tooltip">` con el mismo estilo que usa `IconButton` hoy.
+- Produces: `useHoverTooltip<T extends HTMLElement>(label: string, side?: "top" | "right")` → `{ triggerProps: { ref, onMouseEnter, onMouseLeave, onFocus, onBlur }, tooltipNode: React.ReactNode }`. `tooltipNode` es `null` si no está visible; si está visible, es un `createPortal` de un `<span role="tooltip">` con el mismo estilo que usa `IconButton` hoy. Es un **valor**, no un componente — se inserta directo (`{tooltipNode}`), nunca como `<Tooltip .../>`, para no crear un tipo de componente distinto en cada render (ver Step 1: eso fue un hallazgo Important del review de este task, corregido antes de que Task 3/4 lo heredaran).
 - `IconButton` gana un prop opcional `side?: "top" | "right"` (default `"top"`), sin cambiar su firma existente (`icon`, `label`, resto de `ButtonHTMLAttributes`).
 
 - [ ] **Step 1: Crear el hook `useHoverTooltip`**
@@ -52,7 +52,7 @@ interface TriggerProps<T extends HTMLElement> {
   onBlur: () => void;
 }
 
-export function useHoverTooltip<T extends HTMLElement>(side: "top" | "right" = "top") {
+export function useHoverTooltip<T extends HTMLElement>(label: string, side: "top" | "right" = "top") {
   const triggerRef = React.useRef<T>(null);
   const tooltipRef = React.useRef<HTMLSpanElement>(null);
   const timeoutRef = React.useRef<number | undefined>(undefined);
@@ -80,8 +80,8 @@ export function useHoverTooltip<T extends HTMLElement>(side: "top" | "right" = "
     const th = tip.offsetHeight;
 
     if (side === "right") {
-      const left = Math.min(t.right + GAP, window.innerWidth - tw - MARGIN);
-      const top = t.top + t.height / 2 - th / 2;
+      const left = Math.min(Math.max(t.right + GAP, MARGIN), window.innerWidth - tw - MARGIN);
+      const top = Math.min(Math.max(t.top + t.height / 2 - th / 2, MARGIN), window.innerHeight - th - MARGIN);
       setStyle({ left, top });
       return;
     }
@@ -101,22 +101,27 @@ export function useHoverTooltip<T extends HTMLElement>(side: "top" | "right" = "
     onBlur: hide,
   };
 
-  function Tooltip({ label }: { label: string }) {
-    if (!visible) return null;
-    return createPortal(
-      <span
-        ref={tooltipRef}
-        role="tooltip"
-        style={style}
-        className="pointer-events-none fixed z-50 whitespace-nowrap rounded-md bg-text px-2 py-1 text-[11.5px] font-medium text-white"
-      >
-        {label}
-      </span>,
-      document.body
-    );
-  }
+  // tooltipNode es un VALOR (React.ReactNode), no un componente — nunca
+  // definir una función-componente acá adentro. Una función anidada
+  // definida en cada corrida del hook cambia de identidad en cada render,
+  // lo que hace que React desmonte/remonte el <span> portaleado en
+  // cualquier re-render del componente que llama al hook mientras el
+  // tooltip está visible, no solo cuando cambia el estado hover.
+  const tooltipNode: React.ReactNode = visible
+    ? createPortal(
+        <span
+          ref={tooltipRef}
+          role="tooltip"
+          style={style}
+          className="pointer-events-none fixed z-50 whitespace-nowrap rounded-md bg-text px-2 py-1 text-[11.5px] font-medium text-white"
+        >
+          {label}
+        </span>,
+        document.body
+      )
+    : null;
 
-  return { triggerProps, Tooltip };
+  return { triggerProps, tooltipNode };
 }
 ```
 
@@ -137,11 +142,11 @@ export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ icon, label, side = "top", className, onMouseEnter, onMouseLeave, onFocus, onBlur, ...props }, forwardedRef) => {
-    const { triggerProps, Tooltip } = useHoverTooltip<HTMLButtonElement>(side);
+    const { triggerProps, tooltipNode } = useHoverTooltip<HTMLButtonElement>(label, side);
 
     const setRefs = React.useCallback(
       (node: HTMLButtonElement | null) => {
-        (triggerProps.ref as React.RefObject<HTMLButtonElement | null>).current = node;
+        triggerProps.ref.current = node;
         if (typeof forwardedRef === "function") forwardedRef(node);
         else if (forwardedRef) (forwardedRef as React.RefObject<HTMLButtonElement | null>).current = node;
       },
@@ -177,7 +182,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         >
           {icon}
         </button>
-        <Tooltip label={label} />
+        {tooltipNode}
       </>
     );
   }
@@ -541,7 +546,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
 }
 ```
 
-Agregar `collapsed` a las firmas de `SidebarFooterLink` y `SidebarNavLink`, condicionando el label con `cn("...", collapsed && "md:hidden")` y agregando el tooltip con `side="right"` solo quando `collapsed` (el hook siempre se llama, pero el `Tooltip` renderiza `null` si `visible` es `false`, así que no hace falta condicionar el llamado al hook — solo mostrar/ocultar el trigger's `title` nativo cuando no está colapsado):
+Agregar `collapsed` a las firmas de `SidebarFooterLink` y `SidebarNavLink`, condicionando el label con `cn("...", collapsed && "md:hidden")` y agregando el tooltip con `side="right"` solo cuando `collapsed` (el hook siempre se llama con el `label` correspondiente, pero `tooltipNode` es `null` si `visible` es `false`, así que no hace falta condicionar el llamado al hook — solo mostrar/ocultar el trigger's `title` nativo cuando no está colapsado). `tooltipNode` se inserta directo como `{collapsed && tooltipNode}` — nunca como `<Tooltip .../>` (ver la corrección de Task 1 arriba):
 
 ```tsx
 function SidebarFooterLink({
@@ -557,17 +562,13 @@ function SidebarFooterLink({
   collapsed: boolean;
   onClick: () => void;
 }) {
-  const { triggerProps, Tooltip } = useHoverTooltip<HTMLAnchorElement>("right");
+  const { triggerProps, tooltipNode } = useHoverTooltip<HTMLAnchorElement>(label, "right");
   return (
     <>
       <NavLink
-        ref={triggerProps.ref}
+        {...triggerProps}
         to={href}
         onClick={onClick}
-        onMouseEnter={triggerProps.onMouseEnter}
-        onMouseLeave={triggerProps.onMouseLeave}
-        onFocus={triggerProps.onFocus}
-        onBlur={triggerProps.onBlur}
         className={({ isActive }) =>
           cn(
             "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
@@ -578,7 +579,7 @@ function SidebarFooterLink({
         <Icon className="h-[18px] w-[18px] shrink-0" />
         <span className={cn(collapsed && "md:hidden")}>{label}</span>
       </NavLink>
-      {collapsed && <Tooltip label={label} />}
+      {collapsed && tooltipNode}
     </>
   );
 }
@@ -594,22 +595,18 @@ function SidebarFooterAnchor({
   icon: React.ComponentType<{ className?: string }>;
   collapsed: boolean;
 }) {
-  const { triggerProps, Tooltip } = useHoverTooltip<HTMLAnchorElement>("right");
+  const { triggerProps, tooltipNode } = useHoverTooltip<HTMLAnchorElement>(label, "right");
   return (
     <>
       <a
-        ref={triggerProps.ref}
+        {...triggerProps}
         href={href}
-        onMouseEnter={triggerProps.onMouseEnter}
-        onMouseLeave={triggerProps.onMouseLeave}
-        onFocus={triggerProps.onFocus}
-        onBlur={triggerProps.onBlur}
         className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text"
       >
         <Icon className="h-[18px] w-[18px] shrink-0" />
         <span className={cn(collapsed && "md:hidden")}>{label}</span>
       </a>
-      {collapsed && <Tooltip label={label} />}
+      {collapsed && tooltipNode}
     </>
   );
 }
@@ -638,19 +635,15 @@ function SidebarNavLink({
   const aviso =
     bloqueado && planReq ? `Disponible con el plan ${PLAN_NOMBRE[planReq]}. Hacé click para ver los planes.` : undefined;
 
-  const disabledTooltip = useHoverTooltip<HTMLSpanElement>("right");
-  const lockedTooltip = useHoverTooltip<HTMLAnchorElement>("right");
-  const normalTooltip = useHoverTooltip<HTMLAnchorElement>("right");
+  const disabledTooltip = useHoverTooltip<HTMLSpanElement>("Tu rol no tiene acceso a esta sección.", "right");
+  const lockedTooltip = useHoverTooltip<HTMLAnchorElement>(aviso ?? item.label, "right");
+  const normalTooltip = useHoverTooltip<HTMLAnchorElement>(item.label, "right");
 
   if (sinPermiso) {
     return (
       <>
         <span
-          ref={disabledTooltip.triggerProps.ref}
-          onMouseEnter={disabledTooltip.triggerProps.onMouseEnter}
-          onMouseLeave={disabledTooltip.triggerProps.onMouseLeave}
-          onFocus={disabledTooltip.triggerProps.onFocus}
-          onBlur={disabledTooltip.triggerProps.onBlur}
+          {...disabledTooltip.triggerProps}
           title={collapsed ? undefined : "Tu rol no tiene acceso a esta sección."}
           aria-disabled="true"
           className="flex cursor-not-allowed select-none items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary opacity-40"
@@ -658,7 +651,7 @@ function SidebarNavLink({
           <Icon className="h-[18px] w-[18px] shrink-0" />
           <span className={cn(collapsed && "md:hidden")}>{item.label}</span>
         </span>
-        {collapsed && <disabledTooltip.Tooltip label="Tu rol no tiene acceso a esta sección." />}
+        {collapsed && disabledTooltip.tooltipNode}
       </>
     );
   }
@@ -667,13 +660,9 @@ function SidebarNavLink({
     return (
       <>
         <NavLink
-          ref={lockedTooltip.triggerProps.ref}
+          {...lockedTooltip.triggerProps}
           to="/plan"
           onClick={onClick}
-          onMouseEnter={lockedTooltip.triggerProps.onMouseEnter}
-          onMouseLeave={lockedTooltip.triggerProps.onMouseLeave}
-          onFocus={lockedTooltip.triggerProps.onFocus}
-          onBlur={lockedTooltip.triggerProps.onBlur}
           title={collapsed ? undefined : aviso}
           className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text"
         >
@@ -685,7 +674,7 @@ function SidebarNavLink({
             </Badge>
           </span>
         </NavLink>
-        {collapsed && <lockedTooltip.Tooltip label={aviso ?? item.label} />}
+        {collapsed && lockedTooltip.tooltipNode}
       </>
     );
   }
@@ -693,14 +682,10 @@ function SidebarNavLink({
   return (
     <>
       <NavLink
-        ref={normalTooltip.triggerProps.ref}
+        {...normalTooltip.triggerProps}
         to={item.href}
         end
         onClick={onClick}
-        onMouseEnter={normalTooltip.triggerProps.onMouseEnter}
-        onMouseLeave={normalTooltip.triggerProps.onMouseLeave}
-        onFocus={normalTooltip.triggerProps.onFocus}
-        onBlur={normalTooltip.triggerProps.onBlur}
         className={({ isActive }) =>
           cn(
             "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
@@ -711,7 +696,7 @@ function SidebarNavLink({
         <Icon className="h-[18px] w-[18px] shrink-0" />
         <span className={cn(collapsed && "md:hidden")}>{item.label}</span>
       </NavLink>
-      {collapsed && <normalTooltip.Tooltip label={item.label} />}
+      {collapsed && normalTooltip.tooltipNode}
     </>
   );
 }
