@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2, X } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
-import { Select } from "../../components/ui/select";
+import { FilterChip } from "../../components/ui/filter-chip";
 import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
@@ -67,6 +67,13 @@ export default function SucursalesPage() {
       estadoFiltro === "todos" || (estadoFiltro === "activos" ? s.activa : !s.activa);
     return matchNombre && matchEstado;
   });
+
+  const filtrosActivos = busqueda !== "" || estadoFiltro !== "todos";
+
+  function limpiarFiltros() {
+    setBusqueda("");
+    setEstadoFiltro("todos");
+  }
 
   function resetAlta() {
     setNombre("");
@@ -162,17 +169,6 @@ export default function SucursalesPage() {
           containerClassName="w-64"
           icon={<Search className="h-[15px] w-[15px]" />}
         />
-        <Select
-          label="Estado"
-          value={estadoFiltro}
-          onChange={(e) => setEstadoFiltro(e.target.value as EstadoFiltro)}
-          options={[
-            { value: "todos", label: "Todos" },
-            { value: "activos", label: "Activos" },
-            { value: "inactivos", label: "Inactivos" },
-          ]}
-          containerClassName="w-40"
-        />
         <Button
           variant="primary"
           className="ml-auto"
@@ -192,6 +188,30 @@ export default function SucursalesPage() {
           <Plus className="h-4 w-4" />
           Nueva sucursal
         </Button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <FilterChip
+          label="Estado"
+          value={estadoFiltro}
+          defaultValue="todos"
+          onChange={(v) => setEstadoFiltro(v as EstadoFiltro)}
+          options={[
+            { value: "todos", label: "Todos" },
+            { value: "activos", label: "Activos" },
+            { value: "inactivos", label: "Inactivos" },
+          ]}
+        />
+        {filtrosActivos && (
+          <button
+            type="button"
+            onClick={limpiarFiltros}
+            className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text"
+          >
+            <X className="h-3.5 w-3.5" />
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       {error && !altaOpen && !editando && !eliminarTarget && (

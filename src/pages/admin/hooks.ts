@@ -7,6 +7,9 @@ import {
   getSuscripcionesAdmin,
   createSuscripcionAdmin,
   cancelSuscripcionAdmin,
+  listMiembrosAdmin,
+  listEmpleadosAdmin,
+  listSucursalesAdmin,
   type CrearOrganizacionInput,
   type CrearSuscripcionAdminInput,
 } from "../../lib/api";
@@ -35,6 +38,18 @@ export function useEditarOrganizacionAdmin() {
 
 export function useOrgResumenAdmin(orgId: string) {
   return useQuery({ queryKey: ["admin-org-resumen", orgId], queryFn: () => getOrgResumenAdmin(orgId) });
+}
+
+export function useMiembrosAdminOrg(orgId: string) {
+  return useQuery({ queryKey: ["admin-org-miembros", orgId], queryFn: () => listMiembrosAdmin(orgId) });
+}
+
+export function useEmpleadosAdminOrg(orgId: string) {
+  return useQuery({ queryKey: ["admin-org-empleados", orgId], queryFn: () => listEmpleadosAdmin(orgId) });
+}
+
+export function useSucursalesAdminOrg(orgId: string) {
+  return useQuery({ queryKey: ["admin-org-sucursales", orgId], queryFn: () => listSucursalesAdmin(orgId) });
 }
 
 function suscripcionesKey(orgId: string | null) {

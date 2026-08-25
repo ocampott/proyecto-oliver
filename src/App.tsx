@@ -20,6 +20,7 @@ const HorasPage = lazy(() => import("./pages/horas/HorasPage"));
 const TurnosPage = lazy(() => import("./pages/turnos/TurnosPage"));
 const RrhhPage = lazy(() => import("./pages/rrhh/RrhhPage"));
 const AdminPage = lazy(() => import("./pages/admin/AdminPage"));
+const OrganizacionDetallePage = lazy(() => import("./pages/admin/OrganizacionDetallePage"));
 const PlanPage = lazy(() => import("./pages/plan/PlanPage"));
 const ConfiguracionPage = lazy(() => import("./pages/configuracion/ConfiguracionPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
@@ -130,7 +131,19 @@ export default function App() {
               path="/admin"
               element={
                 <ProtectedRoute>
-                  <AdminPage />
+                  <PanelLayout>
+                    <AdminPage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/organizaciones/:id"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <OrganizacionDetallePage />
+                  </PanelLayout>
                 </ProtectedRoute>
               }
             />

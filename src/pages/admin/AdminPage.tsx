@@ -1,37 +1,30 @@
 import { useState, type FormEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Plus, Pencil, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Pencil, Search, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Dialog } from "../../components/ui/dialog";
 import { Field } from "../../components/ui/field";
-import { Select } from "../../components/ui/select";
 import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import { ApiError, getPlanes, type OrganizationAdmin, type SuscripcionAdmin, type PlanesResponse } from "../../lib/api";
+import { ApiError, type OrganizationAdmin } from "../../lib/api";
 import {
   useOrganizacionesAdmin,
   useCrearOrganizacionAdmin,
   useEditarOrganizacionAdmin,
   useOrgResumenAdmin,
   useSuscripcionesAdmin,
-  useCrearSuscripcionAdmin,
-  useCancelarSuscripcionAdmin,
 } from "./hooks";
 
 function fechaLocal(iso: string): string {
   return new Date(iso).toLocaleDateString("es-AR");
 }
 
-function precioFormateado(n: number): string {
-  return `$${n.toLocaleString("es-AR")}`;
-}
-
 export default function AdminPage() {
   const { data: organizaciones = [], isLoading, isError, error } = useOrganizacionesAdmin();
   const crear = useCrearOrganizacionAdmin();
   const editarOrg = useEditarOrganizacionAdmin();
-  const { data: catalogo } = useQuery({ queryKey: ["planes"], queryFn: getPlanes });
+  const navigate = useNavigate();
   const toast = useToast();
 
   const [name, setName] = useState("");
@@ -39,7 +32,6 @@ export default function AdminPage() {
   const [altaOpen, setAltaOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [gestionOrg, setGestionOrg] = useState<OrganizationAdmin | null>(null);
   const [editandoOrg, setEditandoOrg] = useState<OrganizationAdmin | null>(null);
   const [editName, setEditName] = useState("");
   const [errorEditOrg, setErrorEditOrg] = useState<string | null>(null);
@@ -80,18 +72,16 @@ export default function AdminPage() {
   if (isError) {
     const noAutorizado = error instanceof ApiError && error.status === 403;
     return (
-      <main className="mx-auto w-full max-w-[1440px] px-8 py-8">
-        <p className="text-[15px] text-text">
-          {noAutorizado
-            ? "No tenés acceso a esta sección."
-            : "No se pudieron cargar las organizaciones. Probá de nuevo."}
-        </p>
-      </main>
+      <p className="text-[15px] text-text">
+        {noAutorizado
+          ? "No tenés acceso a esta sección."
+          : "No se pudieron cargar las organizaciones. Probá de nuevo."}
+      </p>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-[1440px] px-8 py-8">
+    <>
       <h1 className="text-[32px] font-extrabold text-text">Organizaciones</h1>
 
       <div className="mt-4 flex justify-end">
@@ -137,9 +127,11 @@ export default function AdminPage() {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1.5">
                     <IconButton onClick={() => abrirEditarOrg(org)} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar organización" />
-                    <Button variant="secondary" className="h-8 px-2.5 text-[13px]" onClick={() => setGestionOrg(org)}>
-                      Gestionar suscripción
-                    </Button>
+                    <IconButton
+                      onClick={() => navigate(`/admin/organizaciones/${org.id}`)}
+                      icon={<Search className="h-3.5 w-3.5" />}
+                      label="Ver detalle"
+                    />
                   </div>
                 </TableCell>
               </TableRow>
@@ -206,14 +198,7 @@ export default function AdminPage() {
         </form>
       </Dialog>
 
-      {gestionOrg && (
-        <GestionSuscripcionDialog
-          org={gestionOrg}
-          planes={catalogo?.planes ?? []}
-          onClose={() => setGestionOrg(null)}
-        />
-      )}
-    </main>
+    </>
   );
 }
 
@@ -234,161 +219,3 @@ function Uso({ orgId }: { orgId: string }) {
   );
 }
 
-interface GestionSuscripcionDialogProps {
-  org: OrganizationAdmin;
-  planes: PlanesResponse["planes"];
-  onClose: () => void;
-}
-
-function GestionSuscripcionDialog({ org, planes, onClose }: GestionSuscripcionDialogProps) {
-  const { data: suscripcionesData, isLoading: suscripcionesLoading } = useSuscripcionesAdmin(org.id);
-  const crear = useCrearSuscripcionAdmin(org.id);
-  const cancelar = useCancelarSuscripcionAdmin(org.id);
-  const toast = useToast();
-
-  const [plan, setPlan] = useState<"basico" | "pro">("basico");
-  const [periodo, setPeriodo] = useState<string>("1");
-  const [precio, setPrecio] = useState<string>("");
-  const [notas, setNotas] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const planDef = planes.find((p) => p.slug === plan);
-  const periodoDef = planDef?.precios.find((p) => p.meses === Number(periodo));
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setFormError(null);
-    const precioNum = precio.trim() === "" ? undefined : Number(precio);
-    try {
-      await crear.mutateAsync({
-        plan,
-        periodoMeses: Number(periodo),
-        precioTotal: precioNum,
-        notas: notas.trim() || undefined,
-      });
-      setNotas("");
-      setPrecio("");
-      toast.success("Suscripción registrada.");
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
-    }
-  }
-
-  async function handleCancelar(suscripcion: SuscripcionAdmin) {
-    if (!confirm("¿Cancelar esta suscripción? La organización volverá al plan Gratis.")) return;
-    try {
-      await cancelar.mutateAsync(suscripcion.id);
-      toast.success("Suscripción cancelada.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo cancelar la suscripción.");
-    }
-  }
-
-  return (
-    <Dialog open onClose={onClose} title={`Suscripción: ${org.name}`} className="max-w-[560px]">
-      <div className="flex min-w-0 max-h-[80vh] flex-col gap-4">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Select
-              label="Plan"
-              value={plan}
-              onChange={(e) => setPlan(e.target.value as "basico" | "pro")}
-              options={[
-                { value: "basico", label: "Básico" },
-                { value: "pro", label: "Pro" },
-              ]}
-            />
-            <Select
-              label="Período"
-              value={periodo}
-              onChange={(e) => setPeriodo(e.target.value)}
-              options={[
-                { value: "1", label: "1 mes" },
-                { value: "3", label: "3 meses (-10%)" },
-                { value: "12", label: "12 meses (-20%)" },
-              ]}
-            />
-          </div>
-
-          {periodoDef && (
-            <p className="text-[14px] text-text-secondary">
-              Precio calculado:{" "}
-              <span className="font-semibold text-text">{precioFormateado(periodoDef.precioTotal)}</span>
-            </p>
-          )}
-
-          <Field
-            label="Precio total (opcional)"
-            type="number"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-            placeholder={periodoDef ? periodoDef.precioTotal.toString() : ""}
-          />
-
-          <Field
-            label="Notas"
-            value={notas}
-            onChange={(e) => setNotas(e.target.value)}
-            placeholder="Ej.: pagó por transferencia"
-          />
-
-          {formError && <p className="text-[15px] text-accent-700">{formError}</p>}
-
-          <div className="flex gap-2">
-            <Button type="submit" variant="primary" disabled={crear.isPending}>
-              Registrar suscripción
-            </Button>
-            <Button type="button" variant="secondary" onClick={onClose}>
-              Cerrar
-            </Button>
-          </div>
-        </form>
-
-        <div>
-          <h3 className="text-[16px] font-semibold text-text">Historial</h3>
-          {suscripcionesLoading && <p className="text-[14px] text-text-secondary">Cargando...</p>}
-          {!suscripcionesLoading && (suscripcionesData?.suscripciones.length ?? 0) === 0 && (
-            <p className="text-[14px] text-text-secondary">No hay suscripciones registradas.</p>
-          )}
-          {!suscripcionesLoading && (suscripcionesData?.suscripciones.length ?? 0) > 0 && (
-            <div className="mt-2 min-w-0 max-h-[240px] overflow-auto rounded-[10px] border border-border">
-              <Table containerClassName="overflow-x-auto rounded-none border-none">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Período</TableHead>
-                    <TableHead>Vence</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {suscripcionesData!.suscripciones.map((s) => (
-                    <TableRow key={s.id}>
-                      <TableCell className="capitalize">{s.plan}</TableCell>
-                      <TableCell>{s.periodo_meses} meses</TableCell>
-                      <TableCell>{fechaLocal(s.vence_at)}</TableCell>
-                      <TableCell className="capitalize">{s.estado}</TableCell>
-                      <TableCell className="text-right">
-                        {s.estado === "activa" && (
-                          <Button
-                            variant="secondary"
-                            className="h-7 px-2 text-[12px]"
-                            onClick={() => handleCancelar(s)}
-                            disabled={cancelar.isPending}
-                          >
-                            Cancelar
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </div>
-      </div>
-    </Dialog>
-  );
-}

@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from "react";
-import { Search, Plus, Loader2, Copy } from "lucide-react";
+import { useState, type FormEvent, type ReactNode } from "react";
+import { Search, Plus, Loader2, Copy, X } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
+import { FilterChip } from "../../components/ui/filter-chip";
 import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
@@ -29,8 +30,31 @@ function minutosRestantes(expiresAt: string): number {
   return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 60000));
 }
 
-type EstadoFiltro = "todos" | "activos" | "inactivos";
+function fechaLocal(iso: string): string {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("es-AR");
+}
+
+function formatCuil(cuil: string): string {
+  const digitos = cuil.replace(/\D/g, "");
+  if (digitos.length !== 11) return cuil;
+  return `${digitos.slice(0, 2)}-${digitos.slice(2, 10)}-${digitos.slice(10)}`;
+}
+
+function formatCuilInput(value: string): string {
+  const digitos = value.replace(/\D/g, "").slice(0, 11);
+  if (digitos.length <= 2) return digitos;
+  if (digitos.length <= 10) return `${digitos.slice(0, 2)}-${digitos.slice(2)}`;
+  return `${digitos.slice(0, 2)}-${digitos.slice(2, 10)}-${digitos.slice(10)}`;
+}
+
+function Celda({ value }: { value: string | null | undefined }): ReactNode {
+  if (value) return <TableCell>{value}</TableCell>;
+  return <TableCell className="text-center text-text-secondary">—</TableCell>;
+}
+
+type EstadoFiltro = "todos" | Empleado["estado"];
 type DispositivoFiltro = "todos" | "vinculado" | "otp_pendiente" | "sin_vincular";
+type CuilFiltro = "todos" | "con" | "sin";
 
 const ESTADO_LABELS: Record<Empleado["estado"], string> = {
   activo: "Activo",
@@ -72,6 +96,8 @@ export default function EmpleadosPage() {
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [dispositivoFiltro, setDispositivoFiltro] = useState<DispositivoFiltro>("todos");
+  const [sucursalFiltro, setSucursalFiltro] = useState("");
+  const [cuilFiltro, setCuilFiltro] = useState<CuilFiltro>("todos");
   const [codigoDialog, setCodigoDialog] = useState<{ nombre: string; code: string } | null>(null);
   const [desvincularTarget, setDesvincularTarget] = useState<Empleado | null>(null);
   const [eliminarTarget, setEliminarTarget] = useState<Empleado | null>(null);
@@ -86,10 +112,24 @@ export default function EmpleadosPage() {
   const alTope = !!ent && !ent.ilimitado && ent.maxEmpleados !== null && activosCount >= ent.maxEmpleados;
   const gestionable = puedeGestionar(org ?? null);
 
+  const filtrosActivos =
+    busqueda !== "" ||
+    estadoFiltro !== "todos" ||
+    dispositivoFiltro !== "todos" ||
+    sucursalFiltro !== "" ||
+    cuilFiltro !== "todos";
+
+  function limpiarFiltros() {
+    setBusqueda("");
+    setEstadoFiltro("todos");
+    setDispositivoFiltro("todos");
+    setSucursalFiltro("");
+    setCuilFiltro("todos");
+  }
+
   const empleadosFiltrados = empleados.filter((emp) => {
     const matchNombre = nombreCompleto(emp).toLowerCase().includes(busqueda.toLowerCase());
-    const matchEstado =
-      estadoFiltro === "todos" || (estadoFiltro === "activos" ? emp.estado !== "baja" : emp.estado === "baja");
+    const matchEstado = estadoFiltro === "todos" || emp.estado === estadoFiltro;
     const matchDispositivo =
       dispositivoFiltro === "todos" ||
       (dispositivoFiltro === "vinculado"
@@ -97,7 +137,9 @@ export default function EmpleadosPage() {
         : dispositivoFiltro === "otp_pendiente"
           ? !emp.device_token && !!emp.otp
           : !emp.device_token && !emp.otp);
-    return matchNombre && matchEstado && matchDispositivo;
+    const matchSucursal = sucursalFiltro === "" || emp.sucursal_id === sucursalFiltro;
+    const matchCuil = cuilFiltro === "todos" || (cuilFiltro === "con" ? !!emp.cuil : !emp.cuil);
+    return matchNombre && matchEstado && matchDispositivo && matchSucursal && matchCuil;
   });
 
   async function handleAlta(e: FormEvent) {
@@ -131,7 +173,7 @@ export default function EmpleadosPage() {
     setEditNombre(emp.nombre);
     setEditApellido(emp.apellido ?? "");
     setEditCelular(emp.celular ?? "");
-    setEditCuil(emp.cuil ?? "");
+    setEditCuil(emp.cuil ? formatCuilInput(emp.cuil) : "");
     setEditFechaIngreso(emp.fecha_ingreso ?? "");
     setEditSucursalId(emp.sucursal_id ?? "");
     setEditEstado(emp.estado);
@@ -234,29 +276,6 @@ export default function EmpleadosPage() {
           containerClassName="w-64"
           icon={<Search className="h-[15px] w-[15px]" />}
         />
-        <Select
-          label="Estado"
-          value={estadoFiltro}
-          onChange={(e) => setEstadoFiltro(e.target.value as EstadoFiltro)}
-          options={[
-            { value: "todos", label: "Todos" },
-            { value: "activos", label: "Activos" },
-            { value: "inactivos", label: "Inactivos" },
-          ]}
-          containerClassName="w-40"
-        />
-        <Select
-          label="Dispositivo"
-          value={dispositivoFiltro}
-          onChange={(e) => setDispositivoFiltro(e.target.value as DispositivoFiltro)}
-          options={[
-            { value: "todos", label: "Todos" },
-            { value: "vinculado", label: "Vinculado" },
-            { value: "otp_pendiente", label: "OTP pendiente" },
-            { value: "sin_vincular", label: "Sin vincular" },
-          ]}
-          containerClassName="w-40"
-        />
         <Button
           variant="primary"
           className="ml-auto"
@@ -278,6 +297,62 @@ export default function EmpleadosPage() {
         </Button>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <FilterChip
+          label="Estado"
+          value={estadoFiltro}
+          defaultValue="todos"
+          onChange={(v) => setEstadoFiltro(v as EstadoFiltro)}
+          options={[
+            { value: "todos", label: "Todos" },
+            { value: "activo", label: "Activo" },
+            { value: "de_licencia", label: "De licencia" },
+            { value: "suspendido", label: "Suspendido" },
+            { value: "baja", label: "Baja" },
+          ]}
+        />
+        <FilterChip
+          label="Dispositivo"
+          value={dispositivoFiltro}
+          defaultValue="todos"
+          onChange={(v) => setDispositivoFiltro(v as DispositivoFiltro)}
+          options={[
+            { value: "todos", label: "Todos" },
+            { value: "vinculado", label: "Vinculado" },
+            { value: "otp_pendiente", label: "OTP pendiente" },
+            { value: "sin_vincular", label: "Sin vincular" },
+          ]}
+        />
+        <FilterChip
+          label="Sucursal"
+          value={sucursalFiltro}
+          defaultValue=""
+          onChange={setSucursalFiltro}
+          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+        />
+        <FilterChip
+          label="CUIL"
+          value={cuilFiltro}
+          defaultValue="todos"
+          onChange={(v) => setCuilFiltro(v as CuilFiltro)}
+          options={[
+            { value: "todos", label: "Todos" },
+            { value: "con", label: "Con CUIL" },
+            { value: "sin", label: "Sin CUIL" },
+          ]}
+        />
+        {filtrosActivos && (
+          <button
+            type="button"
+            onClick={limpiarFiltros}
+            className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text"
+          >
+            <X className="h-3.5 w-3.5" />
+            Limpiar filtros
+          </button>
+        )}
+      </div>
+
       {error && !altaOpen && !editando && !eliminarTarget && (
         <ErrorPlan error={error} className="mt-2">
           <p className="mt-2 text-[15px] text-accent-700">{error.message}</p>
@@ -289,20 +364,24 @@ export default function EmpleadosPage() {
           <TableRow>
             <TableHead>Nombre</TableHead>
             <TableHead>Celular</TableHead>
+            <TableHead>CUIL</TableHead>
             <TableHead>Sucursal</TableHead>
+            <TableHead>Fecha de ingreso</TableHead>
             <TableHead>Dispositivo</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && <TableSkeleton cols={6} />}
+          {isLoading && <TableSkeleton cols={8} />}
           {!isLoading &&
             empleadosFiltrados.map((emp) => (
               <TableRow key={emp.id} className={emp.estado === "baja" ? "text-text/40" : ""}>
                 <TableCell>{nombreCompleto(emp)}</TableCell>
-                <TableCell>{emp.celular ?? "—"}</TableCell>
-                <TableCell>{sucursales.find((s) => s.id === emp.sucursal_id)?.nombre ?? "—"}</TableCell>
+                <Celda value={emp.celular} />
+                <Celda value={emp.cuil ? formatCuil(emp.cuil) : null} />
+                <Celda value={sucursales.find((s) => s.id === emp.sucursal_id)?.nombre} />
+                <Celda value={emp.fecha_ingreso ? fechaLocal(emp.fecha_ingreso) : null} />
                 <TableCell>
                   {emp.device_token ? (
                     <Status tone="success">Vinculado</Status>
@@ -406,14 +485,14 @@ export default function EmpleadosPage() {
             ))}
           {!isLoading && empleados.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-text/60">
+              <TableCell colSpan={8} className="text-text/60">
                 Todavía no hay empleados cargados.
               </TableCell>
             </TableRow>
           )}
           {!isLoading && empleados.length > 0 && empleadosFiltrados.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-text/60">
+              <TableCell colSpan={8} className="text-text/60">
                 Ningún empleado coincide con el filtro.
               </TableCell>
             </TableRow>
@@ -453,8 +532,10 @@ export default function EmpleadosPage() {
           <Field
             label="CUIL (opcional)"
             placeholder="20-12345678-6"
+            inputMode="numeric"
+            maxLength={13}
             value={cuil}
-            onChange={(e) => setCuil(e.target.value)}
+            onChange={(e) => setCuil(formatCuilInput(e.target.value))}
             containerClassName="w-full"
           />
           <Field
@@ -513,8 +594,10 @@ export default function EmpleadosPage() {
           <Field
             label="CUIL (opcional)"
             placeholder="20-12345678-6"
+            inputMode="numeric"
+            maxLength={13}
             value={editCuil}
-            onChange={(e) => setEditCuil(e.target.value)}
+            onChange={(e) => setEditCuil(formatCuilInput(e.target.value))}
             containerClassName="w-full"
           />
           <Field

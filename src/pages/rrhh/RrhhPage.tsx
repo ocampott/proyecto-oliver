@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, Download, X, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
+import { FilterChip } from "../../components/ui/filter-chip";
 import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
 import { IconButton } from "../../components/ui/icon-button";
@@ -135,6 +136,13 @@ export default function RrhhPage() {
   });
   const ausencias = data?.ausencias ?? [];
   const resumen = data?.resumen;
+
+  const filtrosActivos = sucursalFiltro !== "" || motivoFiltro !== "";
+
+  function limpiarFiltros() {
+    setSucursalFiltro("");
+    setMotivoFiltro("");
+  }
 
   const crear = useCrearAusencia();
   const editar = useEditarAusencia();
@@ -309,20 +317,6 @@ export default function RrhhPage() {
         />
         <Field label="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-40" />
         <Field label="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-40" />
-        <Select
-          label="Sucursal"
-          value={sucursalFiltro}
-          onChange={(e) => setSucursalFiltro(e.target.value)}
-          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-          containerClassName="w-48"
-        />
-        <Select
-          label="Motivo"
-          value={motivoFiltro}
-          onChange={(e) => setMotivoFiltro(e.target.value)}
-          options={[{ value: "", label: "Todos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
-          containerClassName="w-48"
-        />
         <div className="ml-auto flex gap-2">
           <Button variant="secondary" onClick={handleDescargarExcel} disabled={descargando}>
             <Download className="h-4 w-4" />
@@ -333,6 +327,33 @@ export default function RrhhPage() {
             Nueva ausencia
           </Button>
         </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <FilterChip
+          label="Sucursal"
+          value={sucursalFiltro}
+          defaultValue=""
+          onChange={setSucursalFiltro}
+          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+        />
+        <FilterChip
+          label="Motivo"
+          value={motivoFiltro}
+          defaultValue=""
+          onChange={setMotivoFiltro}
+          options={[{ value: "", label: "Todos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
+        />
+        {filtrosActivos && (
+          <button
+            type="button"
+            onClick={limpiarFiltros}
+            className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text"
+          >
+            <X className="h-3.5 w-3.5" />
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       {error && !altaOpen && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}

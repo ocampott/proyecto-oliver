@@ -424,6 +424,18 @@ export function getOrgResumenAdmin(id: string): Promise<OrgResumen> {
   return request(`/api/admin/organizations/${id}/resumen`);
 }
 
+export function listMiembrosAdmin(orgId: string): Promise<Miembro[]> {
+  return request(`/api/admin/organizations/${orgId}/miembros`);
+}
+
+export function listEmpleadosAdmin(orgId: string): Promise<Empleado[]> {
+  return request(`/api/admin/organizations/${orgId}/empleados`);
+}
+
+export function listSucursalesAdmin(orgId: string): Promise<Sucursal[]> {
+  return request(`/api/admin/organizations/${orgId}/sucursales`);
+}
+
 export interface CrearOrganizacionInput {
   name: string;
   slug: string;

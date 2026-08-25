@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { LogIn, LogOut, Download, Loader2 } from "lucide-react";
+import { LogIn, LogOut, Download, Loader2, X } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
-import { Select } from "../../components/ui/select";
+import { FilterChip } from "../../components/ui/filter-chip";
 import { Badge } from "../../components/ui/badge";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
@@ -67,6 +67,14 @@ export default function AsistenciaPage() {
     const matchTipo = tipoFiltro === "todos" || r.tipo === tipoFiltro;
     return matchEmpleado && matchSucursal && matchTipo;
   });
+
+  const filtrosActivos = empleadoFiltro !== "todos" || sucursalFiltro !== "todos" || tipoFiltro !== "todos";
+
+  function limpiarFiltros() {
+    setEmpleadoFiltro("todos");
+    setSucursalFiltro("todos");
+    setTipoFiltro("todos");
+  }
 
   async function handleDescargarExcel() {
     setDescargando(true);
@@ -180,37 +188,6 @@ export default function AsistenciaPage() {
             onChange={(e) => setHasta(e.target.value)}
             containerClassName="w-40"
           />
-          <Select
-            label="Empleado"
-            value={empleadoFiltro}
-            onChange={(e) => setEmpleadoFiltro(e.target.value)}
-            options={[
-              { value: "todos", label: "Todos" },
-              ...empleados.map((emp) => ({ value: emp.id, label: emp.nombre })),
-            ]}
-            containerClassName="w-48"
-          />
-          <Select
-            label="Sucursal"
-            value={sucursalFiltro}
-            onChange={(e) => setSucursalFiltro(e.target.value)}
-            options={[
-              { value: "todos", label: "Todos" },
-              ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre })),
-            ]}
-            containerClassName="w-48"
-          />
-          <Select
-            label="Tipo"
-            value={tipoFiltro}
-            onChange={(e) => setTipoFiltro(e.target.value as TipoFiltro)}
-            options={[
-              { value: "todos", label: "Todos" },
-              { value: "entrada", label: "Entrada" },
-              { value: "salida", label: "Salida" },
-            ]}
-            containerClassName="w-40"
-          />
           <Button
             variant="secondary"
             className="ml-auto"
@@ -227,6 +204,50 @@ export default function AsistenciaPage() {
             <Download className="h-4 w-4" />
             {descargando ? "Generando…" : "Descargar Excel"}
           </Button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <FilterChip
+            label="Empleado"
+            value={empleadoFiltro}
+            defaultValue="todos"
+            onChange={setEmpleadoFiltro}
+            options={[
+              { value: "todos", label: "Todos" },
+              ...empleados.map((emp) => ({ value: emp.id, label: emp.nombre })),
+            ]}
+          />
+          <FilterChip
+            label="Sucursal"
+            value={sucursalFiltro}
+            defaultValue="todos"
+            onChange={setSucursalFiltro}
+            options={[
+              { value: "todos", label: "Todos" },
+              ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre })),
+            ]}
+          />
+          <FilterChip
+            label="Tipo"
+            value={tipoFiltro}
+            defaultValue="todos"
+            onChange={(v) => setTipoFiltro(v as TipoFiltro)}
+            options={[
+              { value: "todos", label: "Todos" },
+              { value: "entrada", label: "Entrada" },
+              { value: "salida", label: "Salida" },
+            ]}
+          />
+          {filtrosActivos && (
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text"
+            >
+              <X className="h-3.5 w-3.5" />
+              Limpiar filtros
+            </button>
+          )}
         </div>
 
         {isError && (
