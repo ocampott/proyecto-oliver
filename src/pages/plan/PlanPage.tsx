@@ -3,7 +3,7 @@ import { Check, X } from "lucide-react";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { useOrgActual } from "../../lib/hooks";
-import { getPlanes, listEmpleados, listSucursales, type PlanDef } from "../../lib/api";
+import { getPlanes, getOrgResumenActual, type PlanDef } from "../../lib/api";
 
 // Solo módulos que existen hoy en el producto. Cuando se agregue uno
 // nuevo, hay que preguntar a qué plan(es) pertenece antes de sumarlo acá
@@ -34,13 +34,9 @@ function porcentajeUso(actual: number, max: number | null): number {
 
 export default function PlanPage() {
   const { data: org, isLoading: orgLoading } = useOrgActual();
-  const { data: empleados = [], isLoading: empLoading } = useQuery({
-    queryKey: ["empleados"],
-    queryFn: listEmpleados,
-  });
-  const { data: sucursales = [], isLoading: sucLoading } = useQuery({
-    queryKey: ["sucursales"],
-    queryFn: listSucursales,
+  const { data: resumen, isLoading: resumenLoading } = useQuery({
+    queryKey: ["org-resumen-actual"],
+    queryFn: getOrgResumenActual,
   });
   const { data: catalogo, isLoading: catLoading } = useQuery({
     queryKey: ["planes"],
@@ -63,8 +59,8 @@ export default function PlanPage() {
     );
   }
 
-  const empleadosActivos = empleados.filter((e) => e.estado !== "baja").length;
-  const sucursalesActivas = sucursales.filter((s) => s.activa).length;
+  const empleadosActivos = resumen?.empleadosActivos ?? 0;
+  const sucursalesActivas = resumen?.sucursalesActivas ?? 0;
 
   return (
     <main className="mx-auto w-full max-w-[1440px] px-8 py-8">
@@ -94,13 +90,13 @@ export default function PlanPage() {
             label="Empleados"
             actual={empleadosActivos}
             max={ent.maxEmpleados}
-            loading={empLoading}
+            loading={resumenLoading}
           />
           <UsoCard
             label="Sucursales"
             actual={sucursalesActivas}
             max={ent.maxSucursales}
-            loading={sucLoading}
+            loading={resumenLoading}
           />
         </div>
       </Card>

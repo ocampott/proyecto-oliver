@@ -424,6 +424,10 @@ export function getOrgResumenAdmin(id: string): Promise<OrgResumen> {
   return request(`/api/admin/organizations/${id}/resumen`);
 }
 
+export function getOrgResumenActual(): Promise<OrgResumen> {
+  return request("/api/org/resumen");
+}
+
 export function listMiembrosAdmin(orgId: string): Promise<Miembro[]> {
   return request(`/api/admin/organizations/${orgId}/miembros`);
 }
