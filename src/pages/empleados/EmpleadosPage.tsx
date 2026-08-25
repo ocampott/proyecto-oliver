@@ -32,6 +32,17 @@ function minutosRestantes(expiresAt: string): number {
 type EstadoFiltro = "todos" | "activos" | "inactivos";
 type DispositivoFiltro = "todos" | "vinculado" | "otp_pendiente" | "sin_vincular";
 
+const ESTADO_LABELS: Record<Empleado["estado"], string> = {
+  activo: "Activo",
+  de_licencia: "De licencia",
+  suspendido: "Suspendido",
+  baja: "Baja",
+};
+
+function nombreCompleto(emp: Empleado): string {
+  return emp.apellido ? `${emp.apellido}, ${emp.nombre}` : emp.nombre;
+}
+
 export default function EmpleadosPage() {
   const { data: empleados = [], isLoading } = useEmpleados();
   const { data: org } = useOrgActual();
@@ -76,7 +87,7 @@ export default function EmpleadosPage() {
   const gestionable = puedeGestionar(org ?? null);
 
   const empleadosFiltrados = empleados.filter((emp) => {
-    const matchNombre = emp.nombre.toLowerCase().includes(busqueda.toLowerCase());
+    const matchNombre = nombreCompleto(emp).toLowerCase().includes(busqueda.toLowerCase());
     const matchEstado =
       estadoFiltro === "todos" || (estadoFiltro === "activos" ? emp.estado !== "baja" : emp.estado === "baja");
     const matchDispositivo =
@@ -108,7 +119,7 @@ export default function EmpleadosPage() {
       setFechaIngreso("");
       setSucursalId("");
       setAltaOpen(false);
-      toast.success(`${apellido}, ${nombre} fue agregado a la nómina.`);
+      toast.success(`${apellido.trim()}, ${nombre.trim()} fue agregado a la nómina.`);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Algo salió mal. Probá de nuevo."));
     }
@@ -154,7 +165,7 @@ export default function EmpleadosPage() {
     setAccionandoId(emp.id);
     try {
       await editar.mutateAsync({ id: emp.id, patch: { estado: nuevoEstado } });
-      toast.success(`${emp.nombre} pasó a estado "${nuevoEstado}".`);
+      toast.success(`${nombreCompleto(emp)} pasó a estado "${ESTADO_LABELS[nuevoEstado]}".`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Algo salió mal. Probá de nuevo.");
     } finally {
@@ -289,7 +300,7 @@ export default function EmpleadosPage() {
           {!isLoading &&
             empleadosFiltrados.map((emp) => (
               <TableRow key={emp.id} className={emp.estado === "baja" ? "text-text/40" : ""}>
-                <TableCell>{emp.apellido ? `${emp.apellido}, ${emp.nombre}` : emp.nombre}</TableCell>
+                <TableCell>{nombreCompleto(emp)}</TableCell>
                 <TableCell>{emp.celular ?? "—"}</TableCell>
                 <TableCell>{sucursales.find((s) => s.id === emp.sucursal_id)?.nombre ?? "—"}</TableCell>
                 <TableCell>
@@ -307,7 +318,7 @@ export default function EmpleadosPage() {
                 </TableCell>
                 <TableCell>
                   <Status tone={emp.estado === "activo" ? "success" : emp.estado === "baja" ? "neutral" : "warning"}>
-                    {{ activo: "Activo", de_licencia: "De licencia", suspendido: "Suspendido", baja: "Baja" }[emp.estado]}
+                    {ESTADO_LABELS[emp.estado]}
                   </Status>
                 </TableCell>
                 <TableCell>
@@ -420,7 +431,7 @@ export default function EmpleadosPage() {
       >
         <form onSubmit={handleAlta} className="flex flex-col gap-3">
           <Field
-            label="Nombre y apellido"
+            label="Nombre"
             required
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
@@ -477,18 +488,18 @@ export default function EmpleadosPage() {
           setEditando(null);
           setError(null);
         }}
-        title={`Editar ${editando?.nombre ?? "empleado"}`}
+        title={`Editar ${editando ? nombreCompleto(editando) : "empleado"}`}
       >
         <form onSubmit={handleGuardarEdicion} className="flex flex-col gap-3">
           <Field
-            label="Nombre y apellido"
+            label="Nombre"
             required
             value={editNombre}
             onChange={(e) => setEditNombre(e.target.value)}
             containerClassName="w-full"
           />
           <Field
-            label="Apellido"
+            label="Apellido (opcional)"
             value={editApellido}
             onChange={(e) => setEditApellido(e.target.value)}
             containerClassName="w-full"
@@ -571,7 +582,8 @@ export default function EmpleadosPage() {
         title="Desvincular dispositivo"
       >
         <p className="text-[15px] text-text/70">
-          ¿Desvincular el dispositivo de <strong>{desvincularTarget?.nombre}</strong>? Va a tener que
+          ¿Desvincular el dispositivo de{" "}
+          <strong>{desvincularTarget ? nombreCompleto(desvincularTarget) : ""}</strong>? Va a tener que
           revincular con un código nuevo la próxima vez que quiera marcar.
         </p>
         <div className="flex justify-end gap-2">
@@ -594,7 +606,8 @@ export default function EmpleadosPage() {
         title="Eliminar empleado"
       >
         <p className="text-[15px] text-text/70">
-          ¿Eliminar <strong>{eliminarTarget?.nombre}</strong>? Esta acción no se puede deshacer.
+          ¿Eliminar <strong>{eliminarTarget ? nombreCompleto(eliminarTarget) : ""}</strong>? Esta acción no se puede
+          deshacer.
         </p>
         {error && (
           <ErrorPlan error={error}>

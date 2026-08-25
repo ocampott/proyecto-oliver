@@ -31,7 +31,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new ApiError(body?.error ?? "Algo salió mal. Probá de nuevo.", res.status, body);
+    const base = body?.error ?? "Algo salió mal. Probá de nuevo.";
+    const detalles = Array.isArray(body?.detalles) ? body.detalles : null;
+    const mensaje = detalles?.length
+      ? `${base}: ${detalles.map((d: { mensaje: string }) => d.mensaje).join(". ")}`
+      : base;
+    throw new ApiError(mensaje, res.status, body);
   }
   return body as T;
 }
