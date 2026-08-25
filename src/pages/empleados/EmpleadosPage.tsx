@@ -489,7 +489,6 @@ export default function EmpleadosPage() {
           />
           <Field
             label="Apellido"
-            required
             value={editApellido}
             onChange={(e) => setEditApellido(e.target.value)}
             containerClassName="w-full"
