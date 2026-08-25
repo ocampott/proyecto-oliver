@@ -301,7 +301,7 @@ git commit -m "refactor: PlanPage usa GET /org/resumen en vez de listar empleado
 
 **Repo:** `proyecto-oliver-api`
 
-**Contexto:** `listEmpleados(orgId)` (sin params) se usa también desde `routes/turnos.ts` — **fuera de alcance**, no se toca. Se agrega una función nueva `listEmpleadosPaginado` para los dos consumidores que sí están en alcance (`routes/empleados.ts`, y `routes/admin.ts` en la Task 7).
+**Contexto:** `listEmpleados(orgId)` (sin params) se usa también desde `routes/turnos.ts` — **fuera de alcance**, no se toca. Se agrega una función nueva `listEmpleadosPaginado` para los dos consumidores que sí están en alcance (`routes/empleados.ts`, y `routes/admin.ts` en la Task 7). En el frontend, `GET /empleados` también lo consumen `RrhhPage.tsx`, `AsistenciaPage.tsx` y las páginas de Turnos/Horas (fuera de alcance) solo para poblar selects/filtros con la nómina completa — por eso el handler de `routes/empleados.ts` paginа **solo si la request manda `page`/`pageSize`**; sin esos query params devuelve el array plano de siempre (ver Step 2).
 
 **Files:**
 - Modify: `src/lib/empleados.ts`
@@ -393,6 +393,7 @@ por:
 
 ```ts
 import {
+  listEmpleados,
   listEmpleadosPaginado,
   createEmpleadoConLimite,
   reactivarEmpleadoConLimite,
@@ -401,6 +402,7 @@ import {
   getEmpleadoScoped,
   tieneAsistencia,
   deleteEmpleado,
+  type Empleado,
   type EstadoEmpleado,
 } from "../lib/empleados.js";
 import { parsePagination } from "../lib/pagination.js";
@@ -435,12 +437,34 @@ interface EmpleadosListQuery {
   dispositivo?: "vinculado" | "no_vinculado";
 }
 
+async function conOtp(empleados: (Empleado & { tiene_asistencia: boolean })[]) {
+  return Promise.all(
+    empleados.map(async (e) => {
+      if (e.device_token) return { ...e, otp: null };
+      const otp = await getOtpVigente(e.id);
+      return { ...e, otp: otp ? { code: otp.code, expires_at: otp.expires_at } : null };
+    })
+  );
+}
+
 empleadosRouter.get(
   "/empleados",
   requireAuth,
   requireOrg,
   async (req: Request<Record<string, never>, unknown, unknown, EmpleadosListQuery>, res: Response) => {
-    const { q, estado, sucursalId, cuil, dispositivo } = req.query;
+    const { q, estado, sucursalId, cuil, dispositivo, page, pageSize } = req.query;
+
+    // Sin page/pageSize en la query: mantiene la respuesta vieja (array
+    // plano, sin filtrar) — la usan varios selects/filtros de otras
+    // páginas (RRHH, Asistencia, Turnos, Horas) que necesitan la nómina
+    // completa, no una página. Paginar es opt-in según lo que mande el
+    // caller, no automático.
+    if (page === undefined && pageSize === undefined) {
+      const empleados = await listEmpleados(req.org!.id);
+      res.json(await conOtp(empleados));
+      return;
+    }
+
     const result = await listEmpleadosPaginado(req.org!.id, {
       ...parsePagination(req.query),
       q,
@@ -449,14 +473,7 @@ empleadosRouter.get(
       cuil,
       dispositivo,
     });
-    const data = await Promise.all(
-      result.data.map(async (e) => {
-        if (e.device_token) return { ...e, otp: null };
-        const otp = await getOtpVigente(e.id);
-        return { ...e, otp: otp ? { code: otp.code, expires_at: otp.expires_at } : null };
-      })
-    );
-    res.json({ data, pagination: result.pagination });
+    res.json({ data: await conOtp(result.data), pagination: result.pagination });
   }
 );
 ```
@@ -469,8 +486,9 @@ Expected: sin errores
 Run manual (con el server corriendo y un token válido):
 ```bash
 curl -s "http://localhost:3020/api/empleados?page=1&pageSize=10" -H "Authorization: Bearer <token>" | head -c 500
+curl -s "http://localhost:3020/api/empleados" -H "Authorization: Bearer <token>" | head -c 200
 ```
-Expected: JSON con `{"data":[...],"pagination":{"page":1,"pageSize":10,"total":N,"totalPages":M}}`, como máximo 10 elementos en `data`.
+Expected: la primera devuelve `{"data":[...],"pagination":{"page":1,"pageSize":10,"total":N,"totalPages":M}}` con como máximo 10 elementos en `data`; la segunda (sin `page`/`pageSize`) devuelve el array plano de siempre — `[{...},{...}]`, sin envolver en `{data,pagination}` — que es lo que siguen esperando `RrhhPage.tsx`, `AsistenciaPage.tsx` y las páginas de Turnos/Horas.
 
 - [ ] **Step 4: Commit**
 
@@ -615,11 +633,20 @@ sucursalesRouter.get(
 
 - [ ] **Step 3: Actualizar el handler de admin en `src/routes/admin.ts`**
 
-Agregar el import de `parsePagination` junto a los otros imports de `admin.ts`:
+Reemplazar la línea de import de `listSucursales` (parte del bloque de imports del tope del archivo):
 
 ```ts
+import { listSucursales } from "../lib/sucursales.js";
+```
+
+por:
+
+```ts
+import { listSucursales } from "../lib/sucursales.js";
 import { parsePagination } from "../lib/pagination.js";
 ```
+
+(Task 7 va a tocar este mismo bloque de imports más adelante y ya cuenta con que `parsePagination` quedó agregado acá — no lo vuelve a agregar.)
 
 Reemplazar:
 
@@ -676,7 +703,7 @@ git commit -m "feat: pagina y filtra GET /sucursales server-side (propio y admin
 
 **Repo:** `proyecto-oliver-api`
 
-**Contexto:** `listAsistencia`/`listRechazadas` se llaman también desde `GET /asistencia/export`, que necesita el dataset **completo** filtrado (no paginado) — por eso acá `params` es **opcional**: si no viene, no se aplica `.range()` (y se saca el `.limit(500)`/`.limit(200)` hardcodeado, que hoy trunca tanto la vista como el Excel).
+**Contexto:** `listAsistencia`/`listRechazadas` se llaman también desde `GET /asistencia/export`, que necesita el dataset **completo** filtrado (no paginado) — por eso acá `params` es **opcional**: si no viene, no se aplica `.range()` (y se saca el `.limit(500)`/`.limit(200)` hardcodeado, que hoy trunca tanto la vista como el Excel). El handler de `GET /asistencia` (no el de `/asistencia/rechazadas`) tiene el mismo motivo adicional que Empleados (Task 3): el widget en vivo del dashboard (`useAsistenciaEnVivo`, en `proyecto-oliver`) pide `GET /asistencia?desde=hoy&hasta=hoy` sin `page`/`pageSize` y necesita **todas** las marcas de hoy — por eso ese handler pagina solo si la request manda esos query params (`/asistencia/rechazadas` no tiene ese problema: su único consumidor es la tabla de rechazadas, que sí pagina siempre).
 
 **Files:**
 - Modify: `src/lib/asistencia.ts`
@@ -837,12 +864,20 @@ asistenciaRouter.get(
   requireAuth,
   requireOrg,
   async (req: Request<Record<string, never>, unknown, unknown, ListQuery>, res: Response) => {
-    const { desde, hasta, sucursalId, empleadoId, tipo } = req.query;
-    const result = await listAsistencia(
-      req.org!.id,
-      { desde: desde || hoyAR(), hasta: hasta || hoyAR(), sucursalId, empleadoId, tipo },
-      parsePagination(req.query)
-    );
+    const { desde, hasta, sucursalId, empleadoId, tipo, page, pageSize } = req.query;
+    const filters = { desde: desde || hoyAR(), hasta: hasta || hoyAR(), sucursalId, empleadoId, tipo };
+
+    // Sin page/pageSize: mantiene la respuesta vieja (array plano) — la
+    // usa el widget en vivo del dashboard (useAsistenciaEnVivo), que
+    // necesita TODAS las marcas de hoy para calcular quién está adentro,
+    // no una página. Paginar es opt-in.
+    if (page === undefined && pageSize === undefined) {
+      const data = await listAsistencia(req.org!.id, filters);
+      res.json(data);
+      return;
+    }
+
+    const result = await listAsistencia(req.org!.id, filters, parsePagination(req.query));
     res.json(result);
   }
 );
@@ -886,10 +921,11 @@ Expected: sin errores
 Run manual:
 ```bash
 curl -s "http://localhost:3020/api/asistencia?desde=2026-08-01&hasta=2026-08-25&page=1&pageSize=10" -H "Authorization: Bearer <token>" | head -c 500
+curl -s "http://localhost:3020/api/asistencia?desde=2026-08-25&hasta=2026-08-25" -H "Authorization: Bearer <token>" | head -c 200
 curl -s "http://localhost:3020/api/asistencia/rechazadas?page=1&pageSize=10" -H "Authorization: Bearer <token>" | head -c 300
 curl -s "http://localhost:3020/api/asistencia/export?desde=2026-08-01&hasta=2026-08-25" -H "Authorization: Bearer <token>" -o /tmp/test.xlsx && file /tmp/test.xlsx
 ```
-Expected: los dos primeros devuelven `{"data":[...],"pagination":{...}}`; el export sigue devolviendo un `.xlsx` válido.
+Expected: el primero y el tercero devuelven `{"data":[...],"pagination":{...}}`; el segundo (sin `page`/`pageSize`) devuelve el array plano de siempre, que es lo que espera `useAsistenciaEnVivo`; el export sigue devolviendo un `.xlsx` válido.
 
 - [ ] **Step 4: Commit**
 
@@ -905,7 +941,7 @@ git commit -m "feat: pagina asistencia/rechazadas y saca el limit(500)/limit(200
 
 **Repo:** `proyecto-oliver-api`
 
-**Contexto:** `GET /ausencias` devuelve `{ ausencias, resumen }`, donde `resumen` (`calcularResumenAusencias`) es un agregado (total, certificados pendientes, por sucursal, por motivo) calculado en JS sobre el array. Si `data` se pagina, `resumen` tiene que seguir calculándose sobre el **dataset filtrado completo**, no solo la página — por eso el handler hace dos llamadas a `listAusencias`: una sin `params` (para el resumen) y otra con `params` (para `data`). Mismo patrón opcional que Task 5.
+**Contexto:** `GET /ausencias` devuelve `{ ausencias, resumen }`, donde `resumen` (`calcularResumenAusencias`) es un agregado (total, certificados pendientes, por sucursal, por motivo) calculado en JS sobre el array. Si `ausencias` se pagina, `resumen` tiene que seguir calculándose sobre el **dataset filtrado completo**, no solo la página — por eso el handler, cuando sí pagina, hace dos llamadas a `listAusencias`: una sin `params` (para el resumen) y otra con `params` (para la página que se devuelve). Igual que en Task 3 y 5, el endpoint solo pagina si la request manda `page`/`pageSize` — sin esos query params devuelve exactamente `{ ausencias, resumen }` como hoy (sin campo `pagination`), que es lo que espera el widget "Ausencias hoy" del dashboard (`useAusenciasHoy`, en `proyecto-oliver`).
 
 **Files:**
 - Modify: `src/lib/rrhh.ts`
@@ -1041,6 +1077,15 @@ rrhhRouter.get(
   requireModulo("rrhh"),
   requireRole("owner", "admin"),
   async (req: Request<Record<string, never>, unknown, unknown, ListQuery>, res: Response) => {
+    // Sin page/pageSize: mantiene la respuesta vieja ({ausencias, resumen},
+    // sin envolver ausencias en {data,pagination}) — la usa el widget
+    // "Ausencias hoy" del dashboard (useAusenciasHoy), que no pagina.
+    if (req.query.page === undefined && req.query.pageSize === undefined) {
+      const ausencias = await listAusencias(req.org!.id, req.query);
+      res.json({ ausencias, resumen: calcularResumenAusencias(ausencias) });
+      return;
+    }
+
     const [todasFiltradas, pagina] = await Promise.all([
       listAusencias(req.org!.id, req.query),
       listAusencias(req.org!.id, req.query, parsePagination(req.query)),
@@ -1064,9 +1109,10 @@ Expected: sin errores
 Run manual:
 ```bash
 curl -s "http://localhost:3020/api/ausencias?page=1&pageSize=10" -H "Authorization: Bearer <token>" | head -c 600
+curl -s "http://localhost:3020/api/ausencias?desde=2026-08-25&hasta=2026-08-25" -H "Authorization: Bearer <token>" | head -c 300
 curl -s "http://localhost:3020/api/ausencias/export" -H "Authorization: Bearer <token>" -o /tmp/ausencias.xlsx && file /tmp/ausencias.xlsx
 ```
-Expected: la primera devuelve `{"ausencias":[...máx 10...],"pagination":{...},"resumen":{"total":N,...}}` donde `resumen.total` coincide con `pagination.total` (ambos cuentan el dataset filtrado completo); la segunda sigue devolviendo un `.xlsx` válido con el dataset completo (no se le pasa `params`, así que no queda afectada por el paginado).
+Expected: la primera devuelve `{"ausencias":[...máx 10...],"pagination":{...},"resumen":{"total":N,...}}` donde `resumen.total` coincide con `pagination.total` (ambos cuentan el dataset filtrado completo); la segunda (sin `page`/`pageSize`) devuelve `{"ausencias":[...],"resumen":{...}}` sin campo `pagination`, que es lo que espera `useAusenciasHoy`; la tercera sigue devolviendo un `.xlsx` válido con el dataset completo.
 
 - [ ] **Step 4: Commit**
 
@@ -1082,7 +1128,7 @@ git commit -m "feat: pagina GET /ausencias manteniendo el resumen sobre el datas
 
 **Repo:** `proyecto-oliver-api`
 
-**Contexto:** La lista de Organizaciones hoy vive inline en `routes/admin.ts` (sin filtro de búsqueda) — se mueve a `lib/organizations.ts` como `listOrganizations`, junto a `createOrganization`/`updateOrganization`/`getOrgResumen` que ya están ahí. `listMiembros` tiene un consumidor fuera de alcance (`routes/org.ts`, el propio equipo de la org) — igual que Empleados en Task 3, se agrega una función paralela `listMiembrosPaginado` en vez de tocar la firma existente. El handler de Empleados-por-org reusa `listEmpleadosPaginado` (Task 3); el de Sucursales-por-org ya quedó resuelto en Task 4.
+**Contexto:** La lista de Organizaciones hoy vive inline en `routes/admin.ts` (sin filtro de búsqueda) — se mueve a `lib/organizations.ts` como `listOrganizations`, junto a `createOrganization`/`updateOrganization`/`getOrgResumen` que ya están ahí. `listMiembros` tiene un consumidor fuera de alcance (`routes/org.ts`, el propio equipo de la org) — igual que Empleados en Task 3, se agrega una función paralela `listMiembrosPaginado` en vez de tocar la firma existente. El handler de Empleados-por-org reusa `listEmpleadosPaginado` (Task 3); el de Sucursales-por-org ya quedó resuelto en Task 4. Además se agrega `getOrganization(id)` + `GET /admin/organizations/:id`: `OrganizacionDetallePage.tsx` hoy busca la organización dentro de la lista completa (`useOrganizacionesAdmin().find(...)`) — con esa lista paginada, ese patrón deja de funcionar para cualquier organización fuera de la primera página, así que hace falta un endpoint de a una.
 
 **Files:**
 - Modify: `src/lib/organizations.ts`
@@ -1091,7 +1137,7 @@ git commit -m "feat: pagina GET /ausencias manteniendo el resumen sobre el datas
 
 **Interfaces:**
 - Consumes: `rangeFor`, `buildMeta`, `type Paginated`, `type PaginationParams`, `parsePagination` de `./pagination.js` (Task 1); `listEmpleadosPaginado` de `./empleados.js` (Task 3).
-- Produces: `listOrganizations(params: ListOrganizationsParams): Promise<Paginated<OrganizationRow>>`, `listMiembrosPaginado(orgId: string, params: PaginationParams): Promise<Paginated<Miembro>>`.
+- Produces: `listOrganizations(params: ListOrganizationsParams): Promise<Paginated<OrganizationRow>>`, `getOrganization(id: string): Promise<OrganizationListRow | null>`, `listMiembrosPaginado(orgId: string, params: PaginationParams): Promise<Paginated<Miembro>>`. Usado por Task 9 (frontend, `getOrganizationAdmin`) y Task 14 (`OrganizacionDetallePage.tsx`).
 
 - [ ] **Step 1: Agregar `listOrganizations` en `src/lib/organizations.ts`**
 
@@ -1134,6 +1180,25 @@ export async function listOrganizations(params: ListOrganizationsParams): Promis
   const { data, error, count } = await query;
   if (error) throw error;
   return { data: data as OrganizationListRow[], pagination: buildMeta(params, count ?? 0) };
+}
+
+/**
+ * Una sola organización por id — la necesita OrganizacionDetallePage.tsx
+ * para el encabezado del detalle. Antes de esta tarea esa página resolvía
+ * el nombre buscando dentro de la lista completa de organizaciones
+ * (`useOrganizacionesAdmin().find(...)`); con esa lista paginada a 10/20/30,
+ * ese `.find()` deja de encontrar organizaciones fuera de la primera
+ * página — hace falta un fetch de a una.
+ */
+export async function getOrganization(id: string): Promise<OrganizationListRow | null> {
+  const service = createServiceClient();
+  const { data, error } = await service
+    .from("organizations")
+    .select("id, name, slug, plan, created_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data as OrganizationListRow | null;
 }
 ```
 
@@ -1180,7 +1245,7 @@ export async function listMiembrosPaginado(orgId: string, params: PaginationPara
 
 - [ ] **Step 3: Actualizar `src/routes/admin.ts`**
 
-Reemplazar los imports del tope:
+Reemplazar los imports del tope (Task 4 ya agregó la línea de `parsePagination` después de la de `listSucursales` — el bloque de abajo parte de ese estado):
 
 ```ts
 import { createOrganization, updateOrganization, getOrgResumen } from "../lib/organizations.js";
@@ -1188,12 +1253,13 @@ import { PERIODOS, PLANES, type PlanSlug } from "../lib/planes.js";
 import { listMiembros } from "../lib/miembros.js";
 import { listEmpleados } from "../lib/empleados.js";
 import { listSucursales } from "../lib/sucursales.js";
+import { parsePagination } from "../lib/pagination.js";
 ```
 
 por:
 
 ```ts
-import { createOrganization, updateOrganization, getOrgResumen, listOrganizations } from "../lib/organizations.js";
+import { createOrganization, updateOrganization, getOrgResumen, listOrganizations, getOrganization } from "../lib/organizations.js";
 import { PERIODOS, PLANES, type PlanSlug } from "../lib/planes.js";
 import { listMiembrosPaginado } from "../lib/miembros.js";
 import { listEmpleadosPaginado } from "../lib/empleados.js";
@@ -1237,6 +1303,24 @@ adminRouter.get(
 ```
 
 (`createServiceClient` puede dejar de importarse en este archivo si no lo usa nada más — verificar con `grep -n "createServiceClient" src/routes/admin.ts`; el resto del archivo sí lo sigue usando para suscripciones, así que el import se queda.)
+
+Agregar, inmediatamente después de ese handler, la ruta nueva de organización individual:
+
+```ts
+adminRouter.get(
+  "/admin/organizations/:id",
+  requireAuth,
+  requirePlatformAdmin,
+  async (req: Request<{ id: string }>, res: Response) => {
+    const org = await getOrganization(req.params.id);
+    if (!org) {
+      res.status(404).json({ error: "Organización no encontrada" });
+      return;
+    }
+    res.json(org);
+  }
+);
+```
 
 Reemplazar el handler `GET /admin/organizations/:id/miembros` (línea 130-138):
 
@@ -1301,11 +1385,12 @@ El handler de `GET /admin/organizations/:id/sucursales` ya quedó actualizado en
 Run: `cd proyecto-oliver-api && npx tsc --noEmit`
 Expected: sin errores
 
-Run manual (con un usuario platform admin):
+Run manual (con un usuario platform admin — reemplazar `<id>` por el id de una organización real):
 ```bash
 curl -s "http://localhost:3020/api/admin/organizations?page=1&pageSize=10" -H "Authorization: Bearer <token admin>" | head -c 400
+curl -s "http://localhost:3020/api/admin/organizations/<id>" -H "Authorization: Bearer <token admin>"
 ```
-Expected: `{"data":[...],"pagination":{...}}`
+Expected: la primera devuelve `{"data":[...],"pagination":{...}}`; la segunda devuelve `{"id":...,"name":...,"slug":...,"plan":...,"created_at":...}` de esa única organización.
 
 - [ ] **Step 5: Commit**
 
@@ -1465,8 +1550,8 @@ git commit -m "feat: agrega componente Pagination (selector 10/20/30 + navegaci�
 - Modify: `src/lib/api.ts`
 
 **Interfaces:**
-- Consumes: contrato `{ data, pagination }` de Tasks 3-7.
-- Produces: `interface PaginationMeta`, `interface Paginated<T>`; firmas nuevas de `listEmpleados`, `listSucursales`, `listAsistencia`, `listRechazadas`, `getAusencias`, `listOrganizationsAdmin`, `listMiembrosAdmin`, `listEmpleadosAdmin`, `listSucursalesAdmin`. Usado por Tasks 10-14.
+- Consumes: contrato `{ data, pagination }` de Tasks 3-7 (y el opt-in "sin `page`/`pageSize` devuelve la forma vieja" de las Tasks 3, 5 y 6).
+- Produces: `interface PaginationMeta`, `interface Paginated<T>`. `listEmpleados()` y `listAsistencia(desde,hasta)` **quedan sin tocar** (siguen devolviendo array plano, los llaman páginas fuera del alcance de paginado real). Nuevas: `listEmpleadosPaginado(params)`, `listAsistenciaPaginada(desde,hasta,params)`, `getOrganizationAdmin(orgId)`. Firmas actualizadas: `listSucursales`, `listRechazadas`, `getAusencias` (con `page`/`pageSize` opcionales), `listOrganizationsAdmin`, `listMiembrosAdmin`, `listEmpleadosAdmin`, `listSucursalesAdmin`. Usado por Tasks 10-14.
 
 - [ ] **Step 1: Agregar los tipos genéricos**
 
@@ -1486,17 +1571,9 @@ export interface Paginated<T> {
 }
 ```
 
-- [ ] **Step 2: Actualizar `listEmpleados`**
+- [ ] **Step 2: Agregar `listEmpleadosPaginado`**
 
-Reemplazar:
-
-```ts
-export function listEmpleados(): Promise<Empleado[]> {
-  return request("/api/empleados");
-}
-```
-
-por:
+`listEmpleados(): Promise<Empleado[]>` **no se toca** — lo siguen llamando sin argumentos `RrhhPage.tsx`, `AsistenciaPage.tsx` y las páginas de Turnos/Horas (fuera de alcance) para poblar selects/filtros con la nómina completa, y el backend (Task 3) sigue respondiendo con el array plano de siempre cuando la request no manda `page`/`pageSize`. Se agrega una función nueva, al lado de `listEmpleados`, para el único consumidor que sí pagina (`EmpleadosPage.tsx`, Task 10):
 
 ```ts
 export interface ListEmpleadosParams {
@@ -1509,7 +1586,7 @@ export interface ListEmpleadosParams {
   dispositivo?: "vinculado" | "no_vinculado";
 }
 
-export function listEmpleados(params: ListEmpleadosParams): Promise<Paginated<Empleado>> {
+export function listEmpleadosPaginado(params: ListEmpleadosParams): Promise<Paginated<Empleado>> {
   const qs = new URLSearchParams();
   qs.set("page", String(params.page));
   qs.set("pageSize", String(params.pageSize));
@@ -1554,17 +1631,9 @@ export function listSucursales(params: ListSucursalesParams): Promise<Paginated<
 }
 ```
 
-- [ ] **Step 4: Actualizar `listAsistencia` y `listRechazadas`**
+- [ ] **Step 4: Agregar `listAsistenciaPaginada` y actualizar `listRechazadas`**
 
-Reemplazar:
-
-```ts
-export function listAsistencia(desde: string, hasta: string): Promise<AsistenciaRegistro[]> {
-  return request(`/api/asistencia?desde=${desde}&hasta=${hasta}`);
-}
-```
-
-por:
+`listAsistencia(desde, hasta): Promise<AsistenciaRegistro[]>` **no se toca** — lo sigue llamando sin `page`/`pageSize` el widget en vivo del dashboard (`useAsistenciaEnVivo`, vía `useAsistencia(hoy, hoy)`), y el backend (Task 5) sigue respondiendo con el array plano cuando la request no manda esos query params. Se agrega una función nueva para `AsistenciaPage.tsx` (Task 12):
 
 ```ts
 export interface ListAsistenciaParams {
@@ -1575,7 +1644,7 @@ export interface ListAsistenciaParams {
   tipo?: TipoMarca;
 }
 
-export function listAsistencia(
+export function listAsistenciaPaginada(
   desde: string,
   hasta: string,
   params: ListAsistenciaParams
@@ -1588,7 +1657,7 @@ export function listAsistencia(
 }
 ```
 
-Reemplazar:
+`listRechazadas` sí se reemplaza directamente — su único consumidor es la tabla de rechazadas en `AsistenciaPage.tsx` (Task 12), que siempre pagina. Reemplazar:
 
 ```ts
 export function listRechazadas(): Promise<Rechazada[]> {
@@ -1637,7 +1706,7 @@ por:
 ```ts
 export interface AusenciasResponse {
   ausencias: Ausencia[];
-  pagination: PaginationMeta;
+  pagination?: PaginationMeta;
   resumen: ResumenAusencias;
 }
 
@@ -1647,8 +1716,8 @@ export function getAusencias(filters: {
   sucursalId?: string;
   motivo?: string;
   empleadoId?: string;
-  page: number;
-  pageSize: number;
+  page?: number;
+  pageSize?: number;
 }): Promise<AusenciasResponse> {
   const params = new URLSearchParams();
   if (filters.desde) params.set("desde", filters.desde);
@@ -1656,8 +1725,8 @@ export function getAusencias(filters: {
   if (filters.sucursalId) params.set("sucursalId", filters.sucursalId);
   if (filters.motivo) params.set("motivo", filters.motivo);
   if (filters.empleadoId) params.set("empleadoId", filters.empleadoId);
-  params.set("page", String(filters.page));
-  params.set("pageSize", String(filters.pageSize));
+  if (filters.page !== undefined) params.set("page", String(filters.page));
+  if (filters.pageSize !== undefined) params.set("pageSize", String(filters.pageSize));
   return request(`/api/ausencias?${params}`);
 }
 ```
@@ -1680,7 +1749,13 @@ export function listOrganizationsAdmin(params: { page: number; pageSize: number;
   if (params.q) qs.set("q", params.q);
   return request(`/api/admin/organizations?${qs}`);
 }
+
+export function getOrganizationAdmin(orgId: string): Promise<OrganizationAdmin> {
+  return request(`/api/admin/organizations/${orgId}`);
+}
 ```
+
+(`getOrganizationAdmin` es nueva — la usa `OrganizacionDetallePage.tsx` en la Task 14 para el encabezado del detalle, en vez de buscar la organización dentro de la lista paginada.)
 
 Reemplazar:
 
@@ -1720,7 +1795,7 @@ export function listSucursalesAdmin(orgId: string, params: { page: number; pageS
 - [ ] **Step 7: Typecheck**
 
 Run: `cd proyecto-oliver && npx tsc -b --force`
-Expected: errores en `pages/empleados/hooks.ts`, `pages/sucursales/hooks.ts`, `pages/asistencia/hooks.ts`, `pages/rrhh/hooks.ts`, `pages/admin/hooks.ts` y las páginas que los usan (todavía llaman a estas funciones con la firma vieja) — **son los que arreglan las Tasks 10-14**, no hace falta tocarlos acá. Confirmar que los errores están únicamente en esos archivos y no en `api.ts` mismo.
+Expected: errores en `pages/sucursales/hooks.ts` (`listSucursales` ahora pide `params`), `pages/asistencia/hooks.ts` (`useRechazadas` llama a `listRechazadas` sin `params`) y `pages/admin/hooks.ts` (`listOrganizationsAdmin`/`listMiembrosAdmin`/`listEmpleadosAdmin`/`listSucursalesAdmin` ahora piden `params`), más las páginas que usan esos hooks — **son los que arreglan las Tasks 11, 12 y 14**, no hace falta tocarlos acá. `pages/empleados/hooks.ts` y `pages/rrhh/hooks.ts` NO deberían mostrar errores todavía: `listEmpleados()`/`listAsistencia(desde,hasta)` quedaron sin tocar, y `getAusencias` solo ganó campos opcionales. Confirmar que no hay errores en `api.ts` mismo.
 
 - [ ] **Step 8: Commit**
 
@@ -1741,16 +1816,18 @@ git commit -m "feat: api.ts expone page/pageSize/filtros en las funciones de lis
 - Modify: `src/pages/empleados/EmpleadosPage.tsx`
 
 **Interfaces:**
-- Consumes: `listEmpleados(params: ListEmpleadosParams): Promise<Paginated<Empleado>>` (Task 9), `Pagination` + `PaginationMeta` de `../../components/ui/pagination` (Task 8).
+- Consumes: `listEmpleadosPaginado(params: ListEmpleadosParams): Promise<Paginated<Empleado>>` (Task 9), `Pagination` + `PaginationMeta` de `../../components/ui/pagination` (Task 8).
+- Produces: `useEmpleadosPaginado(params: ListEmpleadosParams)` (hook nuevo, solo para `EmpleadosPage.tsx`). `useEmpleados()` (sin paginar) **no se toca** — lo siguen usando `RrhhPage.tsx` y `AsistenciaPage.tsx` (Tasks 12-13) para poblar selects/filtros con la nómina completa.
 
-- [ ] **Step 1: Reescribir `useEmpleados` en `hooks.ts`**
+- [ ] **Step 1: Agregar `useEmpleadosPaginado` en `hooks.ts`**
 
-Agregar el import de `keepPreviousData`:
+`useEmpleados()` no se toca. Agregar el import de `keepPreviousData` y de las piezas nuevas:
 
 ```ts
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   listEmpleados,
+  listEmpleadosPaginado,
   createEmpleado,
   updateEmpleado,
   eliminarEmpleado,
@@ -1762,33 +1839,19 @@ import {
 } from "../../lib/api";
 ```
 
-Reemplazar:
+Agregar, después de `useEmpleados`:
 
 ```ts
-const QUERY_KEY = ["empleados"];
-
-export function useEmpleados() {
-  return useQuery({ queryKey: QUERY_KEY, queryFn: listEmpleados });
-}
-```
-
-por:
-
-```ts
-const QUERY_KEY = "empleados";
-
-export function useEmpleados(params: ListEmpleadosParams) {
+export function useEmpleadosPaginado(params: ListEmpleadosParams) {
   return useQuery({
-    queryKey: [QUERY_KEY, params],
-    queryFn: () => listEmpleados(params),
+    queryKey: [...QUERY_KEY, params],
+    queryFn: () => listEmpleadosPaginado(params),
     placeholderData: keepPreviousData,
   });
 }
 ```
 
-Las mutaciones (`useCrearEmpleado`, etc.) invalidan `queryKey: QUERY_KEY` — como `QUERY_KEY` pasó de array a string, TanStack Query igual invalida por prefijo (`[QUERY_KEY, params]` matchea contra `QUERY_KEY` como prefijo parcial). Reemplazar cada `queryKey: QUERY_KEY` de las mutaciones por `queryKey: [QUERY_KEY]` para que siga siendo un array (así lo espera `invalidateQueries`):
-
-Buscar y reemplazar las 4 ocurrencias de `queryClient.invalidateQueries({ queryKey: QUERY_KEY })` por `queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })`.
+`QUERY_KEY` sigue siendo `["empleados"]` (array, sin tocar) — `[...QUERY_KEY, params]` da `["empleados", params]`, que las mutaciones existentes (`useCrearEmpleado`, etc.) invalidan igual por prefijo con su `queryKey: QUERY_KEY` de siempre. No hace falta tocar esas mutaciones.
 
 - [ ] **Step 2: Wirear `EmpleadosPage.tsx` — estado de página y filtros server-side**
 
@@ -1805,7 +1868,20 @@ import {
 } from "./hooks";
 ```
 
-sin cambios (misma lista), pero agregar el import del componente de paginado:
+por:
+
+```ts
+import {
+  useEmpleadosPaginado,
+  useCrearEmpleado,
+  useEditarEmpleado,
+  useEliminarEmpleado,
+  useDesvincularDispositivo,
+  useGenerarOtp,
+} from "./hooks";
+```
+
+Agregar el import del componente de paginado:
 
 ```ts
 import { Pagination } from "../../components/ui/pagination";
@@ -1847,7 +1923,7 @@ por:
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data, isLoading } = useEmpleados({
+  const { data, isLoading } = useEmpleadosPaginado({
     page,
     pageSize,
     q: busqueda || undefined,
@@ -2124,7 +2200,9 @@ export { useOrgActual } from "../../lib/hooks";
 
 const QUERY_KEY = "sucursales";
 
-export function useSucursales(params: ListSucursalesParams) {
+const DEFAULT_PARAMS: ListSucursalesParams = { page: 1, pageSize: 30 };
+
+export function useSucursales(params: ListSucursalesParams = DEFAULT_PARAMS) {
   return useQuery({
     queryKey: [QUERY_KEY, params],
     queryFn: () => listSucursales(params),
@@ -2133,9 +2211,9 @@ export function useSucursales(params: ListSucursalesParams) {
 }
 ```
 
-Reemplazar las 3 ocurrencias de `queryClient.invalidateQueries({ queryKey: QUERY_KEY })` (en `useCrearSucursal`, `useEditarSucursal`, `useEliminarSucursal`) por `queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })`.
+El valor default (`{ page: 1, pageSize: 30 }`) es a propósito: `useSucursales()` sin argumentos se llama hoy desde 6 lugares además de `SucursalesPage.tsx` — `EmpleadosPage.tsx`, `AsistenciaPage.tsx`, `RrhhPage.tsx` (para poblar `<Select>`/`FilterChip` de sucursal) y `turnos/HorariosTab.tsx`, `turnos/CumplimientoTab.tsx`, `horas/HorasPage.tsx` (estos tres son de los módulos fuera de alcance de este plan — no se tocan). Con el parámetro default, esos 6 call-sites siguen compilando sin cambios; solo `SucursalesPage.tsx` (Task 11 Step 2) pasa sus propios `page`/`pageSize` reactivos. Si alguno de esos 6 lugares necesitara más de 30 sucursales para poblar su selector, es una limitación conocida, no un bug de esta tarea (mismo criterio que ya señala el spec para el caso general de Sucursales).
 
-**Nota:** `EmpleadosPage.tsx` (Task 10) y otras páginas también importan `useSucursales` desde `../sucursales/hooks` para poblar selects de sucursal — ahora `useSucursales` exige `params`. Verificar con `grep -rn "useSucursales(" src/pages` y actualizar cada call-site que no sea `SucursalesPage.tsx` para pasarle un tamaño de página grande que cubra el uso típico, ya que ahí no se pagina, solo se listan sucursales para un `<select>`: `useSucursales({ page: 1, pageSize: 30 })`. Si algún caso necesitara más de 30 sucursales para el selector, es una limitación conocida — no está en alcance de este plan ampliarla (ver spec §4, Sucursales es de las listas chicas).
+Reemplazar las 3 ocurrencias de `queryClient.invalidateQueries({ queryKey: QUERY_KEY })` (en `useCrearSucursal`, `useEditarSucursal`, `useEliminarSucursal`) por `queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })`.
 
 - [ ] **Step 2: Wirear `SucursalesPage.tsx`**
 
@@ -2319,7 +2397,7 @@ Después del cierre de `</Table>`, agregar:
 - [ ] **Step 3: Typecheck y verificación manual**
 
 Run: `cd proyecto-oliver && npx tsc -b --force`
-Expected: sin errores en `pages/sucursales/*` ni en los demás call-sites de `useSucursales` ya actualizados en este mismo Step 1.
+Expected: sin errores en todo el repo — gracias al valor default de `useSucursales`, los otros 6 call-sites (`EmpleadosPage.tsx`, `AsistenciaPage.tsx`, `RrhhPage.tsx`, `turnos/HorariosTab.tsx`, `turnos/CumplimientoTab.tsx`, `horas/HorasPage.tsx`) siguen compilando sin haber sido tocados.
 
 Verificación manual: abrir `/sucursales`, cambiar de página y de tamaño de página, combinar con el filtro de Estado, y abrir el diálogo de "Nuevo empleado" en `/empleados` para confirmar que el `<Select>` de sucursal sigue poblado.
 
@@ -2328,8 +2406,6 @@ Verificación manual: abrir `/sucursales`, cambiar de página y de tamaño de p�
 ```bash
 cd proyecto-oliver
 git add src/pages/sucursales/hooks.ts src/pages/sucursales/SucursalesPage.tsx
-git status  # confirmar si algún otro archivo quedó modificado por el Step 1 (call-sites de useSucursales)
-git add -A
 git commit -m "feat: Sucursales pagina server-side y mueve los filtros a la query"
 ```
 
@@ -2344,26 +2420,72 @@ git commit -m "feat: Sucursales pagina server-side y mueve los filtros a la quer
 - Modify: `src/pages/asistencia/AsistenciaPage.tsx`
 
 **Interfaces:**
-- Consumes: `listAsistencia(desde, hasta, params: ListAsistenciaParams): Promise<Paginated<AsistenciaRegistro>>`, `listRechazadas(params): Promise<Paginated<Rechazada>>` (Task 9), `Pagination` (Task 8).
+- Consumes: `listAsistenciaPaginada(desde, hasta, params: ListAsistenciaParams): Promise<Paginated<AsistenciaRegistro>>`, `listRechazadas(params): Promise<Paginated<Rechazada>>` (Task 9), `Pagination` (Task 8).
+- Produces: `useAsistenciaPaginada(desde, hasta, params)` (hook nuevo, solo para `AsistenciaPage.tsx`). `useAsistencia(desde, hasta)` **no se toca** — lo sigue usando `useAsistenciaEnVivo.ts` (`src/components/dashboard/`), el widget en vivo del dashboard.
 
-- [ ] **Step 1: Reescribir `hooks.ts`**
+- [ ] **Step 1: Agregar `useAsistenciaPaginada` y actualizar `useRechazadas`**
 
-Reemplazar el archivo completo:
+`useAsistencia(desde, hasta)` no se toca. Reemplazar el archivo completo:
+
+```ts
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listAsistencia, deleteAsistencia, listRechazadas, resolverRechazada } from "../../lib/api";
+
+export function useAsistencia(desde: string, hasta: string) {
+  return useQuery({
+    queryKey: ["asistencia", desde, hasta],
+    queryFn: () => listAsistencia(desde, hasta),
+  });
+}
+
+export function useRechazadas() {
+  return useQuery({ queryKey: ["asistencia-rechazadas"], queryFn: listRechazadas });
+}
+
+export function useBorrarAsistencia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteAsistencia(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["asistencia"] }),
+  });
+}
+
+export function useResolverRechazada() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, accion }: { id: string; accion: "aprobar" | "descartar" }) => resolverRechazada(id, accion),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["asistencia-rechazadas"] });
+      queryClient.invalidateQueries({ queryKey: ["asistencia"] });
+    },
+  });
+}
+```
+
+por:
 
 ```ts
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   listAsistencia,
+  listAsistenciaPaginada,
   deleteAsistencia,
   listRechazadas,
   resolverRechazada,
   type ListAsistenciaParams,
 } from "../../lib/api";
 
-export function useAsistencia(desde: string, hasta: string, params: ListAsistenciaParams) {
+export function useAsistencia(desde: string, hasta: string) {
   return useQuery({
-    queryKey: ["asistencia", desde, hasta, params],
-    queryFn: () => listAsistencia(desde, hasta, params),
+    queryKey: ["asistencia", desde, hasta],
+    queryFn: () => listAsistencia(desde, hasta),
+  });
+}
+
+export function useAsistenciaPaginada(desde: string, hasta: string, params: ListAsistenciaParams) {
+  return useQuery({
+    queryKey: ["asistencia", "paginada", desde, hasta, params],
+    queryFn: () => listAsistenciaPaginada(desde, hasta, params),
     placeholderData: keepPreviousData,
   });
 }
@@ -2396,11 +2518,20 @@ export function useResolverRechazada() {
 }
 ```
 
+La query key de `useAsistenciaPaginada` empieza con `"asistencia"` a propósito (`["asistencia", "paginada", ...]`, no `["asistencia-paginada", ...]`): así `invalidateQueries({ queryKey: ["asistencia"] })` en `useBorrarAsistencia`/`useResolverRechazada` la sigue invalidando por prefijo, junto con la del dashboard, sin tener que tocar esas dos mutaciones.
+
 - [ ] **Step 2: Wirear `AsistenciaPage.tsx`**
 
-Agregar el import:
+Reemplazar el import de hooks:
 
 ```ts
+import { useAsistencia, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
+```
+
+por:
+
+```ts
+import { useAsistenciaPaginada, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
 import { Pagination } from "../../components/ui/pagination";
 ```
 
@@ -2427,7 +2558,7 @@ export default function AsistenciaPage() {
   const [sucursalFiltro, setSucursalFiltro] = useState("todos");
   const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>("todos");
 
-  const { data, isLoading, isError } = useAsistencia(desde, hasta, {
+  const { data, isLoading, isError } = useAsistenciaPaginada(desde, hasta, {
     page,
     pageSize,
     empleadoId: empleadoFiltro === "todos" ? undefined : empleadoFiltro,
@@ -2597,7 +2728,7 @@ Expected: sin errores en `pages/asistencia/*`
 
 - [ ] **Step 4: Verificación manual**
 
-Abrir `/asistencia`, cambiar de página, combinar filtros de Empleado/Sucursal/Tipo con paginado, confirmar que "Descargar Excel" sigue funcionando (usa el endpoint de export, no tocado).
+Abrir `/asistencia`, cambiar de página, combinar filtros de Empleado/Sucursal/Tipo con paginado, confirmar que "Descargar Excel" sigue funcionando (usa el endpoint de export, no tocado). Abrir también el dashboard (donde vive el widget "en vivo" de `useAsistenciaEnVivo`) y confirmar que sigue mostrando quién está adentro y las últimas marcaciones — ese hook sigue usando `useAsistencia` (sin paginar), que no se tocó.
 
 - [ ] **Step 5: Commit**
 
@@ -2618,7 +2749,8 @@ git commit -m "feat: Asistencia pagina server-side y mueve Empleado/Sucursal/Tip
 - Modify: `src/pages/rrhh/RrhhPage.tsx`
 
 **Interfaces:**
-- Consumes: `getAusencias(filters): Promise<AusenciasResponse>` con `pagination` (Task 9), `Pagination` (Task 8).
+- Consumes: `getAusencias(filters): Promise<AusenciasResponse>` con `pagination` opcional (Task 9), `Pagination` (Task 8).
+- `page`/`pageSize` quedan **opcionales** en `useAusencias` (no requeridos) — el widget "Ausencias hoy" del dashboard (`useAusenciasHoy.ts`) llama a `useAusencias({desde,hasta})` sin esos campos y necesita seguir compilando y funcionando igual.
 
 - [ ] **Step 1: Actualizar `useAusencias` en `hooks.ts`**
 
@@ -2672,8 +2804,8 @@ export function useAusencias(filters: {
   sucursalId?: string;
   motivo?: string;
   empleadoId?: string;
-  page: number;
-  pageSize: number;
+  page?: number;
+  pageSize?: number;
 }) {
   return useQuery({
     queryKey: ["ausencias", filters],
@@ -2738,15 +2870,17 @@ En el `FilterChip` de Sucursal y de Motivo, y en los `Field` de Período/Desde/H
 Después del cierre de la `<Table>` que lista ausencias, agregar:
 
 ```tsx
-      {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+      {data?.pagination && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
 ```
+
+(`data?.pagination`, no solo `data &&` — `AusenciasResponse.pagination` es opcional en el tipo, aunque en la práctica `RrhhPage.tsx` siempre manda `page`/`pageSize` y por lo tanto siempre lo recibe.)
 
 - [ ] **Step 3: Typecheck y verificación manual**
 
 Run: `cd proyecto-oliver && npx tsc -b --force`
 Expected: sin errores en `pages/rrhh/*`
 
-Verificación manual: abrir `/rrhh`, confirmar que el resumen (totales por sucursal/motivo) sigue reflejando el dataset filtrado completo aunque la tabla muestre una sola página, y que "Descargar Excel" sigue trayendo todo.
+Verificación manual: abrir `/rrhh`, confirmar que el resumen (totales por sucursal/motivo) sigue reflejando el dataset filtrado completo aunque la tabla muestre una sola página, y que "Descargar Excel" sigue trayendo todo. Abrir también el dashboard y confirmar que el widget "Ausencias hoy" (`useAusenciasHoy`) sigue mostrando las ausencias de hoy — ese hook llama a `useAusencias` sin `page`/`pageSize`, así que tiene que seguir funcionando sin cambios.
 
 - [ ] **Step 4: Commit**
 
@@ -2768,7 +2902,7 @@ git commit -m "feat: RRHH/Ausencias pagina server-side"
 - Modify: `src/pages/admin/OrganizacionDetallePage.tsx`
 
 **Interfaces:**
-- Consumes: `listOrganizationsAdmin(params)`, `listMiembrosAdmin(orgId, params)`, `listEmpleadosAdmin(orgId, params)`, `listSucursalesAdmin(orgId, params)` (Task 9), `Pagination` (Task 8).
+- Consumes: `listOrganizationsAdmin(params)`, `getOrganizationAdmin(orgId)`, `listMiembrosAdmin(orgId, params)`, `listEmpleadosAdmin(orgId, params)`, `listSucursalesAdmin(orgId, params)` (Task 9), `Pagination` (Task 8).
 
 - [ ] **Step 1: Actualizar `src/pages/admin/hooks.ts`**
 
@@ -2804,6 +2938,7 @@ por:
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   listOrganizationsAdmin,
+  getOrganizationAdmin,
   createOrganizationAdmin,
   updateOrganizationAdmin,
   getOrgResumenAdmin,
@@ -2826,7 +2961,13 @@ export function useOrganizacionesAdmin(params: { page: number; pageSize: number;
     placeholderData: keepPreviousData,
   });
 }
+
+export function useOrganizacionAdmin(orgId: string) {
+  return useQuery({ queryKey: [ORGS_KEY, orgId], queryFn: () => getOrganizationAdmin(orgId) });
+}
 ```
+
+`useOrganizacionAdmin` es nueva — reemplaza el `useOrganizacionesAdmin().find((o) => o.id === orgId)` que hoy usa `OrganizacionDetallePage.tsx` para el encabezado (Step 3): con la lista paginada, ese `.find()` deja de encontrar organizaciones fuera de la primera página.
 
 Reemplazar las 2 ocurrencias de `queryClient.invalidateQueries({ queryKey: ORGS_KEY })` (en `useCrearOrganizacionAdmin` y `useEditarOrganizacionAdmin`) por `queryClient.invalidateQueries({ queryKey: [ORGS_KEY] })`.
 
@@ -2927,9 +3068,34 @@ Después del cierre de `</Table>`, agregar:
       {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
 ```
 
-- [ ] **Step 3: Wirear `OrganizacionDetallePage.tsx` — las 3 pestañas paginadas**
+- [ ] **Step 3: Wirear `OrganizacionDetallePage.tsx` — encabezado + las 3 pestañas paginadas**
 
-Cada una de `MiembrosTab`, `EmpleadosTab`, `SucursalesTab` gana su propio estado de página (son componentes separados, cada uno con su ciclo de vida independiente al cambiar de tab). Reemplazar `MiembrosTab`:
+Primero, el encabezado: hoy busca la organización dentro de la lista completa, algo que se rompe en cuanto esa lista se pagina. Reemplazar el import:
+
+```ts
+  useOrganizacionesAdmin,
+```
+
+(dentro del `import { ... } from "./hooks";` del tope del archivo) por:
+
+```ts
+  useOrganizacionAdmin,
+```
+
+Reemplazar:
+
+```tsx
+  const { data: organizaciones } = useOrganizacionesAdmin();
+  const org = organizaciones?.find((o) => o.id === orgId);
+```
+
+por:
+
+```tsx
+  const { data: org } = useOrganizacionAdmin(orgId);
+```
+
+Ahora las 3 pestañas: cada una de `MiembrosTab`, `EmpleadosTab`, `SucursalesTab` gana su propio estado de página (son componentes separados, cada uno con su ciclo de vida independiente al cambiar de tab). Reemplazar `MiembrosTab`:
 
 ```tsx
 function MiembrosTab({ orgId }: { orgId: string }) {
@@ -2980,7 +3146,7 @@ Expected: sin errores en todo el repo — esta es la última tarea, así que el 
 
 - [ ] **Step 5: Verificación manual**
 
-Abrir `/admin`, buscar por nombre/slug, paginar. Entrar al detalle de una organización, confirmar que las pestañas Miembros/Empleados/Sucursales paginan de forma independiente (cambiar de página en una no afecta a las otras) y que cambiar de tab y volver no pierde el estado raro (cada tab arranca en página 1 al montar, es lo esperado ya que son componentes separados).
+Abrir `/admin`, buscar por nombre/slug, paginar. Entrar al detalle de una organización que **no** esté en la primera página de la lista (para probar justamente el caso que rompía antes) y confirmar que el encabezado muestra su nombre correctamente. Confirmar que las pestañas Miembros/Empleados/Sucursales paginan de forma independiente (cambiar de página en una no afecta a las otras) y que cambiar de tab y volver no pierde el estado raro (cada tab arranca en página 1 al montar, es lo esperado ya que son componentes separados).
 
 - [ ] **Step 6: Commit**
 
