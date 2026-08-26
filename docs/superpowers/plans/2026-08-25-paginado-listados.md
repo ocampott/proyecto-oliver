@@ -2151,9 +2151,12 @@ git commit -m "feat: Empleados pagina server-side y mueve los filtros a la query
 
 **Repo:** `proyecto-oliver`
 
+**Nota de corrección (post-ejecución):** el diseño original de esta tarea proponía un valor default en `useSucursales(params = {page:1,pageSize:30})` para que los otros 6 consumidores (`EmpleadosPage.tsx`, `RrhhPage.tsx`, `AsistenciaPage.tsx`, `HorasPage.tsx`, `turnos/HorariosTab.tsx`, `turnos/CumplimientoTab.tsx`) siguieran compilando sin tocarlos. Ese enfoque no funciona: un valor default de JS igual termina mandando `page`/`pageSize` concretos por HTTP, así que el backend (siempre paginado desde la Task 4, sin rama opt-in) devuelve siempre `{data,pagination}` — nunca el array plano que esos 6 archivos esperan. La corrección real: esos 6 archivos SÍ se tocan, cambiando `const { data: sucursales = [] } = useSucursales();` por `const { data: sucursalesData } = useSucursales(); const sucursales = sucursalesData?.data ?? [];` (mismo patrón en los 6, con un nombre de variable que no choque con otro `data` ya desestructurado en ese archivo). Es un fix mecánico de compilación forzado por el cambio de firma ya aprobado de `listSucursales` (Task 9) — no toca lógica de negocio de Turnos/Horas/RRHH/Asistencia/Empleados, así que no viola la restricción de "no tocar Turnos/Horas".
+
 **Files:**
 - Modify: `src/pages/sucursales/hooks.ts`
 - Modify: `src/pages/sucursales/SucursalesPage.tsx`
+- Modify: `src/pages/empleados/EmpleadosPage.tsx`, `src/pages/rrhh/RrhhPage.tsx`, `src/pages/asistencia/AsistenciaPage.tsx`, `src/pages/horas/HorasPage.tsx`, `src/pages/turnos/HorariosTab.tsx`, `src/pages/turnos/CumplimientoTab.tsx` — únicamente la línea de `useSucursales()`, nada más.
 
 **Interfaces:**
 - Consumes: `listSucursales(params: ListSucursalesParams): Promise<Paginated<Sucursal>>` (Task 9), `Pagination` (Task 8).
