@@ -51,8 +51,8 @@ export function AccountMenu() {
         {org ? iniciales(org.name) : user?.email?.slice(0, 2).toUpperCase() ?? "?"}
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] w-[212px] rounded-[14px] border border-border-soft bg-white p-1.5 shadow-[0_16px_40px_rgba(24,24,27,.18),0_3px_10px_rgba(24,24,27,.06)]">
-          <div className="mb-1 border-b border-border-soft px-2.5 pb-2 pt-1">
+        <div className="absolute right-0 top-[calc(100%+8px)] w-[212px] rounded-[6px] border border-border bg-surface-raised p-1.5 shadow-[0_8px_24px_rgba(23,24,18,.1)]">
+          <div className="mb-1 border-b border-border px-2.5 pb-2 pt-1">
             {org && <p className="m-0 text-[13.5px] font-bold text-text">{org.name}</p>}
             <p className="m-0 text-[12px] text-text-tertiary">{user?.email}</p>
           </div>
@@ -61,7 +61,7 @@ export function AccountMenu() {
               setOpen(false);
               navigate("/plan");
             }}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text hover:bg-black/[.03]"
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-[4px] px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text hover:bg-text/[.04]"
           >
             Mi plan
           </button>
@@ -71,14 +71,14 @@ export function AccountMenu() {
                 setOpen(false);
                 navigate("/admin");
               }}
-              className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text hover:bg-black/[.03]"
+              className="flex w-full cursor-pointer items-center gap-2.5 rounded-[4px] px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text hover:bg-text/[.04]"
             >
               Panel admin
             </button>
           )}
           <button
             onClick={handleCerrarSesion}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-[13.5px] font-medium text-alert hover:bg-black/[.03]"
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-[4px] px-2.5 py-1.5 text-left text-[13.5px] font-medium text-alert hover:bg-text/[.04]"
           >
             Cerrar sesión
           </button>

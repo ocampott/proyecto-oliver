@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../../components/ui/button";
+import { PageHeader } from "../../components/PageHeader";
 import HorariosTab from "./HorariosTab";
 import CumplimientoTab from "./CumplimientoTab";
 
@@ -10,7 +11,7 @@ export default function TurnosPage() {
 
   return (
     <>
-      <h1 className="text-[32px] font-extrabold text-text">Turnos</h1>
+      <PageHeader kicker="Operación" title="Turnos" />
 
       <div className="mt-4 flex gap-2" role="tablist">
         <Button

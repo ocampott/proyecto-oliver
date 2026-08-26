@@ -11,6 +11,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSke
 import type { MotivoRechazo, AsistenciaRegistro, TipoMarca } from "../../lib/api";
 import { useAsistenciaPaginada, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
 import { Pagination } from "../../components/ui/pagination";
+import { PageHeader } from "../../components/PageHeader";
 import { exportarAsistencia } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
@@ -122,12 +123,12 @@ export default function AsistenciaPage() {
 
   return (
     <>
-      <h1 className="text-[32px] font-extrabold text-text">Asistencia</h1>
+      <PageHeader kicker="Operación" title="Asistencia" />
 
       {(rechazadasData?.pagination.total ?? 0) > 0 && (
         <section className="mt-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-[20px] font-extrabold text-text">Intentos rechazados</h2>
+            <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-text">Intentos rechazados</h2>
             <Badge variant="alert">{rechazadasData?.pagination.total ?? rechazadas.length} pendientes</Badge>
           </div>
           <Table containerClassName="mt-2 border-alert/25">
@@ -188,8 +189,8 @@ export default function AsistenciaPage() {
         </section>
       )}
 
-      <section className="mt-6">
-        <div className="flex flex-wrap items-end gap-4">
+      <section className="page-section">
+        <div className="flex flex-wrap items-end gap-3">
           <Field
             label="Desde"
             type="date"
@@ -222,7 +223,7 @@ export default function AsistenciaPage() {
           </Button>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="page-filters">
           <FilterChip
             label="Empleado"
             value={empleadoFiltro}

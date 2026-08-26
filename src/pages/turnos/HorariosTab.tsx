@@ -45,8 +45,8 @@ function DiaToggle({ dias, onToggle }: { dias: number[]; onToggle: (d: number) =
           type="button"
           aria-pressed={dias.includes(d)}
           onClick={() => onToggle(d)}
-          className={`rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors ${
-            dias.includes(d) ? "border-accent bg-accent-100 text-accent-800" : "border-border text-text-secondary hover:bg-black/[.03]"
+          className={`rounded-md border px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.04em] transition-colors ${
+            dias.includes(d) ? "border-accent bg-accent-100 text-accent-800" : "border-border text-text-secondary hover:bg-text/[.04]"
           }`}
         >
           {DIAS[d].slice(0, 3)}
@@ -278,7 +278,7 @@ export default function HorariosTab() {
 
   return (
     <>
-      <div className="mt-4 flex flex-wrap items-end gap-4">
+      <div className="page-filters">
         <Select
           label="Empleado"
           value={empleadoId}
@@ -338,7 +338,7 @@ export default function HorariosTab() {
       <Card className="mt-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-[18px] font-extrabold text-text">Plantillas</h2>
+            <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-text">Plantillas</h2>
             <p className="mt-0.5 text-[13px] text-text-secondary">
               Horarios guardados para no tipearlos de nuevo al asignar un turno a varios empleados.
             </p>
@@ -350,7 +350,7 @@ export default function HorariosTab() {
         </div>
         <ul className="mt-3 flex flex-col gap-2">
           {templates.map((t) => (
-            <li key={t.id} className="flex items-center justify-between rounded-lg border border-border-soft px-3 py-2 text-[14px]">
+            <li key={t.id} className="flex items-center justify-between rounded-[4px] border border-border-soft px-3 py-2 text-[14px]">
               <span>
                 <strong className="font-semibold">{t.nombre}</strong> — {t.hora_inicio}–{t.hora_fin}
                 {t.dias_semana.length > 0 && ` (${t.dias_semana.map((d) => DIAS[d].slice(0, 3)).join(", ")})`}

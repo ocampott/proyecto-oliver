@@ -80,7 +80,7 @@ export default function CumplimientoTab() {
   return (
     <>
       <Card className="mt-4">
-        <h2 className="text-[16px] font-extrabold text-text">Tolerancia general</h2>
+        <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Tolerancia general</h2>
         <p className="mt-1 text-[13.5px] text-text-secondary">
           Minutos de margen antes de marcar un turno como "tarde" o "salida anticipada" — aplica salvo que la franja tenga su propia tolerancia.
         </p>
@@ -92,12 +92,12 @@ export default function CumplimientoTab() {
         </div>
       </Card>
 
-      <div className="mt-4 flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-end gap-3">
         <Field label="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-40" />
         <Field label="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-40" />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="page-filters">
         <FilterChip
           label="Sucursal"
           value={sucursalId}

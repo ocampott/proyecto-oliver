@@ -19,99 +19,95 @@ function fechaLocal(iso: string): string {
 
 type EnVivo = ReturnType<typeof useAsistenciaEnVivo>;
 
-function CardAdentroAhora({ enVivo }: { enVivo: EnVivo }) {
-  const totalAdentro = enVivo.porSucursal.reduce((acc, g) => acc + g.empleados.length, 0);
-
+function LiveCount({ enVivo }: { enVivo: EnVivo }) {
+  const total = enVivo.porSucursal.reduce((acc, group) => acc + group.empleados.length, 0);
   return (
-    <Card>
+    <Card className="border-accent bg-accent text-surface-raised">
       <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-bold text-text">Adentro ahora</h2>
-        <Status tone={enVivo.conectado ? "success" : "neutral"}>
-          {enVivo.conectado ? "En vivo" : "Actualizando…"}
+        <span className="text-sm font-medium">Adentro ahora</span>
+        <Status tone={enVivo.conectado ? "success" : "neutral"} className="bg-surface-raised/15 text-surface-raised">
+          {enVivo.conectado ? "En vivo" : "Actualizando"}
         </Status>
       </div>
-      {enVivo.isLoading && <p className="mt-3 text-[13px] text-text/60">Cargando…</p>}
-      {enVivo.isError && <p className="mt-3 text-[13px] text-alert">No pudimos cargar asistencia.</p>}
-      {!enVivo.isLoading && !enVivo.isError && (
-        <p className="mt-2 text-[28px] font-extrabold text-text">{totalAdentro}</p>
+      {enVivo.isError ? (
+        <p className="mt-4 text-sm text-surface-raised/70">No pudimos cargar asistencia.</p>
+      ) : (
+        <>
+          <p className="data-number mt-4 text-6xl font-medium">{enVivo.isLoading ? "—" : total}</p>
+          <p className="mt-2 text-sm text-surface-raised/70">personas fichadas</p>
+        </>
       )}
     </Card>
   );
 }
 
-function CardUltimosMarcados({ enVivo }: { enVivo: EnVivo }) {
-  const marcas = enVivo.ultimosMarcados;
-
+function Recent({ enVivo }: { enVivo: EnVivo }) {
   return (
     <Card>
-      <h2 className="text-[15px] font-bold text-text">Últimos en marcar</h2>
-      {enVivo.isLoading && <p className="mt-3 text-[13px] text-text/60">Cargando…</p>}
-      {enVivo.isError && <p className="mt-3 text-[13px] text-alert">No pudimos cargar asistencia.</p>}
+      <h3 className="text-sm font-semibold">Últimos en marcar</h3>
+      {enVivo.isLoading && <p className="mt-5 text-sm text-text-tertiary">Cargando actividad...</p>}
+      {enVivo.isError && <p className="mt-5 text-sm text-alert">No pudimos cargar asistencia.</p>}
       {!enVivo.isLoading && !enVivo.isError && (
-        <ul className="mt-3 space-y-2">
-          {marcas.map((m) => (
-            <li key={m.id} className="text-[13px] text-text/80">
-              <span className="font-semibold text-text">{m.empleadoNombre}</span> —{" "}
-              {m.tipo === "entrada" ? "Entrada" : "Salida"} a las {horaLocal(m.hora)}, {m.sucursalNombre}
+        <ul className="mt-4 flex flex-col gap-3">
+          {enVivo.ultimosMarcados.slice(0, 4).map((m) => (
+            <li key={m.id} className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="truncate font-medium">{m.empleadoNombre}</span>
+              <span className="shrink-0 font-mono text-xs text-text-tertiary">
+                {m.tipo === "entrada" ? "Entró" : "Salió"} {horaLocal(m.hora)}
+              </span>
             </li>
           ))}
-          {marcas.length === 0 && (
-            <li className="text-[13px] text-text/60">Sin marcas hoy todavía.</li>
-          )}
+          {enVivo.ultimosMarcados.length === 0 && <li className="text-sm text-text-tertiary">Sin marcas hoy todavía.</li>}
         </ul>
       )}
     </Card>
   );
 }
 
-function CardOlvidaronSalida() {
-  const olvidaron = useOlvidaronSalida();
-
+function PendingHours() {
+  const query = useOlvidaronSalida();
   return (
     <Card>
-      <h2 className="text-[15px] font-bold text-text">Olvidaron marcar salida</h2>
-      {olvidaron.isLoading && <p className="mt-3 text-[13px] text-text/60">Cargando…</p>}
-      {olvidaron.isError && <p className="mt-3 text-[13px] text-alert">No pudimos cargar horas.</p>}
-      {!olvidaron.isLoading && !olvidaron.isError && (
-        <ul className="mt-3 space-y-2">
-          {olvidaron.turnos.map((t) => (
-            <li key={`${t.empleadoId}-${t.entradaAt}`} className="text-[13px] text-text/80">
-              <span className="font-semibold text-text">{t.nombre}</span> — {t.sucursalNombre}, entró{" "}
-              {fechaLocal(t.entradaAt)} {horaLocal(t.entradaAt)}
+      <h3 className="text-sm font-semibold">Olvidaron salida</h3>
+      {query.isLoading && <p className="mt-5 text-sm text-text-tertiary">Revisando turnos...</p>}
+      {query.isError && <p className="mt-5 text-sm text-alert">No pudimos cargar horas.</p>}
+      {!query.isLoading && !query.isError && (
+        <ul className="mt-4 flex flex-col gap-3">
+          {query.turnos.slice(0, 4).map((t) => (
+            <li key={`${t.empleadoId}-${t.entradaAt}`} className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="truncate font-medium">{t.nombre}</span>
+              <span className="shrink-0 font-mono text-xs text-alert">
+                {fechaLocal(t.entradaAt)} {horaLocal(t.entradaAt)}
+              </span>
             </li>
           ))}
-          {olvidaron.turnos.length === 0 && (
-            <li className="text-[13px] text-text/60">Ninguno pendiente.</li>
-          )}
+          {query.turnos.length === 0 && <li className="text-sm text-text-tertiary">Todo en orden.</li>}
         </ul>
       )}
     </Card>
   );
 }
 
-function CardAusenciasHoy() {
-  const ausenciasHoy = useAusenciasHoy();
-
+function Absences() {
+  const query = useAusenciasHoy();
   return (
     <Card>
-      <h2 className="text-[15px] font-bold text-text">Ausencias hoy</h2>
-      {ausenciasHoy.isLoading && <p className="mt-3 text-[13px] text-text/60">Cargando…</p>}
-      {ausenciasHoy.isError && <p className="mt-3 text-[13px] text-alert">No pudimos cargar RRHH.</p>}
-      {!ausenciasHoy.isLoading && !ausenciasHoy.isError && (
-        <ul className="mt-3 space-y-2">
-          {ausenciasHoy.ausencias.map((a) => (
-            <li key={a.id} className="text-[13px] text-text/80">
-              <span className="font-semibold text-text">{a.empleado_nombre}</span> — {a.motivo}
-              {a.certificado_pendiente && (
-                <Status tone="warning" className="ml-2 inline-flex">
-                  Certificado pendiente
-                </Status>
+      <h3 className="text-sm font-semibold">Ausencias hoy</h3>
+      {query.isLoading && <p className="mt-5 text-sm text-text-tertiary">Revisando RRHH...</p>}
+      {query.isError && <p className="mt-5 text-sm text-alert">No pudimos cargar RRHH.</p>}
+      {!query.isLoading && !query.isError && (
+        <ul className="mt-4 flex flex-col gap-3">
+          {query.ausencias.slice(0, 4).map((a) => (
+            <li key={a.id} className="flex items-center justify-between gap-3 text-sm">
+              <span className="truncate font-medium">{a.empleado_nombre}</span>
+              {a.certificado_pendiente ? (
+                <Status tone="warning">Pendiente</Status>
+              ) : (
+                <span className="text-text-tertiary">{a.motivo}</span>
               )}
             </li>
           ))}
-          {ausenciasHoy.ausencias.length === 0 && (
-            <li className="text-[13px] text-text/60">Sin ausencias hoy.</li>
-          )}
+          {query.ausencias.length === 0 && <li className="text-sm text-text-tertiary">Sin ausencias hoy.</li>}
         </ul>
       )}
     </Card>
@@ -120,14 +116,14 @@ function CardAusenciasHoy() {
 
 export function PulsoOperativo({ orgId }: { orgId: string }) {
   const ent = useEntitlements();
-  const enVivo = useAsistenciaEnVivo(orgId);
+  const live = useAsistenciaEnVivo(orgId);
 
   return (
-    <div className="mt-6 mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <CardAdentroAhora enVivo={enVivo} />
-      <CardUltimosMarcados enVivo={enVivo} />
-      {tieneModulo(ent, "horas") && <CardOlvidaronSalida />}
-      {tieneModulo(ent, "rrhh") && <CardAusenciasHoy />}
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <LiveCount enVivo={live} />
+      <Recent enVivo={live} />
+      {tieneModulo(ent, "horas") && <PendingHours />}
+      {tieneModulo(ent, "rrhh") && <Absences />}
     </div>
   );
 }

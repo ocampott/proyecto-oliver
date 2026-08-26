@@ -5,14 +5,14 @@ import { IconButton } from "./ui/icon-button";
 
 export function TopBar({ onMenuClick }: { onMenuClick: () => void }) {
   return (
-    <header className="z-20 flex items-center bg-white/90 px-4 py-3.5 shadow-[0_1px_0_rgba(24,24,27,0.07)] backdrop-blur-sm md:px-6">
+    <header className="z-20 flex items-center border-b border-border-soft bg-surface px-4 py-3.5 shadow-none md:px-6">
       <IconButton
         className="mr-2 md:hidden"
         onClick={onMenuClick}
         label="Abrir menú"
         icon={<Menu className="h-[18px] w-[18px]" />}
       />
-      <span className="text-[17px] font-extrabold tracking-tight text-text">oliver</span>
+      <span className="text-[17px] font-bold tracking-tight text-text">oliver</span>
       <div className="ml-auto flex items-center gap-4">
         <NotificationBell />
         <AccountMenu />

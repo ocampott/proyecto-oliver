@@ -7,6 +7,7 @@ import { FilterChip } from "../../components/ui/filter-chip";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { PageHeader } from "../../components/PageHeader";
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { useToast } from "../../components/ui/toast";
 import { useHoras } from "./hooks";
@@ -102,9 +103,9 @@ export default function HorasPage() {
 
   return (
     <>
-      <h1 className="text-[32px] font-extrabold text-text">Horas trabajadas</h1>
+      <PageHeader kicker="Operación" title="Horas trabajadas" />
 
-      <div className="mt-4 flex flex-wrap items-end gap-4">
+      <div className="flex flex-wrap items-end gap-3">
         <Field
           label="Desde"
           type="date"
@@ -125,7 +126,7 @@ export default function HorasPage() {
         </Button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="page-filters">
         <MultiSelect
           variant="chip"
           label="Empleados"
@@ -153,9 +154,9 @@ export default function HorasPage() {
       )}
 
       {resumen.length > 0 && (
-        <section className="mt-6">
-          <h2 className="text-[20px] font-extrabold text-text">Resumen por empleado</h2>
-          <Table containerClassName="mt-2">
+        <section className="page-section">
+          <h2>Resumen por empleado</h2>
+          <Table containerClassName="mt-4">
             <TableHeader>
               <TableRow>
                 <TableHead>Empleado</TableHead>
@@ -176,9 +177,9 @@ export default function HorasPage() {
         </section>
       )}
 
-      <section className="mt-6">
-        <h2 className="text-[20px] font-extrabold text-text">Turnos</h2>
-        <Table containerClassName="mt-2">
+      <section className="page-section">
+        <h2>Turnos</h2>
+        <Table containerClassName="mt-4">
           <TableHeader>
             <TableRow>
               <TableHead>Empleado</TableHead>

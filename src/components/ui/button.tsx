@@ -4,19 +4,19 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[9px] font-semibold text-[14px] transition-colors cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45",
+  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-[4px] font-semibold text-[13px] transition-colors cursor-pointer disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45",
   {
     variants: {
       variant: {
         primary: "bg-accent text-white hover:bg-accent-600 active:bg-accent-700",
         secondary:
-          "border border-border bg-white text-text hover:bg-black/[.03] active:bg-black/[.06]",
+          "border border-border bg-surface-raised text-text hover:bg-text/[.04] active:bg-text/[.07]",
         ghost: "bg-transparent text-accent-700 hover:bg-accent-100 active:bg-accent-200",
         destructive: "bg-alert text-white hover:bg-alert/90 active:bg-alert/80",
       },
       size: {
         default: "h-9 px-[14px] py-2",
-        lg: "h-14 w-full px-4 text-[16px] rounded-[14px]",
+        lg: "h-14 w-full px-4 text-[16px]",
         sm: "h-7 px-2.5 text-[12.5px]",
         icon: "h-9 w-9 p-0",
       },

@@ -128,7 +128,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
             onClick={() => setCollapsed((v) => !v)}
             aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
             style={{ left: togglePos.left, top: togglePos.top }}
-            className="fixed z-30 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-white text-text-secondary shadow-sm hover:bg-black/[.03] md:flex"
+            className="fixed z-30 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-surface text-text-secondary shadow-none hover:bg-text/[.04] md:flex"
           >
             {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>,
@@ -137,13 +137,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
       <aside
         ref={asideRef}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[220px] shrink-0 flex-col border-r border-border-soft bg-white transition-transform duration-200 md:relative md:z-auto md:translate-x-0 md:transition-[width]",
+          "fixed inset-y-0 left-0 z-40 flex w-[220px] shrink-0 flex-col border-r border-border-soft bg-surface-raised transition-transform duration-200 md:relative md:z-auto md:translate-x-0 md:transition-[width]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "md:w-16" : "md:w-[220px]"
         )}
       >
         <div className="flex items-center justify-end px-3 py-3 md:hidden">
-          <button onClick={onMobileClose} aria-label="Cerrar menú" className="rounded-lg p-1.5 hover:bg-black/[.03]">
+          <button onClick={onMobileClose} aria-label="Cerrar menú" className="rounded-lg p-1.5 hover:bg-text/[.04]">
             <X className="h-[18px] w-[18px]" />
           </button>
         </div>
@@ -201,7 +201,7 @@ function SidebarFooterLink({
           cn(
             "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
             collapsed && "md:justify-center md:px-0",
-            isActive ? "bg-accent-100 font-semibold text-accent-700" : "text-text-secondary hover:bg-black/[.03] hover:text-text"
+            isActive ? "bg-accent-100 font-semibold text-accent-700" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
           )
         }
       >
@@ -231,7 +231,7 @@ function SidebarFooterAnchor({
         {...triggerProps}
         href={href}
         className={cn(
-          "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text",
+          "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-text/[.04] hover:text-text",
           collapsed && "md:justify-center md:px-0"
         )}
       >
@@ -296,7 +296,7 @@ function SidebarNavLink({
           onClick={onClick}
           title={collapsed ? undefined : aviso}
           className={cn(
-            "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-black/[.03] hover:text-text",
+            "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium text-text-secondary hover:bg-text/[.04] hover:text-text",
             collapsed && "md:justify-center md:px-0"
           )}
         >
@@ -324,7 +324,7 @@ function SidebarNavLink({
           cn(
             "flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
             collapsed && "md:justify-center md:px-0",
-            isActive ? "bg-accent-100 font-semibold text-accent-700" : "text-text-secondary hover:bg-black/[.03] hover:text-text"
+            isActive ? "bg-accent-100 font-semibold text-accent-700" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
           )
         }
       >

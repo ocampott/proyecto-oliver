@@ -4,6 +4,7 @@ import { ChevronLeft, Loader2, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
+import { PageHeader } from "../../components/PageHeader";
 import { Status } from "../../components/ui/status";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
@@ -70,7 +71,9 @@ export default function OrganizacionDetallePage() {
         Organizaciones
       </Link>
 
-      <h1 className="mt-2 text-[32px] font-extrabold text-text">{org?.name ?? "Organización"}</h1>
+      <div className="mt-4">
+        <PageHeader kicker="Superadmin" title={org?.name ?? "Organización"} />
+      </div>
 
       <div className="mt-4 flex gap-2">
         <Button variant={tab === "miembros" ? "primary" : "secondary"} onClick={() => setTab("miembros")}>
@@ -125,7 +128,7 @@ function MiembrosTab({ orgId }: { orgId: string }) {
           ))}
         {!isLoading && miembros.length === 0 && (
           <TableRow>
-            <TableCell colSpan={3} className="text-text/60">
+            <TableCell colSpan={3} className="text-text-tertiary">
               Esta organización no tiene miembros.
             </TableCell>
           </TableRow>
@@ -167,7 +170,7 @@ function EmpleadosTab({ orgId }: { orgId: string }) {
           ))}
         {!isLoading && empleados.length === 0 && (
           <TableRow>
-            <TableCell colSpan={3} className="text-text/60">
+            <TableCell colSpan={3} className="text-text-tertiary">
               Esta organización no tiene empleados cargados.
             </TableCell>
           </TableRow>
@@ -209,7 +212,7 @@ function SucursalesTab({ orgId }: { orgId: string }) {
           ))}
         {!isLoading && sucursales.length === 0 && (
           <TableRow>
-            <TableCell colSpan={3} className="text-text/60">
+            <TableCell colSpan={3} className="text-text-tertiary">
               Esta organización no tiene sucursales cargadas.
             </TableCell>
           </TableRow>
@@ -371,7 +374,7 @@ function SuscripcionTab({ orgId, orgName }: { orgId: string; orgName: string }) 
             ))}
           {!suscripcionesLoading && (suscripcionesData?.suscripciones.length ?? 0) === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-text/60">
+              <TableCell colSpan={5} className="text-text-tertiary">
                 No hay suscripciones registradas.
               </TableCell>
             </TableRow>

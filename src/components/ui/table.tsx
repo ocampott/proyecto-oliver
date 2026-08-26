@@ -7,7 +7,7 @@ export interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
   ({ className, containerClassName, ...props }, ref) => (
-    <div className={cn("overflow-x-auto rounded-[14px] border border-border bg-white", containerClassName)}>
+    <div className={cn("overflow-x-auto border-y border-border bg-surface-raised", containerClassName)}>
       <table ref={ref} className={cn("w-full text-left text-[13.5px]", className)} {...props} />
     </div>
   )
@@ -27,7 +27,7 @@ const TableBody = React.forwardRef<
 TableBody.displayName = "TableBody";
 
 const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTMLTableRowElement>>(
-  ({ className, ...props }, ref) => <tr ref={ref} className={className} {...props} />
+  ({ className, ...props }, ref) => <tr ref={ref} className={cn("transition-colors hover:bg-bg/70", className)} {...props} />
 );
 TableRow.displayName = "TableRow";
 

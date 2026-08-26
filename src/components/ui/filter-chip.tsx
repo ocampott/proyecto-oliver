@@ -44,17 +44,17 @@ function FilterChip({ label, value, defaultValue, options, onChange }: FilterChi
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          "inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 font-mono text-[11px] font-medium uppercase tracking-[0.04em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
           active
-            ? "border-accent-200 bg-accent-100 text-accent-800 hover:bg-accent-200"
-            : "border-border bg-white text-text-secondary hover:bg-black/[.03]"
+            ? "border-accent bg-accent-100 text-accent-800 hover:bg-accent-200"
+            : "border-border bg-surface text-text-secondary hover:bg-text/[.04]"
         )}
       >
         {active ? `${label}: ${activeLabel}` : label}
         <ChevronDown className="h-3.5 w-3.5" />
       </button>
       {open && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-20 min-w-[180px] overflow-hidden rounded-[12px] border border-border-soft bg-white py-1 shadow-[0_16px_40px_rgba(24,24,27,.18),0_3px_10px_rgba(24,24,27,.06)]">
+        <div className="absolute left-0 top-[calc(100%+6px)] z-20 min-w-[180px] overflow-hidden rounded-[6px] border border-border bg-surface-raised py-1 shadow-[0_8px_24px_rgba(23,24,18,.1)]">
           {options.map((o) => (
             <button
               key={o.value}
@@ -63,7 +63,7 @@ function FilterChip({ label, value, defaultValue, options, onChange }: FilterChi
                 onChange(o.value);
                 setOpen(false);
               }}
-              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[13.5px] text-text hover:bg-black/[.03]"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[13.5px] text-text hover:bg-text/[.04]"
             >
               {o.label}
               {o.value === value && <Check className="h-3.5 w-3.5 text-accent" />}

@@ -312,12 +312,12 @@ export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }
   }
 
   if (error) {
-    return <p className="text-[15px] text-accent-700">{error}</p>;
+    return <p className="text-[15px] text-alert">{error}</p>;
   }
 
   return (
     <div className="flex flex-col gap-[5px]">
-      <span className="text-[12px] text-text/70">Ubicación</span>
+      <span className="text-[12px] text-text-secondary">Ubicación</span>
       <div className="relative">
         <input
           type="text"
@@ -327,10 +327,10 @@ export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }
           onFocus={() => sugerencias.length > 0 && setSugerenciasAbiertas(true)}
           onBlur={() => setTimeout(cerrarSugerencias, 150)}
           placeholder="Buscá una dirección..."
-          className="flex h-10 w-full rounded-[9px] border border-border bg-white px-3 py-2 text-[15px] text-text placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex h-10 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-[15px] text-text placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         />
         {sugerenciasAbiertas && sugerencias.length > 0 && (
-          <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-[9px] border border-black/[.08] bg-white shadow-lg">
+          <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-[6px] border border-border bg-surface-raised shadow-[0_8px_24px_rgba(23,24,18,.1)]">
             {sugerencias.map((s, i) => (
               <li key={s.placeId}>
                 <button
@@ -338,7 +338,7 @@ export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => seleccionarSugerencia(s)}
                   className={`block w-full px-3 py-2 text-left text-[14px] ${
-                    i === indiceActivo ? "bg-accent/10" : "hover:bg-black/[.03]"
+                    i === indiceActivo ? "bg-accent/10" : "hover:bg-text/[.04]"
                   }`}
                 >
                   {s.texto}
@@ -348,14 +348,14 @@ export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }
           </ul>
         )}
       </div>
-      {errorBusqueda && <p className="text-[13px] text-accent-700">{errorBusqueda}</p>}
+      {errorBusqueda && <p className="text-[13px] text-alert">{errorBusqueda}</p>}
       <div className="relative">
         <div
           ref={containerRef}
-          className="h-[280px] w-full rounded-xl border border-black/[.08]"
+          className="h-[280px] w-full rounded-[6px] border border-border"
         />
         {(cargando || buscandoGeo) && (
-          <div className="absolute inset-0 z-[1] grid place-items-center rounded-xl bg-white/70 text-[14px] text-text/70">
+          <div className="absolute inset-0 z-[1] grid place-items-center rounded-[6px] bg-surface-raised/80 text-[14px] text-text-secondary">
             {cargando ? "Cargando mapa..." : "Obteniendo tu ubicación..."}
           </div>
         )}

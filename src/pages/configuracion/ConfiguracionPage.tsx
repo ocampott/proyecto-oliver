@@ -8,6 +8,7 @@ import { Dialog } from "../../components/ui/dialog";
 import { Badge } from "../../components/ui/badge";
 import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
+import { PageHeader } from "../../components/PageHeader";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { useAuth } from "../../lib/auth";
@@ -91,12 +92,12 @@ export default function ConfiguracionPage() {
 
   return (
     <>
-      <h1 className="text-[32px] font-extrabold text-text">Configuración</h1>
+      <PageHeader kicker="Espacio de trabajo" title="Configuración" description="Organización, equipo y permisos." />
 
       <Card className="mt-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-[16px] font-extrabold text-text">Organización</h2>
+            <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Organización</h2>
             <p className="mt-1 text-[15px] text-text">{org?.name ?? "—"}</p>
           </div>
           <Button
@@ -114,7 +115,7 @@ export default function ConfiguracionPage() {
         <Card className="mt-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-[16px] font-extrabold text-text">Equipo</h2>
+              <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Equipo</h2>
               <p className="mt-1 text-[13.5px] text-text-secondary">
                 Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
                 tienen el mismo acceso, sin importar el rol.
@@ -178,11 +179,11 @@ export default function ConfiguracionPage() {
       )}
 
       <Card className="mt-4">
-        <h2 className="text-[16px] font-extrabold text-text">Otras configuraciones</h2>
+        <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Otras configuraciones</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Link
             to="/rrhh"
-            className="flex items-center gap-3 rounded-[12px] border border-border-soft px-4 py-3 transition-colors hover:bg-black/[.03]"
+            className="flex items-center gap-3 rounded-[6px] border border-border px-4 py-3 transition-colors hover:bg-text/[.04]"
           >
             <Briefcase className="h-[18px] w-[18px] text-accent-700" />
             <span className="flex-1">
@@ -193,7 +194,7 @@ export default function ConfiguracionPage() {
           </Link>
           <Link
             to="/turnos"
-            className="flex items-center gap-3 rounded-[12px] border border-border-soft px-4 py-3 transition-colors hover:bg-black/[.03]"
+            className="flex items-center gap-3 rounded-[6px] border border-border px-4 py-3 transition-colors hover:bg-text/[.04]"
           >
             <CalendarDays className="h-[18px] w-[18px] text-accent-700" />
             <span className="flex-1">

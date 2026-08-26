@@ -154,7 +154,7 @@ export default function MarcarPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
       <Card className="w-full max-w-sm rounded-[20px]">
-        <h1 className="text-[20px] font-extrabold text-text">{sucursalNombre}</h1>
+        <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-text">{sucursalNombre}</h1>
 
         {etapa.tipo === "identificar" && (
           <form
@@ -254,7 +254,7 @@ export default function MarcarPage() {
         {etapa.tipo === "rechazado" && (
           <div className="mt-4 flex flex-col gap-3">
             <IconCircle tone="alert" icon={<TriangleAlert className="h-[26px] w-[26px] text-alert" />} />
-            <h4 className="text-[20px] font-extrabold text-text">No pudimos registrar la marca</h4>
+            <h4 className="text-[20px] font-semibold tracking-[-0.02em] text-text">No pudimos registrar la marca</h4>
             <p className="text-[13px] text-text-secondary">{etapa.mensaje}</p>
             <Button
               variant="secondary"

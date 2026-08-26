@@ -8,7 +8,7 @@ export default function NotFoundPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg p-6">
       <Card className="max-w-sm text-center">
-        <h1 className="text-[56px] font-extrabold leading-none text-accent">404</h1>
+        <h1 className="data-number text-[56px] font-medium leading-none text-accent">404</h1>
         <p className="mt-3 text-[15px] text-text-secondary">Esta página no existe.</p>
         <Button className="mt-6" onClick={() => navigate("/")}>
           Inicio

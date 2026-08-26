@@ -61,7 +61,7 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Notificaciones"
-        className="relative inline-flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-lg border border-border bg-white text-text-secondary transition-colors hover:bg-black/[.03]"
+        className="relative inline-flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[4px] border border-border bg-surface-raised text-text-secondary transition-colors hover:bg-text/[.04]"
       >
         <Bell className="h-[18px] w-[18px]" />
         {noLeidas.length > 0 && (
@@ -69,8 +69,8 @@ export function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] w-[320px] rounded-[14px] border border-border-soft bg-white p-1.5 shadow-[0_16px_40px_rgba(24,24,27,.18),0_3px_10px_rgba(24,24,27,.06)]">
-          <div className="flex items-center justify-between gap-2 border-b border-border-soft px-2.5 pb-2 pt-1">
+        <div className="absolute right-0 top-[calc(100%+8px)] w-[320px] rounded-[6px] border border-border bg-surface-raised p-1.5 shadow-[0_8px_24px_rgba(23,24,18,.1)]">
+          <div className="flex items-center justify-between gap-2 border-b border-border px-2.5 pb-2 pt-1">
             <p className="m-0 text-[13.5px] font-bold text-text">Notificaciones</p>
             {noLeidas.length > 0 && (
               <button
@@ -87,7 +87,7 @@ export function NotificationBell() {
               return (
                 <div
                   key={n.id}
-                  className={cn("flex gap-2.5 rounded-lg px-2.5 py-2", esNoLeida && "bg-accent-100/50")}
+                  className={cn("flex gap-2.5 rounded-[4px] px-2.5 py-2", esNoLeida && "bg-accent-100/50")}
                 >
                   <span
                     className={cn(

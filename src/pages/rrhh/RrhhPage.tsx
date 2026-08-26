@@ -12,6 +12,7 @@ import { useToast } from "../../components/ui/toast";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { Pagination } from "../../components/ui/pagination";
+import { PageHeader } from "../../components/PageHeader";
 import type { Ausencia } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
@@ -241,7 +242,7 @@ export default function RrhhPage() {
 
   return (
     <>
-      <h1 className="text-[32px] font-extrabold text-text">RRHH</h1>
+      <PageHeader kicker="Operación" title="RRHH" />
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Card>
@@ -249,7 +250,7 @@ export default function RrhhPage() {
           {isLoading ? (
             <div className="mt-1.5 h-[24px] w-10 animate-pulse rounded bg-text/10" />
           ) : (
-            <p className="text-[24px] font-extrabold text-text">{resumen?.total ?? "—"}</p>
+            <p className="data-number text-2xl font-medium text-text">{resumen?.total ?? "—"}</p>
           )}
         </Card>
         <Card>
@@ -257,7 +258,7 @@ export default function RrhhPage() {
           {isLoading ? (
             <div className="mt-1.5 h-[24px] w-10 animate-pulse rounded bg-text/10" />
           ) : (
-            <p className="text-[24px] font-extrabold text-text">{resumen?.certificadosPendientes ?? "—"}</p>
+            <p className="data-number text-2xl font-medium text-text">{resumen?.certificadosPendientes ?? "—"}</p>
           )}
         </Card>
         <Card>
@@ -301,7 +302,7 @@ export default function RrhhPage() {
       <Card className="mt-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-[16px] font-extrabold text-text">Categorías de motivo</h2>
+            <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Categorías de motivo</h2>
             <p className="mt-1 text-[13.5px] text-text-secondary">
               Motivos disponibles al cargar una ausencia.
             </p>
@@ -320,7 +321,7 @@ export default function RrhhPage() {
             return (
               <span
                 key={c}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white py-1 pl-3 pr-1.5 text-[13px] text-text"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-raised py-1 pl-3 pr-1.5 text-[13px] text-text"
               >
                 {c}
                 <button
@@ -328,7 +329,7 @@ export default function RrhhPage() {
                   onClick={() => handleQuitarCategoria(c)}
                   disabled={quitando}
                   aria-label={`Quitar categoría ${c}`}
-                  className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-text-muted hover:bg-black/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-text-muted hover:bg-text/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                   {quitando ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
                 </button>
@@ -338,86 +339,88 @@ export default function RrhhPage() {
         </div>
       </Card>
 
-      <div className="mt-4 flex flex-wrap items-end gap-4">
-        <Field
-          label="Período"
-          type="month"
-          value={periodo}
-          onChange={(e) => handlePeriodoChange(e.target.value)}
-          containerClassName="w-40"
-        />
-        <Field label="Desde" type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setPage(1); }} containerClassName="w-40" />
-        <Field label="Hasta" type="date" value={hasta} onChange={(e) => { setHasta(e.target.value); setPage(1); }} containerClassName="w-40" />
-        <div className="ml-auto flex gap-2">
-          <Button variant="secondary" onClick={handleDescargarExcel} disabled={descargando}>
-            <Download className="h-4 w-4" />
-            {descargando ? "Generando…" : "Descargar Excel"}
-          </Button>
-          <Button variant="primary" onClick={() => setAltaOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Nueva ausencia
-          </Button>
+      <section className="page-section">
+        <div className="flex flex-wrap items-end gap-3">
+          <Field
+            label="Período"
+            type="month"
+            value={periodo}
+            onChange={(e) => handlePeriodoChange(e.target.value)}
+            containerClassName="w-40"
+          />
+          <Field label="Desde" type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setPage(1); }} containerClassName="w-40" />
+          <Field label="Hasta" type="date" value={hasta} onChange={(e) => { setHasta(e.target.value); setPage(1); }} containerClassName="w-40" />
+          <div className="ml-auto flex gap-2">
+            <Button variant="secondary" onClick={handleDescargarExcel} disabled={descargando}>
+              <Download className="h-4 w-4" />
+              {descargando ? "Generando…" : "Descargar Excel"}
+            </Button>
+            <Button variant="primary" onClick={() => setAltaOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Nueva ausencia
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <FilterChip
-          label="Sucursal"
-          value={sucursalFiltro}
-          defaultValue=""
-          onChange={(v) => { setSucursalFiltro(v); setPage(1); }}
-          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-        />
-        <FilterChip
-          label="Motivo"
-          value={motivoFiltro}
-          defaultValue=""
-          onChange={(v) => { setMotivoFiltro(v); setPage(1); }}
-          options={[{ value: "", label: "Todos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
-        />
-        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
-      </div>
+        <div className="page-filters">
+          <FilterChip
+            label="Sucursal"
+            value={sucursalFiltro}
+            defaultValue=""
+            onChange={(v) => { setSucursalFiltro(v); setPage(1); }}
+            options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+          />
+          <FilterChip
+            label="Motivo"
+            value={motivoFiltro}
+            defaultValue=""
+            onChange={(v) => { setMotivoFiltro(v); setPage(1); }}
+            options={[{ value: "", label: "Todos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
+          />
+          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        </div>
 
-      {error && !altaOpen && <p className="mt-2 text-[15px] text-alert">{error}</p>}
+        {error && !altaOpen && <p className="mt-2 text-[15px] text-alert">{error}</p>}
 
-      <Table containerClassName="mt-4">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Empleado</TableHead>
-            <TableHead>Sucursal</TableHead>
-            <TableHead>Período</TableHead>
-            <TableHead>Motivo</TableHead>
-            <TableHead>Certificado</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading && <TableSkeleton cols={6} />}
-          {!isLoading &&
-            ausencias.map((a) => (
-              <TableRow key={a.id}>
-                <TableCell>{a.empleado_nombre}</TableCell>
-                <TableCell>{a.sucursal_nombre ?? "—"}</TableCell>
-                <TableCell>{a.fecha_desde === a.fecha_hasta ? a.fecha_desde : `${a.fecha_desde} – ${a.fecha_hasta}`}</TableCell>
-                <TableCell>{a.motivo}</TableCell>
-                <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1.5">
-                    <IconButton onClick={() => abrirDetalle(a)} icon={<Pencil className="h-3.5 w-3.5" />} label="Ver detalle" />
-                    <IconButton onClick={() => setBorrarTarget(a)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          {!isLoading && ausencias.length === 0 && (
+        <Table containerClassName="mt-4">
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={6} className="text-text-tertiary">Sin ausencias en este rango.</TableCell>
+              <TableHead>Empleado</TableHead>
+              <TableHead>Sucursal</TableHead>
+              <TableHead>Período</TableHead>
+              <TableHead>Motivo</TableHead>
+              <TableHead>Certificado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {isLoading && <TableSkeleton cols={6} />}
+            {!isLoading &&
+              ausencias.map((a) => (
+                <TableRow key={a.id}>
+                  <TableCell>{a.empleado_nombre}</TableCell>
+                  <TableCell>{a.sucursal_nombre ?? "—"}</TableCell>
+                  <TableCell>{a.fecha_desde === a.fecha_hasta ? a.fecha_desde : `${a.fecha_desde} – ${a.fecha_hasta}`}</TableCell>
+                  <TableCell>{a.motivo}</TableCell>
+                  <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-1.5">
+                      <IconButton onClick={() => abrirDetalle(a)} icon={<Pencil className="h-3.5 w-3.5" />} label="Ver detalle" />
+                      <IconButton onClick={() => setBorrarTarget(a)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            {!isLoading && ausencias.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-text-tertiary">Sin ausencias en este rango.</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
 
-      {data?.pagination && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+        {data?.pagination && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+      </section>
 
       <Dialog open={altaOpen} onClose={() => { setAltaOpen(false); setError(null); }} title="Nueva ausencia">
         <form onSubmit={handleAlta} className="flex flex-col gap-3">

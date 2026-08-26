@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { CalendarClock, Clock, Users, MapPin, ChevronRight, CalendarDays, Briefcase } from "lucide-react";
+import { ArrowUpRight, CalendarClock, Clock, Users, MapPin, CalendarDays, Briefcase } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import { PageHeader } from "../components/PageHeader";
 import { PulsoOperativo } from "../components/dashboard/PulsoOperativo";
 import { useOrgActual, useEntitlements, tieneModulo, tieneRol } from "../lib/hooks";
 import { ApiError } from "../lib/api";
@@ -81,11 +82,11 @@ export default function HomePage() {
   if (isLoading || (isFetching && !org)) {
     return (
       <div className="animate-pulse">
-        <div className="h-8 w-56 rounded-lg bg-text/10" />
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[130px] rounded-[14px] border border-border bg-text/[.04]" />
-          ))}
+        <div className="h-10 w-64 bg-text/10" />
+        <div className="mt-10 grid gap-6 md:grid-cols-4">
+          <div className="h-28 bg-text/5 md:col-span-2" />
+          <div className="h-28 bg-text/5" />
+          <div className="h-28 bg-text/5" />
         </div>
       </div>
     );
@@ -116,66 +117,89 @@ export default function HomePage() {
     );
   }
 
+  const admin = tieneRol(org, ["owner", "admin"]);
+
   return (
-    <>
-      <h1 className="text-[32px] font-extrabold text-text">{org.name}</h1>
-      {tieneRol(org, ["owner", "admin"]) && <PulsoOperativo orgId={org.id} />}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {ACCESOS.map((a) => {
-          const Icon = a.icon;
-          const sinPermiso = a.soloGestion ? !tieneRol(org, ["owner", "admin"]) : false;
-          const bloqueado = a.modulo ? !tieneModulo(ent, a.modulo) : false;
-          const planReq = a.planRequerido;
-          const aviso = sinPermiso
-            ? "Tu rol no tiene acceso a esta sección."
-            : bloqueado && planReq
-              ? `Disponible con el plan ${PLAN_NOMBRE[planReq]}. Hacé click para ver los planes.`
-              : undefined;
+    <div className="animate-appear">
+      <PageHeader
+        kicker="Panel de control"
+        title={org.name}
+        meta={new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}
+      />
 
-          if (sinPermiso) {
-            return (
-              <div
-                key={a.href}
-                aria-disabled="true"
-                className="block h-full cursor-not-allowed opacity-40"
-              >
-                <Card className="relative h-full">
-                  <div className="flex items-start gap-2">
-                    <Icon className="mb-1 h-[22px] w-[22px] text-accent-700" />
-                    <Badge variant="neutral">Sin acceso</Badge>
-                  </div>
-                  <h2 className="text-[17px] font-extrabold text-text">{a.label}</h2>
-                  <p className="mt-1 text-[13px] text-text-secondary">{a.detalle}</p>
-                  <p className="mt-1 text-[12px] text-text-tertiary">{aviso}</p>
-                </Card>
-              </div>
-            );
-          }
+      {admin && (
+        <section className="mt-8" aria-labelledby="pulso-title">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="size-2 rounded-full bg-accent" />
+            <h2 id="pulso-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-text">
+              Pulso operativo
+            </h2>
+            <span className="font-mono text-xs text-text-tertiary">en vivo</span>
+          </div>
+          <PulsoOperativo orgId={org.id} />
+        </section>
+      )}
 
-          const destino = bloqueado ? "/plan" : a.href;
+      <section className="mt-12" aria-labelledby="accesos-title">
+        <div className="flex items-baseline justify-between border-b border-border pb-3">
+          <h2 id="accesos-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-text">
+            Accesos rápidos
+          </h2>
+          <span className="font-mono text-xs text-text-tertiary">{ACCESOS.length.toString().padStart(2, "0")} módulos</span>
+        </div>
+        <div className="grid gap-x-8 md:grid-cols-2 lg:grid-cols-3">
+          {ACCESOS.map((a, index) => {
+            const Icon = a.icon;
+            const sinPermiso = a.soloGestion ? !admin : false;
+            const bloqueado = a.modulo ? !tieneModulo(ent, a.modulo) : false;
+            const destino = bloqueado ? "/plan" : a.href;
+            const indice = String(index + 1).padStart(2, "0");
 
-          return (
-            <Link
-              key={a.href}
-              to={destino}
-              title={aviso}
-              className="group block h-full"
-            >
-              <Card className="relative h-full transition-colors hover:bg-text/5">
-                <ChevronRight className="absolute right-4 top-4 h-4 w-4 text-text-tertiary" />
-                <div className="flex items-start gap-2">
-                  <Icon className="mb-1 h-[22px] w-[22px] text-accent-700" />
-                  {bloqueado && planReq && (
-                    <Badge variant="outline">{PLAN_NOMBRE[planReq]}</Badge>
-                  )}
+            if (sinPermiso) {
+              return (
+                <div
+                  key={a.href}
+                  aria-disabled="true"
+                  className="flex cursor-not-allowed items-center gap-4 border-b border-border py-5 opacity-40"
+                >
+                  <span className="font-mono text-xs text-text-muted">{indice}</span>
+                  <Icon className="size-5 text-accent" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2 font-semibold tracking-[-0.02em]">
+                      {a.label}
+                      <Badge variant="neutral">Sin acceso</Badge>
+                    </span>
+                    <span className="block text-sm text-text-secondary">{a.detalle}</span>
+                  </span>
                 </div>
-                <h2 className="text-[17px] font-extrabold text-text">{a.label}</h2>
-                <p className="mt-1 text-[13px] text-text-secondary">{a.detalle}</p>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
-    </>
+              );
+            }
+
+            return (
+              <Link
+                key={a.href}
+                to={destino}
+                className="group flex items-center gap-4 border-b border-border py-5 hover:text-accent"
+              >
+                <span className="font-mono text-xs text-text-muted">{indice}</span>
+                <Icon className="size-5 text-accent" />
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold tracking-[-0.02em]">
+                    {a.label}
+                    {bloqueado && a.planRequerido && (
+                      <Badge variant="outline" className="ml-2">
+                        {PLAN_NOMBRE[a.planRequerido]}
+                      </Badge>
+                    )}
+                  </span>
+                  <span className="block text-sm text-text-secondary">{a.detalle}</span>
+                </span>
+                <ArrowUpRight className="size-4 text-text-tertiary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+    </div>
   );
 }

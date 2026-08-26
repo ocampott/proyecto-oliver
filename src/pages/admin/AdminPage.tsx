@@ -4,6 +4,7 @@ import { Plus, Pencil, Search, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
+import { PageHeader } from "../../components/PageHeader";
 import { Field } from "../../components/ui/field";
 import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
@@ -95,7 +96,7 @@ export default function AdminPage() {
 
   return (
     <>
-      <h1 className="text-[32px] font-extrabold text-text">Organizaciones</h1>
+      <PageHeader kicker="Superadmin" title="Organizaciones" />
 
       <div className="mt-4 flex justify-end">
         <Button

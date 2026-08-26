@@ -10,6 +10,7 @@ import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { Pagination } from "../../components/ui/pagination";
+import { PageHeader } from "../../components/PageHeader";
 import { MapaUbicacion, type Coordenadas } from "../../components/MapaUbicacion";
 import type { Sucursal } from "../../lib/api";
 import { getOrgResumenActual } from "../../lib/api";
@@ -169,7 +170,7 @@ export default function SucursalesPage() {
 
   return (
     <>
-      <h1 className="text-[32px] font-extrabold text-text">Sucursales</h1>
+      <PageHeader kicker="Operación" title="Sucursales" />
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <Field

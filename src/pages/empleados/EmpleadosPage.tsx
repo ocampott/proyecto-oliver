@@ -24,6 +24,7 @@ import { ErrorPlan } from "../../components/ErrorPlan";
 import { useOrgActual, puedeGestionar } from "../../lib/hooks";
 import { useSucursales } from "../sucursales/hooks";
 import { Pagination } from "../../components/ui/pagination";
+import { PageHeader } from "../../components/PageHeader";
 
 function formatCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
@@ -272,7 +273,7 @@ export default function EmpleadosPage() {
 
   return (
     <>
-      <h1 className="text-[32px] font-extrabold text-text">Empleados</h1>
+      <PageHeader kicker="Operación" title="Empleados" />
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <Field
@@ -645,13 +646,13 @@ export default function EmpleadosPage() {
       </Dialog>
 
       <Dialog open={codigoDialog != null} onClose={() => setCodigoDialog(null)} title="Código de vinculación">
-        <div className="mx-auto -mt-1 flex h-[52px] w-[52px] items-center justify-center rounded-[14px] bg-accent-100">
+        <div className="mx-auto -mt-1 flex h-[52px] w-[52px] items-center justify-center rounded-[6px] bg-accent-100">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-accent" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
         </div>
-        <div className="text-center text-[38px] font-extrabold tracking-[0.14em] text-text">
+        <div className="data-number text-center text-4xl font-medium tracking-[0.14em] text-text">
           {codigoDialog ? formatCode(codigoDialog.code) : ""}
         </div>
         <p className="text-center text-[13.5px] text-text-secondary">

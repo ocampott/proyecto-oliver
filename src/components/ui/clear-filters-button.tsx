@@ -12,7 +12,7 @@ function ClearFiltersButton({ onClick, className }: ClearFiltersButtonProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        "ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text",
+        "ml-auto inline-flex items-center gap-1 font-mono text-[11px] font-medium uppercase tracking-[0.04em] text-text-secondary hover:text-text",
         className
       )}
     >
