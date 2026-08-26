@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   getAusencias,
   createAusencia,
@@ -16,10 +16,13 @@ export function useAusencias(filters: {
   sucursalId?: string;
   motivo?: string;
   empleadoId?: string;
+  page?: number;
+  pageSize?: number;
 }) {
   return useQuery({
     queryKey: ["ausencias", filters],
     queryFn: () => getAusencias(filters),
+    placeholderData: keepPreviousData,
   });
 }
 

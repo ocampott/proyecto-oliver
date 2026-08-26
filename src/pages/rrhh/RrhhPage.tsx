@@ -10,6 +10,7 @@ import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { Pagination } from "../../components/ui/pagination";
 import type { Ausencia } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
@@ -102,6 +103,8 @@ export default function RrhhPage() {
   const [periodo, setPeriodo] = useState(hoyAR().slice(0, 7));
   const [sucursalFiltro, setSucursalFiltro] = useState("");
   const [motivoFiltro, setMotivoFiltro] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [descargando, setDescargando] = useState(false);
 
   function handlePeriodoChange(nuevoPeriodo: string) {
@@ -110,6 +113,7 @@ export default function RrhhPage() {
       setDesde(`${nuevoPeriodo}-01`);
       setHasta(finDeMesAR(nuevoPeriodo));
     }
+    setPage(1);
   }
 
   async function handleDescargarExcel() {
@@ -134,6 +138,8 @@ export default function RrhhPage() {
     hasta,
     sucursalId: sucursalFiltro || undefined,
     motivo: motivoFiltro || undefined,
+    page,
+    pageSize,
   });
   const ausencias = data?.ausencias ?? [];
   const resumen = data?.resumen;
@@ -143,6 +149,7 @@ export default function RrhhPage() {
   function limpiarFiltros() {
     setSucursalFiltro("");
     setMotivoFiltro("");
+    setPage(1);
   }
 
   const crear = useCrearAusencia();
@@ -316,8 +323,8 @@ export default function RrhhPage() {
           onChange={(e) => handlePeriodoChange(e.target.value)}
           containerClassName="w-40"
         />
-        <Field label="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-40" />
-        <Field label="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-40" />
+        <Field label="Desde" type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setPage(1); }} containerClassName="w-40" />
+        <Field label="Hasta" type="date" value={hasta} onChange={(e) => { setHasta(e.target.value); setPage(1); }} containerClassName="w-40" />
         <div className="ml-auto flex gap-2">
           <Button variant="secondary" onClick={handleDescargarExcel} disabled={descargando}>
             <Download className="h-4 w-4" />
@@ -335,14 +342,14 @@ export default function RrhhPage() {
           label="Sucursal"
           value={sucursalFiltro}
           defaultValue=""
-          onChange={setSucursalFiltro}
+          onChange={(v) => { setSucursalFiltro(v); setPage(1); }}
           options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
         />
         <FilterChip
           label="Motivo"
           value={motivoFiltro}
           defaultValue=""
-          onChange={setMotivoFiltro}
+          onChange={(v) => { setMotivoFiltro(v); setPage(1); }}
           options={[{ value: "", label: "Todos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
         />
         {filtrosActivos && (
@@ -395,6 +402,8 @@ export default function RrhhPage() {
           )}
         </TableBody>
       </Table>
+
+      {data?.pagination && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
 
       <Dialog open={altaOpen} onClose={() => { setAltaOpen(false); setError(null); }} title="Nueva ausencia">
         <form onSubmit={handleAlta} className="flex flex-col gap-3">
