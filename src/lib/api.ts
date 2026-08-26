@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { descargarArchivo } from "./descargarArchivo";
+import { getDemoResponse, isDemoDataEnabled } from "./demoData";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
@@ -24,11 +25,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (init?.headers) Object.assign(headers, init.headers);
   if (session) headers["Authorization"] = `Bearer ${session.access_token}`;
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...init,
+      credentials: "include",
+      headers,
+    });
+  } catch (error) {
+    const demo = init?.method === undefined || init.method === "GET" ? getDemoResponse(path) : undefined;
+    if (isDemoDataEnabled() && demo !== undefined) {
+      return demo as T;
+    }
+    throw error;
+  }
   const body = await res.json().catch(() => null);
   if (!res.ok) {
     const base = body?.error ?? "Algo salió mal. Probá de nuevo.";
