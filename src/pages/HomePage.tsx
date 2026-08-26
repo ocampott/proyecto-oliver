@@ -140,15 +140,12 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="mt-14" aria-labelledby="accesos-title">
+      <section className="mt-12" aria-labelledby="accesos-title">
         <div className="flex items-baseline justify-between border-b border-border pb-3">
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">Navegación</p>
-            <h2 id="accesos-title" className="mt-1 text-lg font-semibold tracking-[-0.03em] text-text">Acciones frecuentes</h2>
-          </div>
-          <span className="font-mono text-xs text-text-tertiary">{ACCESOS.length} módulos</span>
+          <h2 id="accesos-title" className="text-base font-medium tracking-[-0.02em] text-text">Ir a</h2>
+          <span className="text-xs text-text-tertiary">{ACCESOS.length} opciones</span>
         </div>
-        <div className="grid gap-x-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-x-10 md:grid-cols-2 lg:grid-cols-3">
           {ACCESOS.map((a) => {
             const Icon = a.icon;
             const sinPermiso = a.soloGestion ? !admin : false;
