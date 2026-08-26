@@ -142,19 +142,18 @@ export default function HomePage() {
 
       <section className="mt-12" aria-labelledby="accesos-title">
         <div className="flex items-baseline justify-between border-b border-border pb-3">
-          <h2 id="accesos-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-text">
-            Accesos rápidos
-          </h2>
-          <span className="font-mono text-xs text-text-tertiary">{ACCESOS.length.toString().padStart(2, "0")} módulos</span>
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">Navegación</p>
+            <h2 id="accesos-title" className="mt-1 text-lg font-semibold tracking-[-0.03em] text-text">Acciones frecuentes</h2>
+          </div>
+          <span className="font-mono text-xs text-text-tertiary">{ACCESOS.length} módulos</span>
         </div>
         <div className="grid gap-x-8 md:grid-cols-2 lg:grid-cols-3">
-          {ACCESOS.map((a, index) => {
+          {ACCESOS.map((a) => {
             const Icon = a.icon;
             const sinPermiso = a.soloGestion ? !admin : false;
             const bloqueado = a.modulo ? !tieneModulo(ent, a.modulo) : false;
             const destino = bloqueado ? "/plan" : a.href;
-            const indice = String(index + 1).padStart(2, "0");
-
             if (sinPermiso) {
               return (
                 <div
@@ -162,8 +161,9 @@ export default function HomePage() {
                   aria-disabled="true"
                   className="flex cursor-not-allowed items-center gap-4 border-b border-border py-5 opacity-40"
                 >
-                  <span className="font-mono text-xs text-text-muted">{indice}</span>
-                  <Icon className="size-5 text-accent" />
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent-100 text-accent-700">
+                    <Icon className="size-4" />
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 font-semibold tracking-[-0.02em]">
                       {a.label}
@@ -181,8 +181,9 @@ export default function HomePage() {
                 to={destino}
                 className="group flex items-center gap-4 border-b border-border py-5 hover:text-accent"
               >
-                <span className="font-mono text-xs text-text-muted">{indice}</span>
-                <Icon className="size-5 text-accent" />
+  <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent-100 text-accent-700">
+    <Icon className="size-4" />
+  </span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-semibold tracking-[-0.02em]">
                     {a.label}

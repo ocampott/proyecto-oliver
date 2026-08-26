@@ -147,25 +147,19 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
             <X className="h-[18px] w-[18px]" />
           </button>
         </div>
-        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-2">
+        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-3" aria-label="Navegación principal">
+          {!collapsed && <p className="px-3 pb-2 pt-1 font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted md:block">Operación</p>}
           {isLoading
             ? LINKS.map((item) => (
-                <span
-                  key={item.href}
-                  className={cn("flex items-center gap-2.5 px-3 py-2.5", collapsed && "md:justify-center md:px-0")}
-                >
+                <span key={item.href} className={cn("flex items-center gap-2.5 px-3 py-2.5", collapsed && "md:justify-center md:px-0")}>
                   <span className={cn("h-[13px] animate-pulse rounded-full bg-text/10", collapsed ? "w-6" : "w-24")} />
                 </span>
               ))
-            : LINKS.map((item) => (
-                <SidebarNavLink
-                  key={item.href}
-                  item={item}
-                  ent={ent}
-                  org={orgOrNull}
-                  collapsed={collapsed}
-                  onClick={onMobileClose}
-                />
+            : LINKS.map((item, index) => (
+                <React.Fragment key={item.href}>
+                  {!collapsed && index === 2 && <p className="px-3 pb-2 pt-5 font-mono text-[10px] uppercase tracking-[0.18em] text-text-muted">Personas</p>}
+                  <SidebarNavLink item={item} ent={ent} org={orgOrNull} collapsed={collapsed} onClick={onMobileClose} />
+                </React.Fragment>
               ))}
         </nav>
         <div className="border-t border-border-soft p-2">
