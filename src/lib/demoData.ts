@@ -62,7 +62,11 @@ export function getDemoResponse(path: string): unknown {
   if (path.startsWith("/api/org/resumen")) return { empleadosActivos: 3, sucursalesActivas: 2, miembros: 4 };
   if (path.startsWith("/api/sucursales")) return page(demoSucursales);
   if (path.startsWith("/api/empleados")) return path.includes("?") ? page(demoEmpleados) : demoEmpleados;
-  if (path.startsWith("/api/asistencia")) return path.includes("rechazadas") ? page([]) : path.includes("?") ? page(demoAsistencia) : demoAsistencia;
+  if (path.startsWith("/api/asistencia")) {
+    if (path.includes("rechazadas")) return page([]);
+    const query = new URLSearchParams(path.split("?")[1] ?? "");
+    return query.has("page") || query.has("pageSize") ? page(demoAsistencia) : demoAsistencia;
+  }
   if (path.startsWith("/api/ausencias")) {
     const response: AusenciasResponse = { ausencias: [], resumen: { total: 0, certificadosPendientes: 0, porSucursal: {}, porMotivo: {} } };
     return response;

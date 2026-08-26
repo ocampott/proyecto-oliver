@@ -28,6 +28,14 @@ interface Marca {
   hora: string;
 }
 
+function normalizarRegistros(data: unknown): AsistenciaRegistro[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object" && "data" in data && Array.isArray(data.data)) {
+    return data.data as AsistenciaRegistro[];
+  }
+  return [];
+}
+
 function derivarUltimosMarcados(registros: AsistenciaRegistro[]): Marca[] {
   return [...registros]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -92,8 +100,9 @@ export function useAsistenciaEnVivo(orgId: string) {
     };
   }, [orgId, hoy, queryClient, instanceId]);
 
-  const porSucursal = useMemo(() => derivarAdentro(data ?? []), [data]);
-  const ultimosMarcados = useMemo(() => derivarUltimosMarcados(data ?? []), [data]);
+  const registros = useMemo(() => normalizarRegistros(data), [data]);
+  const porSucursal = useMemo(() => derivarAdentro(registros), [registros]);
+  const ultimosMarcados = useMemo(() => derivarUltimosMarcados(registros), [registros]);
 
   return { isLoading, isError, porSucursal, conectado, ultimosMarcados };
 }
