@@ -1,10 +1,15 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/auth";
+import { isSupabaseConfigured } from "../lib/supabase";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
   const location = useLocation();
+
+  // The preview can showcase the authenticated UI before Supabase variables
+  // are mounted. This branch is disabled automatically in configured builds.
+  if (!isSupabaseConfigured) return <>{children}</>;
 
   if (loading) {
     return (

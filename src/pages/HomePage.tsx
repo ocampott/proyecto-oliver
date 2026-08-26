@@ -6,6 +6,7 @@ import { Badge } from "../components/ui/badge";
 import { PulsoOperativo } from "../components/dashboard/PulsoOperativo";
 import { useOrgActual, useEntitlements, tieneModulo, tieneRol } from "../lib/hooks";
 import { ApiError } from "../lib/api";
+import { isSupabaseConfigured } from "../lib/supabase";
 import type { Modulo, PlanSlug } from "../lib/api";
 
 interface Acceso { href: string; label: string; detalle: string; icon: React.ComponentType<{ className?: string }>; modulo?: Modulo; planRequerido?: PlanSlug; soloGestion?: boolean; }
@@ -22,6 +23,17 @@ const PLAN_NOMBRE: Record<PlanSlug, string> = { gratis: "Gratis", basico: "Bási
 export default function HomePage() {
   const { data: org, isLoading, isFetching, isError, error, refetch } = useOrgActual();
   const ent = useEntitlements();
+  const previewOrg = { id: "preview-org", name: "Tu organización" } as const;
+  if (!isSupabaseConfigured) {
+    return <div className="pb-10">
+      <div className="flex flex-col gap-5 border-b border-border-soft pb-7 md:flex-row md:items-end md:justify-between">
+        <div><p className="mb-2 text-[13px] font-semibold uppercase tracking-[.14em] text-accent-700">Resumen de hoy</p><h1 className="text-balance text-[32px] font-extrabold tracking-[-0.04em] text-text md:text-[40px]">Buen día, {previewOrg.name}</h1><p className="mt-2 text-[15px] text-text-secondary">Esto es lo que está pasando con tu equipo.</p></div><Button asChild><Link to="/asistencia">Ver asistencia <ArrowUpRight className="h-4 w-4" /></Link></Button>
+      </div>
+      <div className="my-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><Card><p className="text-sm text-text-secondary">Presentes ahora</p><p className="mt-3 text-3xl font-extrabold text-text">24</p><p className="mt-2 text-xs font-semibold text-success-700">+8% vs. ayer</p></Card><Card><p className="text-sm text-text-secondary">Ausencias de hoy</p><p className="mt-3 text-3xl font-extrabold text-text">3</p><p className="mt-2 text-xs font-semibold text-warning">Revisar novedades</p></Card><Card><p className="text-sm text-text-secondary">Sin marcar salida</p><p className="mt-3 text-3xl font-extrabold text-text">2</p><p className="mt-2 text-xs font-semibold text-alert">Atención requerida</p></Card><Card><p className="text-sm text-text-secondary">Turnos próximos</p><p className="mt-3 text-3xl font-extrabold text-text">5</p><p className="mt-2 text-xs font-semibold text-accent-700">En la próxima hora</p></Card></div>
+      <Card className="mb-8 border-accent-200 bg-accent-100/40 shadow-none"><div className="flex items-start gap-3"><div className="mt-0.5 rounded-lg bg-surface p-2 text-accent-700"><AlertTriangle className="h-4 w-4" /></div><div><h2 className="text-[15px] font-bold text-text">Atención rápida</h2><p className="mt-1 text-[13px] leading-6 text-text-secondary">Revisá la asistencia del equipo y resolvé cualquier marca pendiente antes del cierre del día.</p></div><Link to="/asistencia" className="ml-auto hidden shrink-0 text-[13px] font-bold text-accent-700 hover:underline sm:block">Revisar <ChevronRight className="inline h-4 w-4" /></Link></div></Card>
+      <div className="mb-4"><p className="text-[13px] font-semibold uppercase tracking-[.12em] text-text-tertiary">Módulos</p><h2 className="mt-1 text-xl font-bold text-text">Gestioná tu operación</h2></div><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{ACCESOS.map((a) => { const Icon = a.icon; return <Link key={a.href} to={a.href} className="group block h-full"><Card className="relative h-full transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-accent-300"><ChevronRight className="absolute right-5 top-5 h-4 w-4 text-text-tertiary transition-transform group-hover:translate-x-1 group-hover:text-accent" /><Icon className="h-5 w-5 text-accent-700" /><h3 className="mt-5 text-[17px] font-bold text-text">{a.label}</h3><p className="mt-1 max-w-[240px] text-[13px] leading-5 text-text-secondary">{a.detalle}</p></Card></Link> })}</div>
+    </div>;
+  }
   if (isLoading || (isFetching && !org)) return <div className="animate-pulse"><div className="h-8 w-56 rounded-lg bg-text/10" /><div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-[140px] rounded-2xl border border-border bg-surface" />)}</div></div>;
   const sinOrg = isError && error instanceof ApiError && error.status === 404;
   if (sinOrg) return <Card><p className="text-text">Tu cuenta todavía no está asociada a ninguna organización. Contactá a soporte.</p></Card>;
