@@ -70,7 +70,8 @@ function nombreCompleto(emp: Empleado): string {
 
 export default function EmpleadosPage() {
   const { data: org } = useOrgActual();
-  const { data: sucursales = [] } = useSucursales();
+  const { data: sucursalesData } = useSucursales();
+  const sucursales = sucursalesData?.data ?? [];
   const crear = useCrearEmpleado();
   const editar = useEditarEmpleado();
   const eliminar = useEliminarEmpleado();

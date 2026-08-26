@@ -47,7 +47,8 @@ export default function CumplimientoTab() {
   const [toleranciaInput, setToleranciaInput] = useState("");
   const toast = useToast();
 
-  const { data: sucursales = [] } = useSucursales();
+  const { data: sucursalesData } = useSucursales();
+  const sucursales = sucursalesData?.data ?? [];
   const { data: empleados = [] } = useEmpleados();
   const { data: filas = [], isLoading } = useCumplimiento({
     desde,

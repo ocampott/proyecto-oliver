@@ -52,7 +52,8 @@ export default function HorasPage() {
 
   const { data, isLoading, isError, error } = useHoras(desde, hasta);
   const { data: empleados = [] } = useEmpleados();
-  const { data: sucursales = [] } = useSucursales();
+  const { data: sucursalesData } = useSucursales();
+  const sucursales = sucursalesData?.data ?? [];
   const toast = useToast();
   const [descargando, setDescargando] = useState(false);
 

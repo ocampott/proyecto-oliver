@@ -46,7 +46,8 @@ export default function AsistenciaPage() {
   const { data: registros = [], isLoading, isError } = useAsistencia(desde, hasta);
   const { data: rechazadas = [] } = useRechazadas();
   const { data: empleados = [] } = useEmpleados();
-  const { data: sucursales = [] } = useSucursales();
+  const { data: sucursalesData } = useSucursales();
+  const sucursales = sucursalesData?.data ?? [];
   const borrar = useBorrarAsistencia();
   const resolver = useResolverRechazada();
   const toast = useToast();

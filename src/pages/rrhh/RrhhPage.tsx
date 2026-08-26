@@ -54,7 +54,8 @@ function motivoFinal(f: FormState): string {
 export default function RrhhPage() {
   const toast = useToast();
   const { data: empleados = [] } = useEmpleados();
-  const { data: sucursales = [] } = useSucursales();
+  const { data: sucursalesData } = useSucursales();
+  const sucursales = sucursalesData?.data ?? [];
   const { data: categoriasData } = useRrhhCategorias();
   const categorias = categoriasData?.categorias ?? [];
   const opcionesMotivo = [...categorias.map((c) => ({ value: c, label: c })), { value: OTRO, label: "Otro" }];

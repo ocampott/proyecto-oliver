@@ -57,7 +57,8 @@ function DiaToggle({ dias, onToggle }: { dias: number[]; onToggle: (d: number) =
 
 export default function HorariosTab() {
   const { data: empleados = [] } = useEmpleados();
-  const { data: sucursales = [] } = useSucursales();
+  const { data: sucursalesData } = useSucursales();
+  const sucursales = sucursalesData?.data ?? [];
   const { data: templates = [] } = useTurnoTemplates();
   const toast = useToast();
 

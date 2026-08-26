@@ -8,6 +8,7 @@ import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { Pagination } from "../../components/ui/pagination";
 import { MapaUbicacion, type Coordenadas } from "../../components/MapaUbicacion";
 import type { Sucursal } from "../../lib/api";
 import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useEliminarSucursal } from "./hooks";
@@ -27,7 +28,6 @@ function coordsDe(suc: Sucursal): Coordenadas | null {
 }
 
 export default function SucursalesPage() {
-  const { data: sucursales = [], isLoading } = useSucursales();
   const { data: org } = useOrgActual();
   const crear = useCrearSucursal();
   const editar = useEditarSucursal();
@@ -48,6 +48,16 @@ export default function SucursalesPage() {
   const [eliminarTarget, setEliminarTarget] = useState<Sucursal | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const { data, isLoading } = useSucursales({
+    page,
+    pageSize,
+    q: busqueda || undefined,
+    estado: estadoFiltro === "todos" ? undefined : estadoFiltro,
+  });
+  const sucursales = data?.data ?? [];
   const [error, setError] = useState<Error | null>(null);
   const [accionandoId, setAccionandoId] = useState<string | null>(null);
 
@@ -61,18 +71,12 @@ export default function SucursalesPage() {
   const alTope = !!ent && !ent.ilimitado && ent.maxSucursales !== null && activasCount >= ent.maxSucursales;
   const gestionable = puedeGestionar(org ?? null);
 
-  const sucursalesFiltradas = sucursales.filter((s) => {
-    const matchNombre = s.nombre.toLowerCase().includes(busqueda.toLowerCase());
-    const matchEstado =
-      estadoFiltro === "todos" || (estadoFiltro === "activos" ? s.activa : !s.activa);
-    return matchNombre && matchEstado;
-  });
-
   const filtrosActivos = busqueda !== "" || estadoFiltro !== "todos";
 
   function limpiarFiltros() {
     setBusqueda("");
     setEstadoFiltro("todos");
+    setPage(1);
   }
 
   function resetAlta() {
@@ -165,7 +169,7 @@ export default function SucursalesPage() {
           label="Buscar"
           placeholder="Nombre de la sucursal"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
           containerClassName="w-64"
           icon={<Search className="h-[15px] w-[15px]" />}
         />
@@ -195,7 +199,7 @@ export default function SucursalesPage() {
           label="Estado"
           value={estadoFiltro}
           defaultValue="todos"
-          onChange={(v) => setEstadoFiltro(v as EstadoFiltro)}
+          onChange={(v) => { setEstadoFiltro(v as EstadoFiltro); setPage(1); }}
           options={[
             { value: "todos", label: "Todos" },
             { value: "activos", label: "Activos" },
@@ -234,7 +238,7 @@ export default function SucursalesPage() {
         <TableBody>
           {isLoading && <TableSkeleton cols={6} />}
           {!isLoading &&
-            sucursalesFiltradas.map((suc) => (
+            sucursales.map((suc) => (
               <TableRow key={suc.id} className={suc.activa ? "" : "text-text/40"}>
                 <TableCell>{suc.nombre}</TableCell>
                 <TableCell>{suc.direccion ?? "—"}</TableCell>
@@ -308,14 +312,14 @@ export default function SucursalesPage() {
                 </TableCell>
               </TableRow>
             ))}
-          {!isLoading && sucursales.length === 0 && (
+          {!isLoading && sucursales.length === 0 && !filtrosActivos && (
             <TableRow>
               <TableCell colSpan={6} className="text-text/60">
                 Todavía no hay sucursales cargadas.
               </TableCell>
             </TableRow>
           )}
-          {!isLoading && sucursales.length > 0 && sucursalesFiltradas.length === 0 && (
+          {!isLoading && sucursales.length === 0 && filtrosActivos && (
             <TableRow>
               <TableCell colSpan={6} className="text-text/60">
                 Ninguna sucursal coincide con el filtro.
@@ -324,6 +328,8 @@ export default function SucursalesPage() {
           )}
         </TableBody>
       </Table>
+
+      {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
 
       <Dialog
         open={altaOpen}
