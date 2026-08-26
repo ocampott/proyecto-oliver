@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, Loader2, X } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
@@ -11,6 +12,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSke
 import { Pagination } from "../../components/ui/pagination";
 import { MapaUbicacion, type Coordenadas } from "../../components/MapaUbicacion";
 import type { Sucursal } from "../../lib/api";
+import { getOrgResumenActual } from "../../lib/api";
 import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useEliminarSucursal } from "./hooks";
 import { useQrBlob } from "./useQrBlob";
 import { ErrorPlan } from "../../components/ErrorPlan";
@@ -66,8 +68,13 @@ export default function SucursalesPage() {
 
   const loading = crear.isPending || editar.isPending || eliminar.isPending;
 
+  const { data: resumen } = useQuery({
+    queryKey: ["org-resumen-actual"],
+    queryFn: getOrgResumenActual,
+  });
+
   const ent = org?.entitlements;
-  const activasCount = sucursales.filter((s) => s.activa).length;
+  const activasCount = resumen?.sucursalesActivas ?? 0;
   const alTope = !!ent && !ent.ilimitado && ent.maxSucursales !== null && activasCount >= ent.maxSucursales;
   const gestionable = puedeGestionar(org ?? null);
 

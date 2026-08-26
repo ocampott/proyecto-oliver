@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, Loader2, Copy, X } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
@@ -10,6 +11,7 @@ import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { Empleado } from "../../lib/api";
+import { getOrgResumenActual } from "../../lib/api";
 import {
   useEmpleadosPaginado,
   useCrearEmpleado,
@@ -121,8 +123,13 @@ export default function EmpleadosPage() {
   const loading =
     crear.isPending || editar.isPending || eliminar.isPending || desvincular.isPending || generarCodigo.isPending;
 
+  const { data: resumen } = useQuery({
+    queryKey: ["org-resumen-actual"],
+    queryFn: getOrgResumenActual,
+  });
+
   const ent = org?.entitlements;
-  const activosCount = empleados.filter((e) => e.estado !== "baja").length;
+  const activosCount = resumen?.empleadosActivos ?? 0;
   const alTope = !!ent && !ent.ilimitado && ent.maxEmpleados !== null && activosCount >= ent.maxEmpleados;
   const gestionable = puedeGestionar(org ?? null);
 

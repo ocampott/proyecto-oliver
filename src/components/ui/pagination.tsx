@@ -50,6 +50,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
         <select
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          aria-label="Filas por página"
           className="h-8 rounded-lg border border-border bg-white px-2 text-[13px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           {PAGE_SIZE_OPTIONS.map((n) => (

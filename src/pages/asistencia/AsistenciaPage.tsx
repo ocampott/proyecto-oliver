@@ -48,6 +48,8 @@ export default function AsistenciaPage() {
   const [empleadoFiltro, setEmpleadoFiltro] = useState("todos");
   const [sucursalFiltro, setSucursalFiltro] = useState("todos");
   const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>("todos");
+  const [rechazadasPage, setRechazadasPage] = useState(1);
+  const [rechazadasPageSize, setRechazadasPageSize] = useState(20);
 
   const { data, isLoading, isError } = useAsistenciaPaginada(desde, hasta, {
     page,
@@ -57,7 +59,7 @@ export default function AsistenciaPage() {
     tipo: tipoFiltro === "todos" ? undefined : tipoFiltro,
   });
   const registros = data?.data ?? [];
-  const { data: rechazadasData } = useRechazadas({ page: 1, pageSize: 30 });
+  const { data: rechazadasData } = useRechazadas({ page: rechazadasPage, pageSize: rechazadasPageSize });
   const rechazadas = rechazadasData?.data ?? [];
   const { data: empleados = [] } = useEmpleados();
   const { data: sucursalesData } = useSucursales();
@@ -79,6 +81,7 @@ export default function AsistenciaPage() {
     setEmpleadoFiltro("todos");
     setSucursalFiltro("todos");
     setTipoFiltro("todos");
+    setPage(1);
   }
 
   async function handleDescargarExcel() {
@@ -120,11 +123,11 @@ export default function AsistenciaPage() {
     <>
       <h1 className="text-[32px] font-extrabold text-text">Asistencia</h1>
 
-      {rechazadas.length > 0 && (
+      {(rechazadasData?.pagination.total ?? 0) > 0 && (
         <section className="mt-6">
           <div className="flex items-center gap-2">
             <h2 className="text-[20px] font-extrabold text-text">Intentos rechazados</h2>
-            <Badge variant="alert">{rechazadas.length} pendientes</Badge>
+            <Badge variant="alert">{rechazadasData?.pagination.total ?? rechazadas.length} pendientes</Badge>
           </div>
           <Table containerClassName="mt-2 border-[#f3ddc9]">
             <TableHeader>
@@ -174,6 +177,13 @@ export default function AsistenciaPage() {
               ))}
             </TableBody>
           </Table>
+          {rechazadasData && (
+            <Pagination
+              pagination={rechazadasData.pagination}
+              onPageChange={setRechazadasPage}
+              onPageSizeChange={(s) => { setRechazadasPageSize(s); setRechazadasPage(1); }}
+            />
+          )}
         </section>
       )}
 
