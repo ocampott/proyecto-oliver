@@ -119,7 +119,7 @@ export function PulsoOperativo({ orgId }: { orgId: string }) {
   const live = useAsistenciaEnVivo(orgId);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-0 divide-y divide-border border-y border-border md:grid-cols-2 md:divide-x md:divide-y-0 lg:grid-cols-4">
       <LiveCount enVivo={live} />
       <Recent enVivo={live} />
       {tieneModulo(ent, "horas") && <PendingHours />}
