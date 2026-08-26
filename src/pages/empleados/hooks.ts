@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   listEmpleados,
+  listEmpleadosPaginado,
   createEmpleado,
   updateEmpleado,
   eliminarEmpleado,
@@ -8,12 +9,21 @@ import {
   generarOtp,
   type CrearEmpleadoInput,
   type EditarEmpleadoInput,
+  type ListEmpleadosParams,
 } from "../../lib/api";
 
 const QUERY_KEY = ["empleados"];
 
 export function useEmpleados() {
   return useQuery({ queryKey: QUERY_KEY, queryFn: listEmpleados });
+}
+
+export function useEmpleadosPaginado(params: ListEmpleadosParams) {
+  return useQuery({
+    queryKey: [...QUERY_KEY, params],
+    queryFn: () => listEmpleadosPaginado(params),
+    placeholderData: keepPreviousData,
+  });
 }
 
 export function useCrearEmpleado() {

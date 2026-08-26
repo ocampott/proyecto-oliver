@@ -11,7 +11,7 @@ import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { Empleado } from "../../lib/api";
 import {
-  useEmpleados,
+  useEmpleadosPaginado,
   useCrearEmpleado,
   useEditarEmpleado,
   useEliminarEmpleado,
@@ -21,6 +21,7 @@ import {
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { useOrgActual, puedeGestionar } from "../../lib/hooks";
 import { useSucursales } from "../sucursales/hooks";
+import { Pagination } from "../../components/ui/pagination";
 
 function formatCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
@@ -53,7 +54,7 @@ function Celda({ value }: { value: string | null | undefined }): ReactNode {
 }
 
 type EstadoFiltro = "todos" | Empleado["estado"];
-type DispositivoFiltro = "todos" | "vinculado" | "otp_pendiente" | "sin_vincular";
+type DispositivoFiltro = "todos" | "vinculado" | "no_vinculado";
 type CuilFiltro = "todos" | "con" | "sin";
 
 const ESTADO_LABELS: Record<Empleado["estado"], string> = {
@@ -68,7 +69,6 @@ function nombreCompleto(emp: Empleado): string {
 }
 
 export default function EmpleadosPage() {
-  const { data: empleados = [], isLoading } = useEmpleados();
   const { data: org } = useOrgActual();
   const { data: sucursales = [] } = useSucursales();
   const crear = useCrearEmpleado();
@@ -98,6 +98,19 @@ export default function EmpleadosPage() {
   const [dispositivoFiltro, setDispositivoFiltro] = useState<DispositivoFiltro>("todos");
   const [sucursalFiltro, setSucursalFiltro] = useState("");
   const [cuilFiltro, setCuilFiltro] = useState<CuilFiltro>("todos");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const { data, isLoading } = useEmpleadosPaginado({
+    page,
+    pageSize,
+    q: busqueda || undefined,
+    estado: estadoFiltro === "todos" ? undefined : estadoFiltro,
+    sucursalId: sucursalFiltro || undefined,
+    cuil: cuilFiltro === "todos" ? undefined : cuilFiltro,
+    dispositivo: dispositivoFiltro === "todos" ? undefined : (dispositivoFiltro as "vinculado" | "no_vinculado"),
+  });
+  const empleados = data?.data ?? [];
   const [codigoDialog, setCodigoDialog] = useState<{ nombre: string; code: string } | null>(null);
   const [desvincularTarget, setDesvincularTarget] = useState<Empleado | null>(null);
   const [eliminarTarget, setEliminarTarget] = useState<Empleado | null>(null);
@@ -125,22 +138,8 @@ export default function EmpleadosPage() {
     setDispositivoFiltro("todos");
     setSucursalFiltro("");
     setCuilFiltro("todos");
+    setPage(1);
   }
-
-  const empleadosFiltrados = empleados.filter((emp) => {
-    const matchNombre = nombreCompleto(emp).toLowerCase().includes(busqueda.toLowerCase());
-    const matchEstado = estadoFiltro === "todos" || emp.estado === estadoFiltro;
-    const matchDispositivo =
-      dispositivoFiltro === "todos" ||
-      (dispositivoFiltro === "vinculado"
-        ? !!emp.device_token
-        : dispositivoFiltro === "otp_pendiente"
-          ? !emp.device_token && !!emp.otp
-          : !emp.device_token && !emp.otp);
-    const matchSucursal = sucursalFiltro === "" || emp.sucursal_id === sucursalFiltro;
-    const matchCuil = cuilFiltro === "todos" || (cuilFiltro === "con" ? !!emp.cuil : !emp.cuil);
-    return matchNombre && matchEstado && matchDispositivo && matchSucursal && matchCuil;
-  });
 
   async function handleAlta(e: FormEvent) {
     e.preventDefault();
@@ -272,7 +271,7 @@ export default function EmpleadosPage() {
           label="Buscar"
           placeholder="Nombre del empleado"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
+          onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
           containerClassName="w-64"
           icon={<Search className="h-[15px] w-[15px]" />}
         />
@@ -302,7 +301,7 @@ export default function EmpleadosPage() {
           label="Estado"
           value={estadoFiltro}
           defaultValue="todos"
-          onChange={(v) => setEstadoFiltro(v as EstadoFiltro)}
+          onChange={(v) => { setEstadoFiltro(v as EstadoFiltro); setPage(1); }}
           options={[
             { value: "todos", label: "Todos" },
             { value: "activo", label: "Activo" },
@@ -315,26 +314,25 @@ export default function EmpleadosPage() {
           label="Dispositivo"
           value={dispositivoFiltro}
           defaultValue="todos"
-          onChange={(v) => setDispositivoFiltro(v as DispositivoFiltro)}
+          onChange={(v) => { setDispositivoFiltro(v as DispositivoFiltro); setPage(1); }}
           options={[
             { value: "todos", label: "Todos" },
             { value: "vinculado", label: "Vinculado" },
-            { value: "otp_pendiente", label: "OTP pendiente" },
-            { value: "sin_vincular", label: "Sin vincular" },
+            { value: "no_vinculado", label: "No vinculado" },
           ]}
         />
         <FilterChip
           label="Sucursal"
           value={sucursalFiltro}
           defaultValue=""
-          onChange={setSucursalFiltro}
+          onChange={(v) => { setSucursalFiltro(v); setPage(1); }}
           options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
         />
         <FilterChip
           label="CUIL"
           value={cuilFiltro}
           defaultValue="todos"
-          onChange={(v) => setCuilFiltro(v as CuilFiltro)}
+          onChange={(v) => { setCuilFiltro(v as CuilFiltro); setPage(1); }}
           options={[
             { value: "todos", label: "Todos" },
             { value: "con", label: "Con CUIL" },
@@ -375,7 +373,7 @@ export default function EmpleadosPage() {
         <TableBody>
           {isLoading && <TableSkeleton cols={8} />}
           {!isLoading &&
-            empleadosFiltrados.map((emp) => (
+            empleados.map((emp) => (
               <TableRow key={emp.id} className={emp.estado === "baja" ? "text-text/40" : ""}>
                 <TableCell>{nombreCompleto(emp)}</TableCell>
                 <Celda value={emp.celular} />
@@ -483,14 +481,14 @@ export default function EmpleadosPage() {
                 </TableCell>
               </TableRow>
             ))}
-          {!isLoading && empleados.length === 0 && (
+          {!isLoading && empleados.length === 0 && !filtrosActivos && (
             <TableRow>
               <TableCell colSpan={8} className="text-text/60">
                 Todavía no hay empleados cargados.
               </TableCell>
             </TableRow>
           )}
-          {!isLoading && empleados.length > 0 && empleadosFiltrados.length === 0 && (
+          {!isLoading && empleados.length === 0 && filtrosActivos && (
             <TableRow>
               <TableCell colSpan={8} className="text-text/60">
                 Ningún empleado coincide con el filtro.
@@ -499,6 +497,8 @@ export default function EmpleadosPage() {
           )}
         </TableBody>
       </Table>
+
+      {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
 
       <Dialog
         open={altaOpen}
