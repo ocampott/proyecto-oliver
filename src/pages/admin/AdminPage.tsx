@@ -7,6 +7,7 @@ import { Field } from "../../components/ui/field";
 import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { Pagination } from "../../components/ui/pagination";
 import { ApiError, type OrganizationAdmin } from "../../lib/api";
 import {
   useOrganizacionesAdmin,
@@ -21,7 +22,11 @@ function fechaLocal(iso: string): string {
 }
 
 export default function AdminPage() {
-  const { data: organizaciones = [], isLoading, isError, error } = useOrganizacionesAdmin();
+  const [busqueda, setBusqueda] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const { data, isLoading, isError, error } = useOrganizacionesAdmin({ page, pageSize, q: busqueda || undefined });
+  const organizaciones = data?.data ?? [];
   const crear = useCrearOrganizacionAdmin();
   const editarOrg = useEditarOrganizacionAdmin();
   const navigate = useNavigate();
@@ -97,6 +102,17 @@ export default function AdminPage() {
         </Button>
       </div>
 
+      <div className="mt-4 flex flex-wrap items-end gap-2">
+        <Field
+          label="Buscar"
+          placeholder="Nombre o slug"
+          value={busqueda}
+          onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
+          containerClassName="w-64"
+          icon={<Search className="h-[15px] w-[15px]" />}
+        />
+      </div>
+
       <Table containerClassName="mt-4">
         <TableHeader>
           <TableRow>
@@ -145,6 +161,8 @@ export default function AdminPage() {
           )}
         </TableBody>
       </Table>
+
+      {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
 
       <Dialog
         open={altaOpen}

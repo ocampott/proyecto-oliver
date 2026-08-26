@@ -10,9 +10,10 @@ import { Select } from "../../components/ui/select";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { Pagination } from "../../components/ui/pagination";
 import { getPlanes, type EstadoEmpleado, type OrgRole, type SuscripcionAdmin, type PlanesResponse } from "../../lib/api";
 import {
-  useOrganizacionesAdmin,
+  useOrganizacionAdmin,
   useMiembrosAdminOrg,
   useEmpleadosAdminOrg,
   useSucursalesAdminOrg,
@@ -60,8 +61,7 @@ export default function OrganizacionDetallePage() {
   const orgId = id!;
   const [tab, setTab] = useState<Tab>("miembros");
 
-  const { data: organizaciones } = useOrganizacionesAdmin();
-  const org = organizaciones?.find((o) => o.id === orgId);
+  const { data: org } = useOrganizacionAdmin(orgId);
 
   return (
     <>
@@ -96,9 +96,13 @@ export default function OrganizacionDetallePage() {
 }
 
 function MiembrosTab({ orgId }: { orgId: string }) {
-  const { data: miembros = [], isLoading } = useMiembrosAdminOrg(orgId);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const { data, isLoading } = useMiembrosAdminOrg(orgId, { page, pageSize });
+  const miembros = data?.data ?? [];
 
   return (
+    <>
     <Table containerClassName="mt-4">
       <TableHeader>
         <TableRow>
@@ -128,13 +132,19 @@ function MiembrosTab({ orgId }: { orgId: string }) {
         )}
       </TableBody>
     </Table>
+    {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+    </>
   );
 }
 
 function EmpleadosTab({ orgId }: { orgId: string }) {
-  const { data: empleados = [], isLoading } = useEmpleadosAdminOrg(orgId);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const { data, isLoading } = useEmpleadosAdminOrg(orgId, { page, pageSize });
+  const empleados = data?.data ?? [];
 
   return (
+    <>
     <Table containerClassName="mt-4">
       <TableHeader>
         <TableRow>
@@ -164,13 +174,19 @@ function EmpleadosTab({ orgId }: { orgId: string }) {
         )}
       </TableBody>
     </Table>
+    {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+    </>
   );
 }
 
 function SucursalesTab({ orgId }: { orgId: string }) {
-  const { data: sucursales = [], isLoading } = useSucursalesAdminOrg(orgId);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const { data, isLoading } = useSucursalesAdminOrg(orgId, { page, pageSize });
+  const sucursales = data?.data ?? [];
 
   return (
+    <>
     <Table containerClassName="mt-4">
       <TableHeader>
         <TableRow>
@@ -200,6 +216,8 @@ function SucursalesTab({ orgId }: { orgId: string }) {
         )}
       </TableBody>
     </Table>
+    {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+    </>
   );
 }
 
