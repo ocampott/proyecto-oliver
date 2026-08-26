@@ -41,6 +41,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+export interface PaginationMeta {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface Paginated<T> {
+  data: T[];
+  pagination: PaginationMeta;
+}
+
 export type PlanSlug = "gratis" | "basico" | "pro";
 
 /**
@@ -146,8 +158,20 @@ export interface Sucursal {
   tiene_asistencia: boolean;
 }
 
-export function listSucursales(): Promise<Sucursal[]> {
-  return request("/api/sucursales");
+export interface ListSucursalesParams {
+  page: number;
+  pageSize: number;
+  q?: string;
+  estado?: "activos" | "inactivos";
+}
+
+export function listSucursales(params: ListSucursalesParams): Promise<Paginated<Sucursal>> {
+  const qs = new URLSearchParams();
+  qs.set("page", String(params.page));
+  qs.set("pageSize", String(params.pageSize));
+  if (params.q) qs.set("q", params.q);
+  if (params.estado) qs.set("estado", params.estado);
+  return request(`/api/sucursales?${qs}`);
 }
 
 export interface CrearSucursalInput {
@@ -269,6 +293,28 @@ export function listEmpleados(): Promise<Empleado[]> {
   return request("/api/empleados");
 }
 
+export interface ListEmpleadosParams {
+  page: number;
+  pageSize: number;
+  q?: string;
+  estado?: EstadoEmpleado;
+  sucursalId?: string;
+  cuil?: "con" | "sin";
+  dispositivo?: "vinculado" | "no_vinculado";
+}
+
+export function listEmpleadosPaginado(params: ListEmpleadosParams): Promise<Paginated<Empleado>> {
+  const qs = new URLSearchParams();
+  qs.set("page", String(params.page));
+  qs.set("pageSize", String(params.pageSize));
+  if (params.q) qs.set("q", params.q);
+  if (params.estado) qs.set("estado", params.estado);
+  if (params.sucursalId) qs.set("sucursalId", params.sucursalId);
+  if (params.cuil) qs.set("cuil", params.cuil);
+  if (params.dispositivo) qs.set("dispositivo", params.dispositivo);
+  return request(`/api/empleados?${qs}`);
+}
+
 export interface CrearEmpleadoInput {
   nombre: string;
   apellido: string;
@@ -337,6 +383,26 @@ export function listAsistencia(desde: string, hasta: string): Promise<Asistencia
   return request(`/api/asistencia?desde=${desde}&hasta=${hasta}`);
 }
 
+export interface ListAsistenciaParams {
+  page: number;
+  pageSize: number;
+  sucursalId?: string;
+  empleadoId?: string;
+  tipo?: TipoMarca;
+}
+
+export function listAsistenciaPaginada(
+  desde: string,
+  hasta: string,
+  params: ListAsistenciaParams
+): Promise<Paginated<AsistenciaRegistro>> {
+  const qs = new URLSearchParams({ desde, hasta, page: String(params.page), pageSize: String(params.pageSize) });
+  if (params.sucursalId) qs.set("sucursalId", params.sucursalId);
+  if (params.empleadoId) qs.set("empleadoId", params.empleadoId);
+  if (params.tipo) qs.set("tipo", params.tipo);
+  return request(`/api/asistencia?${qs}`);
+}
+
 export function deleteAsistencia(id: string): Promise<{ ok: true }> {
   return request(`/api/asistencia/${id}`, { method: "DELETE" });
 }
@@ -363,8 +429,9 @@ export interface Rechazada {
   sucursal_nombre: string | null;
 }
 
-export function listRechazadas(): Promise<Rechazada[]> {
-  return request("/api/asistencia/rechazadas");
+export function listRechazadas(params: { page: number; pageSize: number }): Promise<Paginated<Rechazada>> {
+  const qs = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
+  return request(`/api/asistencia/rechazadas?${qs}`);
 }
 
 export function resolverRechazada(id: string, accion: "aprobar" | "descartar"): Promise<{ ok: true }> {
@@ -406,8 +473,14 @@ export interface OrganizationAdmin {
   created_at: string;
 }
 
-export function listOrganizationsAdmin(): Promise<OrganizationAdmin[]> {
-  return request("/api/admin/organizations");
+export function listOrganizationsAdmin(params: { page: number; pageSize: number; q?: string }): Promise<Paginated<OrganizationAdmin>> {
+  const qs = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
+  if (params.q) qs.set("q", params.q);
+  return request(`/api/admin/organizations?${qs}`);
+}
+
+export function getOrganizationAdmin(orgId: string): Promise<OrganizationAdmin> {
+  return request(`/api/admin/organizations/${orgId}`);
 }
 
 export function updateOrganizationAdmin(id: string, name: string): Promise<OrganizationAdmin> {
@@ -428,16 +501,19 @@ export function getOrgResumenActual(): Promise<OrgResumen> {
   return request("/api/org/resumen");
 }
 
-export function listMiembrosAdmin(orgId: string): Promise<Miembro[]> {
-  return request(`/api/admin/organizations/${orgId}/miembros`);
+export function listMiembrosAdmin(orgId: string, params: { page: number; pageSize: number }): Promise<Paginated<Miembro>> {
+  const qs = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
+  return request(`/api/admin/organizations/${orgId}/miembros?${qs}`);
 }
 
-export function listEmpleadosAdmin(orgId: string): Promise<Empleado[]> {
-  return request(`/api/admin/organizations/${orgId}/empleados`);
+export function listEmpleadosAdmin(orgId: string, params: { page: number; pageSize: number }): Promise<Paginated<Empleado>> {
+  const qs = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
+  return request(`/api/admin/organizations/${orgId}/empleados?${qs}`);
 }
 
-export function listSucursalesAdmin(orgId: string): Promise<Sucursal[]> {
-  return request(`/api/admin/organizations/${orgId}/sucursales`);
+export function listSucursalesAdmin(orgId: string, params: { page: number; pageSize: number }): Promise<Paginated<Sucursal>> {
+  const qs = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
+  return request(`/api/admin/organizations/${orgId}/sucursales?${qs}`);
 }
 
 export interface CrearOrganizacionInput {
@@ -623,6 +699,7 @@ export interface ResumenAusencias {
 
 export interface AusenciasResponse {
   ausencias: Ausencia[];
+  pagination?: PaginationMeta;
   resumen: ResumenAusencias;
 }
 
@@ -632,6 +709,8 @@ export function getAusencias(filters: {
   sucursalId?: string;
   motivo?: string;
   empleadoId?: string;
+  page?: number;
+  pageSize?: number;
 }): Promise<AusenciasResponse> {
   const params = new URLSearchParams();
   if (filters.desde) params.set("desde", filters.desde);
@@ -639,6 +718,8 @@ export function getAusencias(filters: {
   if (filters.sucursalId) params.set("sucursalId", filters.sucursalId);
   if (filters.motivo) params.set("motivo", filters.motivo);
   if (filters.empleadoId) params.set("empleadoId", filters.empleadoId);
+  if (filters.page !== undefined) params.set("page", String(filters.page));
+  if (filters.pageSize !== undefined) params.set("pageSize", String(filters.pageSize));
   return request(`/api/ausencias?${params}`);
 }
 
