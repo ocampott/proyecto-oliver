@@ -137,7 +137,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
       <aside
         ref={asideRef}
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[220px] shrink-0 flex-col border-r border-border-soft bg-surface-raised transition-transform duration-200 md:relative md:z-auto md:translate-x-0 md:transition-[width]",
+          "fixed inset-y-0 left-0 z-40 flex w-[232px] shrink-0 flex-col border-r border-border-soft bg-surface transition-transform duration-200 md:relative md:z-auto md:translate-x-0 md:transition-[width]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "md:w-16" : "md:w-[220px]"
         )}

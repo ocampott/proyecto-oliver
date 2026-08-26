@@ -140,7 +140,7 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="mt-12" aria-labelledby="accesos-title">
+      <section className="mt-14" aria-labelledby="accesos-title">
         <div className="flex items-baseline justify-between border-b border-border pb-3">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">Navegación</p>
