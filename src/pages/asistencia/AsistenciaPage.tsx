@@ -8,7 +8,8 @@ import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { MotivoRechazo, AsistenciaRegistro, TipoMarca } from "../../lib/api";
-import { useAsistencia, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
+import { useAsistenciaPaginada, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
+import { Pagination } from "../../components/ui/pagination";
 import { exportarAsistencia } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
@@ -42,9 +43,22 @@ const MOTIVOS: Record<MotivoRechazo, string> = {
 export default function AsistenciaPage() {
   const [desde, setDesde] = useState(hoyAR());
   const [hasta, setHasta] = useState(hoyAR());
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [empleadoFiltro, setEmpleadoFiltro] = useState("todos");
+  const [sucursalFiltro, setSucursalFiltro] = useState("todos");
+  const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>("todos");
 
-  const { data: registros = [], isLoading, isError } = useAsistencia(desde, hasta);
-  const { data: rechazadas = [] } = useRechazadas();
+  const { data, isLoading, isError } = useAsistenciaPaginada(desde, hasta, {
+    page,
+    pageSize,
+    empleadoId: empleadoFiltro === "todos" ? undefined : empleadoFiltro,
+    sucursalId: sucursalFiltro === "todos" ? undefined : sucursalFiltro,
+    tipo: tipoFiltro === "todos" ? undefined : tipoFiltro,
+  });
+  const registros = data?.data ?? [];
+  const { data: rechazadasData } = useRechazadas({ page: 1, pageSize: 30 });
+  const rechazadas = rechazadasData?.data ?? [];
   const { data: empleados = [] } = useEmpleados();
   const { data: sucursalesData } = useSucursales();
   const sucursales = sucursalesData?.data ?? [];
@@ -58,16 +72,6 @@ export default function AsistenciaPage() {
   const [descargando, setDescargando] = useState(false);
   const [resolviendoId, setResolviendoId] = useState<string | null>(null);
   const [borrarTarget, setBorrarTarget] = useState<AsistenciaRegistro | null>(null);
-  const [empleadoFiltro, setEmpleadoFiltro] = useState("todos");
-  const [sucursalFiltro, setSucursalFiltro] = useState("todos");
-  const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>("todos");
-
-  const registrosFiltrados = registros.filter((r) => {
-    const matchEmpleado = empleadoFiltro === "todos" || r.empleado_id === empleadoFiltro;
-    const matchSucursal = sucursalFiltro === "todos" || r.sucursal_id === sucursalFiltro;
-    const matchTipo = tipoFiltro === "todos" || r.tipo === tipoFiltro;
-    return matchEmpleado && matchSucursal && matchTipo;
-  });
 
   const filtrosActivos = empleadoFiltro !== "todos" || sucursalFiltro !== "todos" || tipoFiltro !== "todos";
 
@@ -179,14 +183,14 @@ export default function AsistenciaPage() {
             label="Desde"
             type="date"
             value={desde}
-            onChange={(e) => setDesde(e.target.value)}
+            onChange={(e) => { setDesde(e.target.value); setPage(1); }}
             containerClassName="w-40"
           />
           <Field
             label="Hasta"
             type="date"
             value={hasta}
-            onChange={(e) => setHasta(e.target.value)}
+            onChange={(e) => { setHasta(e.target.value); setPage(1); }}
             containerClassName="w-40"
           />
           <Button
@@ -212,7 +216,7 @@ export default function AsistenciaPage() {
             label="Empleado"
             value={empleadoFiltro}
             defaultValue="todos"
-            onChange={setEmpleadoFiltro}
+            onChange={(v) => { setEmpleadoFiltro(v); setPage(1); }}
             options={[
               { value: "todos", label: "Todos" },
               ...empleados.map((emp) => ({ value: emp.id, label: emp.nombre })),
@@ -222,7 +226,7 @@ export default function AsistenciaPage() {
             label="Sucursal"
             value={sucursalFiltro}
             defaultValue="todos"
-            onChange={setSucursalFiltro}
+            onChange={(v) => { setSucursalFiltro(v); setPage(1); }}
             options={[
               { value: "todos", label: "Todos" },
               ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre })),
@@ -232,7 +236,7 @@ export default function AsistenciaPage() {
             label="Tipo"
             value={tipoFiltro}
             defaultValue="todos"
-            onChange={(v) => setTipoFiltro(v as TipoFiltro)}
+            onChange={(v) => { setTipoFiltro(v as TipoFiltro); setPage(1); }}
             options={[
               { value: "todos", label: "Todos" },
               { value: "entrada", label: "Entrada" },
@@ -269,7 +273,7 @@ export default function AsistenciaPage() {
           </TableHeader>
           <TableBody>
             {isLoading && <TableSkeleton cols={5} />}
-            {registrosFiltrados.map((r) => (
+            {registros.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>{horaLocal(r.created_at)}</TableCell>
                 <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
@@ -296,7 +300,7 @@ export default function AsistenciaPage() {
                 </TableCell>
               </TableRow>
             ))}
-            {!isLoading && registrosFiltrados.length === 0 && (
+            {!isLoading && registros.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-text/60">
                   No hay registros en este rango.
@@ -305,6 +309,7 @@ export default function AsistenciaPage() {
             )}
           </TableBody>
         </Table>
+        {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
       </section>
 
       <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar registro">
