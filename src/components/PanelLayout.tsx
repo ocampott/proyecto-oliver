@@ -11,7 +11,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-0 flex-1">
         <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1440px] px-8 py-8">{children}</div>
+          <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6 md:px-8 md:py-10">{children}</div>
         </main>
       </div>
     </div>
