@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
 import { FilterChip } from "../../components/ui/filter-chip";
+import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
 import { IconButton } from "../../components/ui/icon-button";
@@ -244,34 +245,56 @@ export default function RrhhPage() {
 
       <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Card>
-          <p className="text-[12px] text-text/60">Total</p>
-          <p className="text-[24px] font-extrabold text-text">{resumen?.total ?? "—"}</p>
+          <p className="text-[12px] text-text-tertiary">Total</p>
+          {isLoading ? (
+            <div className="mt-1.5 h-[24px] w-10 animate-pulse rounded bg-text/10" />
+          ) : (
+            <p className="text-[24px] font-extrabold text-text">{resumen?.total ?? "—"}</p>
+          )}
         </Card>
         <Card>
-          <p className="text-[12px] text-text/60">Certificados pendientes</p>
-          <p className="text-[24px] font-extrabold text-text">{resumen?.certificadosPendientes ?? "—"}</p>
+          <p className="text-[12px] text-text-tertiary">Certificados pendientes</p>
+          {isLoading ? (
+            <div className="mt-1.5 h-[24px] w-10 animate-pulse rounded bg-text/10" />
+          ) : (
+            <p className="text-[24px] font-extrabold text-text">{resumen?.certificadosPendientes ?? "—"}</p>
+          )}
         </Card>
         <Card>
-          <p className="text-[12px] text-text/60">Por sucursal</p>
-          <ul className="mt-1 flex flex-col gap-0.5 text-[13px] text-text-secondary">
-            {resumen &&
-              Object.entries(resumen.porSucursal).map(([k, v]) => (
-                <li key={k}>
-                  {k}: {v}
-                </li>
-              ))}
-          </ul>
+          <p className="text-[12px] text-text-tertiary">Por sucursal</p>
+          {isLoading ? (
+            <div className="mt-1.5 flex flex-col gap-1.5">
+              <div className="h-[13px] w-28 animate-pulse rounded bg-text/10" />
+              <div className="h-[13px] w-20 animate-pulse rounded bg-text/10" />
+            </div>
+          ) : (
+            <ul className="mt-1 flex flex-col gap-0.5 text-[13px] text-text-secondary">
+              {resumen &&
+                Object.entries(resumen.porSucursal).map(([k, v]) => (
+                  <li key={k}>
+                    {k}: {v}
+                  </li>
+                ))}
+            </ul>
+          )}
         </Card>
         <Card>
-          <p className="text-[12px] text-text/60">Por motivo</p>
-          <ul className="mt-1 flex flex-col gap-0.5 text-[13px] text-text-secondary">
-            {resumen &&
-              Object.entries(resumen.porMotivo).map(([k, v]) => (
-                <li key={k}>
-                  {k}: {v}
-                </li>
-              ))}
-          </ul>
+          <p className="text-[12px] text-text-tertiary">Por motivo</p>
+          {isLoading ? (
+            <div className="mt-1.5 flex flex-col gap-1.5">
+              <div className="h-[13px] w-28 animate-pulse rounded bg-text/10" />
+              <div className="h-[13px] w-20 animate-pulse rounded bg-text/10" />
+            </div>
+          ) : (
+            <ul className="mt-1 flex flex-col gap-0.5 text-[13px] text-text-secondary">
+              {resumen &&
+                Object.entries(resumen.porMotivo).map(([k, v]) => (
+                  <li key={k}>
+                    {k}: {v}
+                  </li>
+                ))}
+            </ul>
+          )}
         </Card>
       </div>
 
@@ -279,7 +302,7 @@ export default function RrhhPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-[16px] font-extrabold text-text">Categorías de motivo</h2>
-            <p className="mt-1 text-[13.5px] text-text/60">
+            <p className="mt-1 text-[13.5px] text-text-secondary">
               Motivos disponibles al cargar una ausencia.
             </p>
           </div>
@@ -290,7 +313,7 @@ export default function RrhhPage() {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {categorias.length === 0 && (
-            <p className="text-[13.5px] text-text/50">Todavía no cargaste ninguna categoría.</p>
+            <p className="text-[13.5px] text-text-tertiary">Todavía no cargaste ninguna categoría.</p>
           )}
           {categorias.map((c) => {
             const quitando = quitandoCategoria === c;
@@ -305,7 +328,7 @@ export default function RrhhPage() {
                   onClick={() => handleQuitarCategoria(c)}
                   disabled={quitando}
                   aria-label={`Quitar categoría ${c}`}
-                  className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-text/40 hover:bg-black/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-text-muted hover:bg-black/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                   {quitando ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
                 </button>
@@ -352,19 +375,10 @@ export default function RrhhPage() {
           onChange={(v) => { setMotivoFiltro(v); setPage(1); }}
           options={[{ value: "", label: "Todos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
         />
-        {filtrosActivos && (
-          <button
-            type="button"
-            onClick={limpiarFiltros}
-            className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text"
-          >
-            <X className="h-3.5 w-3.5" />
-            Limpiar filtros
-          </button>
-        )}
+        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
       </div>
 
-      {error && !altaOpen && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+      {error && !altaOpen && <p className="mt-2 text-[15px] text-alert">{error}</p>}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -397,7 +411,7 @@ export default function RrhhPage() {
             ))}
           {!isLoading && ausencias.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-text/60">Sin ausencias en este rango.</TableCell>
+              <TableCell colSpan={6} className="text-text-tertiary">Sin ausencias en este rango.</TableCell>
             </TableRow>
           )}
         </TableBody>
@@ -445,7 +459,7 @@ export default function RrhhPage() {
             />
             Certificado pendiente
           </label>
-          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          {error && <p className="text-[15px] text-alert">{error}</p>}
           <Button type="submit" variant="primary" block disabled={crear.isPending}>
             Agregar
           </Button>
@@ -491,7 +505,7 @@ export default function RrhhPage() {
             />
             Certificado pendiente
           </label>
-          {errorEdit && <p className="text-[15px] text-accent-700">{errorEdit}</p>}
+          {errorEdit && <p className="text-[15px] text-alert">{errorEdit}</p>}
           <Button type="submit" variant="primary" block disabled={editar.isPending}>
             Guardar
           </Button>
@@ -499,7 +513,7 @@ export default function RrhhPage() {
       </Dialog>
 
       <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar ausencia">
-        <p className="text-[15px] text-text/70">
+        <p className="text-[15px] text-text-secondary">
           ¿Borrar la ausencia de <strong>{borrarTarget?.empleado_nombre}</strong>{" "}
           ({borrarTarget?.fecha_desde === borrarTarget?.fecha_hasta
             ? borrarTarget?.fecha_desde
@@ -534,7 +548,7 @@ export default function RrhhPage() {
             autoFocus
             required
           />
-          {errorCategoria && <p className="text-[15px] text-accent-700">{errorCategoria}</p>}
+          {errorCategoria && <p className="text-[15px] text-alert">{errorCategoria}</p>}
           <Button type="submit" variant="primary" block disabled={guardarCategorias.isPending}>
             Agregar
           </Button>

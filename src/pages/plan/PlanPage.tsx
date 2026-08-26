@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
 import { useOrgActual } from "../../lib/hooks";
 import { getPlanes, getOrgResumenActual, type PlanDef } from "../../lib/api";
 
@@ -48,14 +49,14 @@ export default function PlanPage() {
 
   if (orgLoading || !ent) {
     return (
-      <main className="mx-auto w-full max-w-[1440px] px-8 py-8">
+      <>
         <div className="h-8 w-48 animate-pulse rounded-lg bg-text/10" />
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-[320px] animate-pulse rounded-[14px] bg-text/[.04]" />
+            <div key={i} className="h-[320px] animate-pulse rounded-[14px] bg-text/10" />
           ))}
         </div>
-      </main>
+      </>
     );
   }
 
@@ -63,7 +64,7 @@ export default function PlanPage() {
   const sucursalesActivas = resumen?.sucursalesActivas ?? 0;
 
   return (
-    <main className="mx-auto w-full max-w-[1440px] px-8 py-8">
+    <>
       <h1 className="text-[32px] font-extrabold text-text">Tu plan</h1>
 
       <Card className="mt-6">
@@ -105,14 +106,14 @@ export default function PlanPage() {
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         {catLoading &&
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-[320px] animate-pulse rounded-[14px] bg-text/[.04]" />
+            <div key={i} className="h-[320px] animate-pulse rounded-[14px] bg-text/10" />
           ))}
         {!catLoading &&
           planes.map((plan) => (
             <PlanCard key={plan.slug} plan={plan} actual={ent.plan.slug === plan.slug} />
           ))}
       </div>
-    </main>
+    </>
   );
 }
 
@@ -128,7 +129,7 @@ function UsoCard({
   loading: boolean;
 }) {
   return (
-    <div className="rounded-[10px] border border-border bg-white p-4">
+    <Card className="p-4">
       <div className="flex items-center justify-between">
         <span className="text-[15px] font-medium text-text">{label}</span>
         {loading ? (
@@ -145,7 +146,7 @@ function UsoCard({
           />
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -154,7 +155,7 @@ function PlanCard({ plan, actual }: { plan: PlanDef & { precios: { meses: number
     <Card className={actual ? "border-accent-700 ring-1 ring-accent-700" : undefined}>
       <div className="flex items-center justify-between">
         <h3 className="text-[20px] font-extrabold text-text">{plan.nombre}</h3>
-        {actual && <span className="rounded-full bg-accent-100 px-2.5 py-0.5 text-[11.5px] font-semibold text-accent-800">Actual</span>}
+        {actual && <Badge variant="accent">Actual</Badge>}
       </div>
 
       <div className="mt-4">

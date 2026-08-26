@@ -361,7 +361,7 @@ export default function EmpleadosPage() {
 
       {error && !altaOpen && !editando && !eliminarTarget && (
         <ErrorPlan error={error} className="mt-2">
-          <p className="mt-2 text-[15px] text-accent-700">{error.message}</p>
+          <p className="mt-2 text-[15px] text-alert">{error.message}</p>
         </ErrorPlan>
       )}
 
@@ -382,7 +382,7 @@ export default function EmpleadosPage() {
           {isLoading && <TableSkeleton cols={8} />}
           {!isLoading &&
             empleados.map((emp) => (
-              <TableRow key={emp.id} className={emp.estado === "baja" ? "text-text/40" : ""}>
+              <TableRow key={emp.id} className={emp.estado === "baja" ? "text-text-muted" : ""}>
                 <TableCell>{nombreCompleto(emp)}</TableCell>
                 <Celda value={emp.celular} />
                 <Celda value={emp.cuil ? formatCuil(emp.cuil) : null} />
@@ -392,11 +392,10 @@ export default function EmpleadosPage() {
                   {emp.device_token ? (
                     <Status tone="success">Vinculado</Status>
                   ) : emp.otp ? (
-                    <span className="inline-flex items-center gap-[7px] text-[13px] text-text">
-                      <span className="h-[7px] w-[7px] rounded-full bg-warning" />
+                    <Status tone="warning">
                       <span className="font-mono tracking-wide">{formatCode(emp.otp.code)}</span>
                       <span className="text-text-tertiary">({minutosRestantes(emp.otp.expires_at)} min)</span>
-                    </span>
+                    </Status>
                   ) : (
                     <Status tone="neutral">Sin vincular</Status>
                   )}
@@ -410,7 +409,7 @@ export default function EmpleadosPage() {
                   <div className="flex justify-end gap-1.5">
                     <IconButton
                       onClick={() => abrirEdicion(emp)}
-                      disabled={loading || !gestionable}
+                      disabled={accionandoId === emp.id || !gestionable}
                       title={!gestionable ? "Tu rol no tiene acceso a editar empleados." : undefined}
                       icon={
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -421,7 +420,7 @@ export default function EmpleadosPage() {
                     />
                     <IconButton
                       onClick={() => handleCambiarEstado(emp, emp.estado === "baja" ? "activo" : "baja")}
-                      disabled={loading || !gestionable}
+                      disabled={accionandoId === emp.id || !gestionable}
                       title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
                       icon={
                         accionandoId === emp.id ? (
@@ -438,7 +437,7 @@ export default function EmpleadosPage() {
                     {gestionable && emp.device_token && (
                       <IconButton
                         onClick={() => setDesvincularTarget(emp)}
-                        disabled={loading}
+                        disabled={accionandoId === emp.id}
                         icon={
                           accionandoId === emp.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -455,7 +454,7 @@ export default function EmpleadosPage() {
                     {gestionable && !emp.device_token && (
                       <IconButton
                         onClick={() => handleGenerarCodigo(emp)}
-                        disabled={loading}
+                        disabled={accionandoId === emp.id}
                         icon={
                           accionandoId === emp.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -491,14 +490,14 @@ export default function EmpleadosPage() {
             ))}
           {!isLoading && empleados.length === 0 && !filtrosActivos && (
             <TableRow>
-              <TableCell colSpan={8} className="text-text/60">
+              <TableCell colSpan={8} className="py-8 text-center text-text-tertiary">
                 Todavía no hay empleados cargados.
               </TableCell>
             </TableRow>
           )}
           {!isLoading && empleados.length === 0 && filtrosActivos && (
             <TableRow>
-              <TableCell colSpan={8} className="text-text/60">
+              <TableCell colSpan={8} className="py-8 text-center text-text-tertiary">
                 Ningún empleado coincide con el filtro.
               </TableCell>
             </TableRow>
@@ -562,7 +561,7 @@ export default function EmpleadosPage() {
           />
           {error && (
             <ErrorPlan error={error}>
-              <p className="text-[15px] text-accent-700">{error.message}</p>
+              <p className="text-[15px] text-alert">{error.message}</p>
             </ErrorPlan>
           )}
           <Button type="submit" variant="primary" block disabled={loading}>
@@ -636,7 +635,7 @@ export default function EmpleadosPage() {
           />
           {error && (
             <ErrorPlan error={error}>
-              <p className="text-[15px] text-accent-700">{error.message}</p>
+              <p className="text-[15px] text-alert">{error.message}</p>
             </ErrorPlan>
           )}
           <Button type="submit" variant="primary" block disabled={loading}>
@@ -672,7 +671,7 @@ export default function EmpleadosPage() {
         onClose={() => setDesvincularTarget(null)}
         title="Desvincular dispositivo"
       >
-        <p className="text-[15px] text-text/70">
+        <p className="text-[15px] text-text-secondary">
           ¿Desvincular el dispositivo de{" "}
           <strong>{desvincularTarget ? nombreCompleto(desvincularTarget) : ""}</strong>? Va a tener que
           revincular con un código nuevo la próxima vez que quiera marcar.
@@ -696,13 +695,13 @@ export default function EmpleadosPage() {
         }}
         title="Eliminar empleado"
       >
-        <p className="text-[15px] text-text/70">
+        <p className="text-[15px] text-text-secondary">
           ¿Eliminar <strong>{eliminarTarget ? nombreCompleto(eliminarTarget) : ""}</strong>? Esta acción no se puede
           deshacer.
         </p>
         {error && (
           <ErrorPlan error={error}>
-            <p className="text-[15px] text-accent-700">{error.message}</p>
+            <p className="text-[15px] text-alert">{error.message}</p>
           </ErrorPlan>
         )}
         <div className="flex justify-end gap-2">
@@ -715,7 +714,7 @@ export default function EmpleadosPage() {
           >
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleEliminar} disabled={loading}>
+          <Button variant="destructive" onClick={handleEliminar} disabled={loading}>
             {eliminar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Eliminar
           </Button>

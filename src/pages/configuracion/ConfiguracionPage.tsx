@@ -115,7 +115,7 @@ export default function ConfiguracionPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-[16px] font-extrabold text-text">Equipo</h2>
-              <p className="mt-1 text-[13.5px] text-text/60">
+              <p className="mt-1 text-[13.5px] text-text-secondary">
                 Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
                 tienen el mismo acceso, sin importar el rol.
               </p>
@@ -167,7 +167,7 @@ export default function ConfiguracionPage() {
                 ))}
               {!miembrosLoading && miembros.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-text/60">
+                  <TableCell colSpan={5} className="py-8 text-center text-text-tertiary">
                     Todavía no hay miembros cargados.
                   </TableCell>
                 </TableRow>
@@ -189,7 +189,7 @@ export default function ConfiguracionPage() {
               <span className="block text-[14px] font-semibold text-text">Categorías de motivo</span>
               <span className="block text-[12.5px] text-text-secondary">Se administran desde RRHH</span>
             </span>
-            <ChevronRight className="h-4 w-4 text-text/40" />
+            <ChevronRight className="h-4 w-4 text-text-tertiary" />
           </Link>
           <Link
             to="/turnos"
@@ -200,7 +200,7 @@ export default function ConfiguracionPage() {
               <span className="block text-[14px] font-semibold text-text">Tolerancia de horarios</span>
               <span className="block text-[12.5px] text-text-secondary">Se administra desde Turnos</span>
             </span>
-            <ChevronRight className="h-4 w-4 text-text/40" />
+            <ChevronRight className="h-4 w-4 text-text-tertiary" />
           </Link>
         </div>
       </Card>
@@ -208,7 +208,7 @@ export default function ConfiguracionPage() {
       <Dialog open={editOrgOpen} onClose={() => setEditOrgOpen(false)} title="Editar organización">
         <form onSubmit={handleGuardarOrg} className="flex flex-col gap-3">
           <Field label="Nombre" required value={nombreOrg} onChange={(e) => setNombreOrg(e.target.value)} containerClassName="w-full" autoFocus />
-          {errorOrg && <p className="text-[15px] text-accent-700">{errorOrg}</p>}
+          {errorOrg && <p className="text-[15px] text-alert">{errorOrg}</p>}
           <Button type="submit" variant="primary" block disabled={actualizarOrg.isPending}>
             Guardar
           </Button>
@@ -229,7 +229,7 @@ export default function ConfiguracionPage() {
             containerClassName="w-full"
             autoFocus
           />
-          {errorInvitar && <p className="text-[15px] text-accent-700">{errorInvitar}</p>}
+          {errorInvitar && <p className="text-[15px] text-alert">{errorInvitar}</p>}
           <Button type="submit" variant="primary" block disabled={invitar.isPending}>
             {invitar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Invitar
@@ -238,7 +238,7 @@ export default function ConfiguracionPage() {
       </Dialog>
 
       <Dialog open={quitarTarget != null} onClose={() => setQuitarTarget(null)} title="Quitar de la organización">
-        <p className="text-[15px] text-text/70">
+        <p className="text-[15px] text-text-secondary">
           ¿Quitar a <strong>{quitarTarget?.email}</strong> de esta organización? Pierde el acceso al panel
           de inmediato.
         </p>
@@ -246,7 +246,7 @@ export default function ConfiguracionPage() {
           <Button variant="secondary" onClick={() => setQuitarTarget(null)}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleEliminar} disabled={eliminar.isPending}>
+          <Button variant="destructive" onClick={handleEliminar} disabled={eliminar.isPending}>
             {eliminar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Quitar
           </Button>

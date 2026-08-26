@@ -3,7 +3,8 @@ import { Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { MultiSelect } from "../../components/ui/multi-select";
-import { Select } from "../../components/ui/select";
+import { FilterChip } from "../../components/ui/filter-chip";
+import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Status } from "../../components/ui/status";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { ErrorPlan } from "../../components/ErrorPlan";
@@ -74,6 +75,12 @@ export default function HorasPage() {
 
   const hayFiltroEmpleados = empleadosSel.length > 0;
   const hayFiltroSucursal = sucursalSel !== "";
+  const filtrosActivos = hayFiltroEmpleados || hayFiltroSucursal;
+
+  function limpiarFiltros() {
+    setEmpleadosSel([]);
+    setSucursalSel("");
+  }
 
   const turnos = useMemo(
     () =>
@@ -112,31 +119,35 @@ export default function HorasPage() {
           onChange={(e) => setHasta(e.target.value)}
           containerClassName="w-40"
         />
-        <MultiSelect
-          label="Empleados"
-          value={empleadosSel}
-          onChange={setEmpleadosSel}
-          options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
-          placeholder="Todos"
-          containerClassName="w-56"
-        />
-        <Select
-          label="Sucursal"
-          value={sucursalSel}
-          onChange={(e) => setSucursalSel(e.target.value)}
-          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-          containerClassName="w-48"
-        />
         <Button variant="secondary" className="ml-auto" onClick={handleDescargarExcel} disabled={descargando}>
           <Download className="h-4 w-4" />
           {descargando ? "Generando…" : "Descargar Excel"}
         </Button>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <MultiSelect
+          variant="chip"
+          label="Empleados"
+          value={empleadosSel}
+          onChange={setEmpleadosSel}
+          options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
+          placeholder="Empleados"
+        />
+        <FilterChip
+          label="Sucursal"
+          value={sucursalSel}
+          defaultValue=""
+          onChange={setSucursalSel}
+          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+        />
+        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+      </div>
+
       {isError && (
         <div className="mt-2">
           <ErrorPlan error={error instanceof Error ? error : null}>
-            <p className="text-[15px] text-accent-700">No se pudieron cargar los datos. Probá de nuevo.</p>
+            <p className="text-[15px] text-alert">No se pudieron cargar los datos. Probá de nuevo.</p>
           </ErrorPlan>
         </div>
       )}
@@ -192,7 +203,7 @@ export default function HorasPage() {
             ))}
             {!isLoading && turnos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-text/60">
+                <TableCell colSpan={5} className="text-text-tertiary">
                   No hay turnos en este rango.
                 </TableCell>
               </TableRow>

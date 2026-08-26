@@ -12,11 +12,21 @@ export default function TurnosPage() {
     <>
       <h1 className="text-[32px] font-extrabold text-text">Turnos</h1>
 
-      <div className="mt-4 flex gap-2">
-        <Button variant={tab === "horarios" ? "primary" : "secondary"} onClick={() => setTab("horarios")}>
+      <div className="mt-4 flex gap-2" role="tablist">
+        <Button
+          role="tab"
+          aria-selected={tab === "horarios"}
+          variant={tab === "horarios" ? "primary" : "secondary"}
+          onClick={() => setTab("horarios")}
+        >
           Horarios
         </Button>
-        <Button variant={tab === "cumplimiento" ? "primary" : "secondary"} onClick={() => setTab("cumplimiento")}>
+        <Button
+          role="tab"
+          aria-selected={tab === "cumplimiento"}
+          variant={tab === "cumplimiento" ? "primary" : "secondary"}
+          onClick={() => setTab("cumplimiento")}
+        >
           Cumplimiento
         </Button>
       </div>

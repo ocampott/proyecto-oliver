@@ -37,7 +37,7 @@ export default function SetPasswordPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-bg p-8">
+      <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
         <div
           className="h-8 w-8 animate-spin rounded-full border-[3px] border-text/15 border-t-accent"
           role="status"
@@ -49,7 +49,7 @@ export default function SetPasswordPage() {
 
   if (!session) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-bg p-8">
+      <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
         <Card className="w-full max-w-sm border-2 border-divider p-8 text-center">
           <h1 className="text-[20px] font-extrabold text-text">Este enlace no es válido</h1>
           <p className="mt-2 text-[15px] text-text/60">
@@ -82,7 +82,7 @@ export default function SetPasswordPage() {
             value={confirmar}
             onChange={(e) => setConfirmar(e.target.value)}
           />
-          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          {error && <p className="text-[15px] text-alert">{error}</p>}
           <Button type="submit" variant="primary" size="lg" disabled={guardando}>
             {guardando ? "Guardando..." : "Entrar"}
           </Button>

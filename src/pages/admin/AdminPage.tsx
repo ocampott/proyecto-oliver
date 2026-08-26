@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Pencil, Search, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
 import { Field } from "../../components/ui/field";
 import { IconButton } from "../../components/ui/icon-button";
@@ -25,7 +26,7 @@ export default function AdminPage() {
   const [busqueda, setBusqueda] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const { data, isLoading, isError, error } = useOrganizacionesAdmin({ page, pageSize, q: busqueda || undefined });
+  const { data, isLoading, isError, error, refetch } = useOrganizacionesAdmin({ page, pageSize, q: busqueda || undefined });
   const organizaciones = data?.data ?? [];
   const crear = useCrearOrganizacionAdmin();
   const editarOrg = useEditarOrganizacionAdmin();
@@ -77,11 +78,18 @@ export default function AdminPage() {
   if (isError) {
     const noAutorizado = error instanceof ApiError && error.status === 403;
     return (
-      <p className="text-[15px] text-text">
-        {noAutorizado
-          ? "No tenés acceso a esta sección."
-          : "No se pudieron cargar las organizaciones. Probá de nuevo."}
-      </p>
+      <Card>
+        <p className="text-[15px] text-text">
+          {noAutorizado
+            ? "No tenés acceso a esta sección."
+            : "No se pudieron cargar las organizaciones. Probá de nuevo."}
+        </p>
+        {!noAutorizado && (
+          <Button onClick={() => refetch()} variant="secondary" className="mt-4">
+            Reintentar
+          </Button>
+        )}
+      </Card>
     );
   }
 
@@ -154,7 +162,7 @@ export default function AdminPage() {
             ))}
           {!isLoading && organizaciones.length === 0 && (
             <TableRow>
-              <TableCell colSpan={7} className="text-text/60">
+              <TableCell colSpan={7} className="text-text-tertiary">
                 Todavía no hay organizaciones.
               </TableCell>
             </TableRow>
@@ -187,7 +195,7 @@ export default function AdminPage() {
             onChange={(e) => setSlug(e.target.value)}
             containerClassName="w-full"
           />
-          {formError && <p className="text-[15px] text-accent-700">{formError}</p>}
+          {formError && <p className="text-[15px] text-alert">{formError}</p>}
           <Button type="submit" variant="primary" block disabled={crear.isPending}>
             Agregar
           </Button>
@@ -208,7 +216,7 @@ export default function AdminPage() {
             containerClassName="w-full"
             autoFocus
           />
-          {errorEditOrg && <p className="text-[15px] text-accent-700">{errorEditOrg}</p>}
+          {errorEditOrg && <p className="text-[15px] text-alert">{errorEditOrg}</p>}
           <Button type="submit" variant="primary" block disabled={editarOrg.isPending}>
             {editarOrg.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Guardar

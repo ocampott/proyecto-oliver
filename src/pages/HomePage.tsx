@@ -95,9 +95,11 @@ export default function HomePage() {
 
   if (sinOrg) {
     return (
-      <p className="text-text">
-        Tu cuenta todavía no está asociada a ninguna organización. Contactá a soporte.
-      </p>
+      <Card>
+        <p className="text-text">
+          Tu cuenta todavía no está asociada a ninguna organización. Contactá a soporte.
+        </p>
+      </Card>
     );
   }
 
@@ -132,13 +134,19 @@ export default function HomePage() {
 
           if (sinPermiso) {
             return (
-              <div key={a.href} title={aviso} className="block h-full cursor-not-allowed opacity-40">
+              <div
+                key={a.href}
+                aria-disabled="true"
+                className="block h-full cursor-not-allowed opacity-40"
+              >
                 <Card className="relative h-full">
                   <div className="flex items-start gap-2">
                     <Icon className="mb-1 h-[22px] w-[22px] text-accent-700" />
+                    <Badge variant="neutral">Sin acceso</Badge>
                   </div>
                   <h2 className="text-[17px] font-extrabold text-text">{a.label}</h2>
-                  <p className="mt-1 text-[13px] text-text/80">{a.detalle}</p>
+                  <p className="mt-1 text-[13px] text-text-secondary">{a.detalle}</p>
+                  <p className="mt-1 text-[12px] text-text-tertiary">{aviso}</p>
                 </Card>
               </div>
             );
@@ -154,17 +162,15 @@ export default function HomePage() {
               className="group block h-full"
             >
               <Card className="relative h-full transition-colors hover:bg-text/5">
-                <ChevronRight className="absolute right-4 top-4 h-4 w-4 text-text/40" />
+                <ChevronRight className="absolute right-4 top-4 h-4 w-4 text-text-tertiary" />
                 <div className="flex items-start gap-2">
                   <Icon className="mb-1 h-[22px] w-[22px] text-accent-700" />
                   {bloqueado && planReq && (
-                    <Badge variant="outline" className="text-[10px]">
-                      {PLAN_NOMBRE[planReq]}
-                    </Badge>
+                    <Badge variant="outline">{PLAN_NOMBRE[planReq]}</Badge>
                   )}
                 </div>
                 <h2 className="text-[17px] font-extrabold text-text">{a.label}</h2>
-                <p className="mt-1 text-[13px] text-text/80">{a.detalle}</p>
+                <p className="mt-1 text-[13px] text-text-secondary">{a.detalle}</p>
               </Card>
             </Link>
           );

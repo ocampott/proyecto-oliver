@@ -227,7 +227,7 @@ export default function SucursalesPage() {
 
       {error && !altaOpen && !editando && !eliminarTarget && (
         <ErrorPlan error={error} className="mt-2">
-          <p className="mt-2 text-[15px] text-accent-700">{error.message}</p>
+          <p className="mt-2 text-[15px] text-alert">{error.message}</p>
         </ErrorPlan>
       )}
 
@@ -246,7 +246,7 @@ export default function SucursalesPage() {
           {isLoading && <TableSkeleton cols={6} />}
           {!isLoading &&
             sucursales.map((suc) => (
-              <TableRow key={suc.id} className={suc.activa ? "" : "text-text/40"}>
+              <TableRow key={suc.id} className={suc.activa ? "" : "text-text-muted"}>
                 <TableCell>{suc.nombre}</TableCell>
                 <TableCell>{suc.direccion ?? "—"}</TableCell>
                 <TableCell>
@@ -321,14 +321,14 @@ export default function SucursalesPage() {
             ))}
           {!isLoading && sucursales.length === 0 && !filtrosActivos && (
             <TableRow>
-              <TableCell colSpan={6} className="text-text/60">
+              <TableCell colSpan={6} className="py-8 text-center text-text-tertiary">
                 Todavía no hay sucursales cargadas.
               </TableCell>
             </TableRow>
           )}
           {!isLoading && sucursales.length === 0 && filtrosActivos && (
             <TableRow>
-              <TableCell colSpan={6} className="text-text/60">
+              <TableCell colSpan={6} className="py-8 text-center text-text-tertiary">
                 Ninguna sucursal coincide con el filtro.
               </TableCell>
             </TableRow>
@@ -372,7 +372,7 @@ export default function SucursalesPage() {
           />
           {error && (
             <ErrorPlan error={error}>
-              <p className="text-[15px] text-accent-700">{error.message}</p>
+              <p className="text-[15px] text-alert">{error.message}</p>
             </ErrorPlan>
           )}
           <Button type="submit" variant="primary" block disabled={loading}>
@@ -415,7 +415,7 @@ export default function SucursalesPage() {
           />
           {error && (
             <ErrorPlan error={error}>
-              <p className="text-[15px] text-accent-700">{error.message}</p>
+              <p className="text-[15px] text-alert">{error.message}</p>
             </ErrorPlan>
           )}
           <Button type="submit" variant="primary" block disabled={loading}>
@@ -429,10 +429,10 @@ export default function SucursalesPage() {
         {qrUrl ? (
           <img src={qrUrl} alt={`QR de ${qrSucursal?.nombre}`} className="w-full" />
         ) : (
-          <p className="text-[15px] text-text/60">Generando QR...</p>
+          <p className="text-[15px] text-text-tertiary">Generando QR…</p>
         )}
         {org && qrSucursal && (
-          <p className="break-all text-[15px] text-text/60">
+          <p className="break-all text-[15px] text-text-tertiary">
             {`${window.location.origin}/marcar/${org.slug}/${qrSucursal.id}`}
           </p>
         )}
@@ -453,12 +453,12 @@ export default function SucursalesPage() {
         }}
         title="Eliminar sucursal"
       >
-        <p className="text-[15px] text-text/70">
+        <p className="text-[15px] text-text-secondary">
           ¿Eliminar <strong>{eliminarTarget?.nombre}</strong>? Esta acción no se puede deshacer.
         </p>
         {error && (
           <ErrorPlan error={error}>
-            <p className="text-[15px] text-accent-700">{error.message}</p>
+            <p className="text-[15px] text-alert">{error.message}</p>
           </ErrorPlan>
         )}
         <div className="flex justify-end gap-2">
@@ -471,7 +471,7 @@ export default function SucursalesPage() {
           >
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleEliminar} disabled={loading}>
+          <Button variant="destructive" onClick={handleEliminar} disabled={loading}>
             {eliminar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Eliminar
           </Button>

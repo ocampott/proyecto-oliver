@@ -15,9 +15,19 @@ export interface MultiSelectProps {
   onChange: (value: string[]) => void;
   placeholder?: string;
   containerClassName?: string;
+  /** "field" (default): labeled box, matches Field/Select. "chip": pill trigger for a filter row, matches FilterChip. */
+  variant?: "field" | "chip";
 }
 
-function MultiSelect({ label, options, value, onChange, placeholder = "Elegí opciones", containerClassName }: MultiSelectProps) {
+function MultiSelect({
+  label,
+  options,
+  value,
+  onChange,
+  placeholder = "Elegí opciones",
+  containerClassName,
+  variant = "field",
+}: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const ref = React.useRef<HTMLDivElement>(null);
@@ -55,22 +65,51 @@ function MultiSelect({ label, options, value, onChange, placeholder = "Elegí op
         ? (options.find((o) => o.value === value[0])?.label ?? "1 seleccionado")
         : `${value.length} seleccionados`;
 
+  const isChip = variant === "chip";
+  const active = value.length > 0;
+
   return (
-    <div ref={ref} className={cn("relative flex flex-col gap-[5px]", containerClassName)}>
-      <label htmlFor={autoId} className="text-[12px] text-text/70">
-        {label}
-      </label>
+    <div ref={ref} className={cn(isChip ? "relative" : "relative flex flex-col gap-[5px]", containerClassName)}>
+      {!isChip && (
+        <label htmlFor={autoId} className="text-[12px] text-text-secondary">
+          {label}
+        </label>
+      )}
       <button
         id={autoId}
         type="button"
+        aria-label={isChip ? label : undefined}
         onClick={() => setOpen((v) => !v)}
-        className="flex h-10 w-full items-center justify-between rounded-[9px] border border-border bg-white px-3 py-2 text-left text-[15px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className={
+          isChip
+            ? cn(
+                "inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                active
+                  ? "border-accent-200 bg-accent-100 text-accent-800 hover:bg-accent-200"
+                  : "border-border bg-white text-text-secondary hover:bg-black/[.03]"
+              )
+            : "flex h-10 w-full items-center justify-between rounded-[9px] border border-border bg-white px-3 py-2 text-left text-[15px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        }
       >
-        <span className={cn("truncate", value.length === 0 && "text-text-tertiary")}>{summary}</span>
-        <ChevronDown className="h-4 w-4 shrink-0 text-text-tertiary" />
+        {isChip ? (
+          <>
+            {active ? `${label}: ${summary}` : label}
+            <ChevronDown className="h-3.5 w-3.5" />
+          </>
+        ) : (
+          <>
+            <span className={cn("truncate", value.length === 0 && "text-text-tertiary")}>{summary}</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-text-tertiary" />
+          </>
+        )}
       </button>
       {open && (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-20 flex max-h-72 w-full flex-col overflow-hidden rounded-[12px] border border-border-soft bg-white shadow-[0_16px_40px_rgba(24,24,27,.18),0_3px_10px_rgba(24,24,27,.06)]">
+        <div
+          className={cn(
+            "absolute left-0 top-[calc(100%+4px)] z-20 flex max-h-72 flex-col overflow-hidden rounded-[12px] border border-border-soft bg-white shadow-[0_16px_40px_rgba(24,24,27,.18),0_3px_10px_rgba(24,24,27,.06)]",
+            isChip ? "w-[240px]" : "w-full"
+          )}
+        >
           <div className="border-b border-border-soft p-2">
             <Input
               autoFocus

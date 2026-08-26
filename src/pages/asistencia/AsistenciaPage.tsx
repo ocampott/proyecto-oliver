@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { LogIn, LogOut, Download, Loader2, X } from "lucide-react";
+import { LogIn, LogOut, Download, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { FilterChip } from "../../components/ui/filter-chip";
+import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Badge } from "../../components/ui/badge";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
@@ -129,7 +130,7 @@ export default function AsistenciaPage() {
             <h2 className="text-[20px] font-extrabold text-text">Intentos rechazados</h2>
             <Badge variant="alert">{rechazadasData?.pagination.total ?? rechazadas.length} pendientes</Badge>
           </div>
-          <Table containerClassName="mt-2 border-[#f3ddc9]">
+          <Table containerClassName="mt-2 border-alert/25">
             <TableHeader>
               <TableRow>
                 <TableHead>Fecha</TableHead>
@@ -148,9 +149,9 @@ export default function AsistenciaPage() {
                   <TableCell>
                     {MOTIVOS[r.motivo] ?? r.motivo}
                     {r.motivo === "fuera_de_rango" && r.distancia_metros != null && (
-                      <span className="text-text/55"> (a {r.distancia_metros} m)</span>
+                      <span className="text-text-tertiary"> (a {r.distancia_metros} m)</span>
                     )}
-                    {r.tipo && <span className="text-text/55"> — {r.tipo}</span>}
+                    {r.tipo && <span className="text-text-tertiary"> — {r.tipo}</span>}
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
@@ -253,20 +254,11 @@ export default function AsistenciaPage() {
               { value: "salida", label: "Salida" },
             ]}
           />
-          {filtrosActivos && (
-            <button
-              type="button"
-              onClick={limpiarFiltros}
-              className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text"
-            >
-              <X className="h-3.5 w-3.5" />
-              Limpiar filtros
-            </button>
-          )}
+          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
         </div>
 
         {isError && (
-          <p className="mt-2 text-[15px] text-accent-700">
+          <p className="mt-2 text-[15px] text-alert">
             No se pudieron cargar los registros. Probá de nuevo.
           </p>
         )}
@@ -312,7 +304,7 @@ export default function AsistenciaPage() {
             ))}
             {!isLoading && registros.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-text/60">
+                <TableCell colSpan={5} className="text-text-tertiary">
                   No hay registros en este rango.
                 </TableCell>
               </TableRow>
@@ -323,7 +315,7 @@ export default function AsistenciaPage() {
       </section>
 
       <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar registro">
-        <p className="text-[15px] text-text/70">
+        <p className="text-[15px] text-text-secondary">
           ¿Borrar el registro de {borrarTarget?.tipo === "entrada" ? "entrada" : "salida"} de{" "}
           <strong>{borrarTarget?.empleado_nombre ?? "este empleado"}</strong> del{" "}
           {borrarTarget ? horaLocal(borrarTarget.created_at) : ""}? Esta acción no se puede deshacer.

@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import { ArrowRight, CheckCircle, LogIn, LogOut, RotateCcw, TriangleAlert } from "lucide-react";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
+import { Field } from "../components/ui/field";
 import { Card } from "../components/ui/card";
 import { getEstadoMarcado, identificar, verificar, registrarMarca } from "../lib/api";
 
@@ -14,6 +14,18 @@ type Etapa =
   | { tipo: "codigo"; empleadoId: string }
   | { tipo: "marcar"; nombre: string }
   | { tipo: "rechazado"; nombreMarcar: string; mensaje: string };
+
+function IconCircle({ tone, icon }: { tone: "success" | "alert"; icon: ReactNode }) {
+  return tone === "alert" ? (
+    <span className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-alert-100">
+      {icon}
+    </span>
+  ) : (
+    <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-success-700">
+      {icon}
+    </span>
+  );
+}
 
 function horaLocal(iso: string): string {
   return new Date(iso).toLocaleTimeString("es-AR", {
@@ -119,24 +131,28 @@ export default function MarcarPage() {
 
   if (etapa.tipo === "cargando") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-bg p-8">
-        <p className="text-text/60">Cargando...</p>
+      <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
+        <Card className="w-full max-w-sm rounded-[20px] text-center">
+          <p className="text-text-tertiary">Cargando...</p>
+        </Card>
       </main>
     );
   }
 
   if (etapa.tipo === "invalido") {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-bg p-8">
-        <p className="max-w-sm text-center text-text">
-          Este enlace no es válido o la sucursal está desactivada. Pedile el QR correcto a tu encargado.
-        </p>
+      <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
+        <Card className="w-full max-w-sm rounded-[20px] text-center">
+          <p className="text-text">
+            Este enlace no es válido o la sucursal está desactivada. Pedile el QR correcto a tu encargado.
+          </p>
+        </Card>
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg p-8">
+    <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
       <Card className="w-full max-w-sm rounded-[20px]">
         <h1 className="text-[20px] font-extrabold text-text">{sucursalNombre}</h1>
 
@@ -148,10 +164,8 @@ export default function MarcarPage() {
             }}
             className="mt-4 space-y-4"
           >
-            <p className="text-[15px] text-text/60">
-              Escribí tu nombre y apellido como figura en la nómina.
-            </p>
-            <Input
+            <Field
+              label="Escribí tu nombre y apellido como figura en la nómina."
               required
               placeholder="Tu nombre y apellido"
               value={nombre}
@@ -196,11 +210,8 @@ export default function MarcarPage() {
             }}
             className="mt-4 space-y-4"
           >
-            <p className="text-[15px] text-text/60">
-              Pedile el código de vinculación a tu encargado e ingresalo acá. Se hace una sola vez en
-              este dispositivo.
-            </p>
-            <Input
+            <Field
+              label="Pedile el código de vinculación a tu encargado e ingresalo acá. Se hace una sola vez en este dispositivo."
               required
               inputMode="numeric"
               placeholder="Código de 6 dígitos"
@@ -242,11 +253,9 @@ export default function MarcarPage() {
 
         {etapa.tipo === "rechazado" && (
           <div className="mt-4 flex flex-col gap-3">
-            <span className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-alert-100">
-              <TriangleAlert className="h-[26px] w-[26px] text-alert" />
-            </span>
+            <IconCircle tone="alert" icon={<TriangleAlert className="h-[26px] w-[26px] text-alert" />} />
             <h4 className="text-[20px] font-extrabold text-text">No pudimos registrar la marca</h4>
-            <p className="text-[13px] text-text/75">{etapa.mensaje}</p>
+            <p className="text-[13px] text-text-secondary">{etapa.mensaje}</p>
             <Button
               variant="secondary"
               block
@@ -258,14 +267,12 @@ export default function MarcarPage() {
         )}
 
         {mensaje && (
-          <div className="mt-4 flex items-center gap-[10px] rounded-xl bg-[#eafaf0] px-[14px] py-[13px] text-[13.5px] font-semibold text-success-700">
-            <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-success-700">
-              <CheckCircle className="h-3.5 w-3.5 text-white" />
-            </span>
+          <div className="mt-4 flex items-center gap-[10px] rounded-xl bg-success-100 px-[14px] py-[13px] text-[13.5px] font-semibold text-success-700">
+            <IconCircle tone="success" icon={<CheckCircle className="h-3.5 w-3.5 text-white" />} />
             {mensaje}
           </div>
         )}
-        {error && <p className="mt-4 text-[15px] text-accent-700">{error}</p>}
+        {error && <p className="mt-4 text-[15px] text-alert">{error}</p>}
       </Card>
     </main>
   );

@@ -12,10 +12,12 @@ const buttonVariants = cva(
         secondary:
           "border border-border bg-white text-text hover:bg-black/[.03] active:bg-black/[.06]",
         ghost: "bg-transparent text-accent-700 hover:bg-accent-100 active:bg-accent-200",
+        destructive: "bg-alert text-white hover:bg-alert/90 active:bg-alert/80",
       },
       size: {
         default: "h-9 px-[14px] py-2",
         lg: "h-14 w-full px-4 text-[16px] rounded-[14px]",
+        sm: "h-7 px-2.5 text-[12.5px]",
         icon: "h-9 w-9 p-0",
       },
       block: {

@@ -19,7 +19,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const selectId = id ?? autoId;
     return (
       <div className={cn("flex flex-col gap-[5px]", containerClassName)}>
-        <label htmlFor={selectId} className="text-[12px] text-text/70">
+        <label htmlFor={selectId} className="text-[12px] text-text-secondary">
           {label}
         </label>
         <div className="relative">

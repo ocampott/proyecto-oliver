@@ -31,7 +31,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg p-8">
+    <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
       <Card className="w-full max-w-sm border-2 border-divider p-8">
         <form onSubmit={handleSubmit} className="space-y-4">
           <h1 className="text-[20px] font-extrabold text-text">Iniciar sesión</h1>
@@ -54,7 +54,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          {error && <p className="text-[15px] text-alert">{error}</p>}
           <Button type="submit" variant="primary" size="lg" disabled={loading}>
             {loading ? "Entrando..." : "Entrar"}
           </Button>

@@ -43,6 +43,7 @@ function DiaToggle({ dias, onToggle }: { dias: number[]; onToggle: (d: number) =
         <button
           key={d}
           type="button"
+          aria-pressed={dias.includes(d)}
           onClick={() => onToggle(d)}
           className={`rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors ${
             dias.includes(d) ? "border-accent bg-accent-100 text-accent-800" : "border-border text-text-secondary hover:bg-black/[.03]"
@@ -297,7 +298,7 @@ export default function HorariosTab() {
         </div>
       </div>
 
-      {error && <p className="mt-2 text-[15px] text-accent-700">{error}</p>}
+      {error && <p className="mt-2 text-[15px] text-alert">{error}</p>}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -328,7 +329,7 @@ export default function HorariosTab() {
             ))}
           {!isLoading && horarios.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-text/60">Sin franjas cargadas para este empleado.</TableCell>
+              <TableCell colSpan={5} className="text-text-tertiary">Sin franjas cargadas para este empleado.</TableCell>
             </TableRow>
           )}
         </TableBody>
@@ -360,7 +361,7 @@ export default function HorariosTab() {
               </div>
             </li>
           ))}
-          {templates.length === 0 && <p className="text-[14px] text-text/60">Todavía no hay plantillas.</p>}
+          {templates.length === 0 && <p className="text-[14px] text-text-tertiary">Todavía no hay plantillas.</p>}
         </ul>
       </Card>
 
@@ -383,7 +384,7 @@ export default function HorariosTab() {
             options={[{ value: "", label: "Sin especificar" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
           />
           <Field label="Tolerancia en minutos (opcional)" type="number" value={form.tolerancia_min} onChange={(e) => setForm({ ...form, tolerancia_min: e.target.value })} containerClassName="w-full" />
-          {error && <p className="text-[15px] text-accent-700">{error}</p>}
+          {error && <p className="text-[15px] text-alert">{error}</p>}
           <Button type="submit" variant="primary" block disabled={crearHorario.isPending}>
             Agregar
           </Button>
@@ -413,7 +414,7 @@ export default function HorariosTab() {
             options={[{ value: "", label: "Sin especificar" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
           />
           <Field label="Tolerancia en minutos (opcional)" type="number" value={editForm.tolerancia_min} onChange={(e) => setEditForm({ ...editForm, tolerancia_min: e.target.value })} containerClassName="w-full" />
-          {errorEdit && <p className="text-[15px] text-accent-700">{errorEdit}</p>}
+          {errorEdit && <p className="text-[15px] text-alert">{errorEdit}</p>}
           <Button type="submit" variant="primary" block disabled={editarHorario.isPending}>
             Guardar
           </Button>
@@ -421,7 +422,7 @@ export default function HorariosTab() {
       </Dialog>
 
       <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar franja horaria">
-        <p className="text-[15px] text-text/70">
+        <p className="text-[15px] text-text-secondary">
           ¿Borrar la franja de <strong>{borrarTarget ? DIAS[borrarTarget.dia_semana] : ""}</strong>{" "}
           {borrarTarget?.hora_inicio}–{borrarTarget?.hora_fin}?
         </p>
@@ -453,7 +454,7 @@ export default function HorariosTab() {
             }
           />
           <Field label="Tolerancia en minutos (opcional)" type="number" value={plantillaForm.tolerancia_min} onChange={(e) => setPlantillaForm({ ...plantillaForm, tolerancia_min: e.target.value })} containerClassName="w-full" />
-          {errorPlantilla && <p className="text-[15px] text-accent-700">{errorPlantilla}</p>}
+          {errorPlantilla && <p className="text-[15px] text-alert">{errorPlantilla}</p>}
           <Button type="submit" variant="primary" block disabled={crearPlantilla.isPending}>
             Crear plantilla
           </Button>
@@ -481,7 +482,7 @@ export default function HorariosTab() {
             }
           />
           <Field label="Tolerancia en minutos (opcional)" type="number" value={editPlantillaForm.tolerancia_min} onChange={(e) => setEditPlantillaForm({ ...editPlantillaForm, tolerancia_min: e.target.value })} containerClassName="w-full" />
-          {errorEditPlantilla && <p className="text-[15px] text-accent-700">{errorEditPlantilla}</p>}
+          {errorEditPlantilla && <p className="text-[15px] text-alert">{errorEditPlantilla}</p>}
           <Button type="submit" variant="primary" block disabled={editarPlantilla.isPending}>
             Guardar
           </Button>
@@ -493,7 +494,7 @@ export default function HorariosTab() {
         onClose={() => setBorrarPlantillaTarget(null)}
         title="Borrar plantilla"
       >
-        <p className="text-[15px] text-text/70">
+        <p className="text-[15px] text-text-secondary">
           ¿Borrar la plantilla <strong>{borrarPlantillaTarget?.nombre}</strong>? Los turnos ya asignados con
           esta plantilla no se modifican.
         </p>
@@ -544,7 +545,7 @@ export default function HorariosTab() {
             options={[{ value: "", label: "Sin plantilla" }, ...templates.map((t) => ({ value: t.id, label: t.nombre }))]}
           />
           <div className="flex flex-col gap-[5px]">
-            <span className="text-[12px] text-text/70">Días</span>
+            <span className="text-[12px] text-text-secondary">Días</span>
             <DiaToggle dias={asignDias} onToggle={(d) => setAsignDias((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]))} />
           </div>
           <div className="flex gap-3">
@@ -552,7 +553,7 @@ export default function HorariosTab() {
             <Field label="Hora fin" type="time" value={asignHoraFin} onChange={(e) => setAsignHoraFin(e.target.value)} containerClassName="w-full" />
           </div>
           <Field label="Tolerancia en minutos (opcional)" type="number" value={asignTolerancia} onChange={(e) => setAsignTolerancia(e.target.value)} containerClassName="w-full" />
-          {errorAsign && <p className="text-[15px] text-accent-700">{errorAsign}</p>}
+          {errorAsign && <p className="text-[15px] text-alert">{errorAsign}</p>}
           <Button type="submit" variant="primary" block disabled={asignar.isPending}>
             Asignar
           </Button>

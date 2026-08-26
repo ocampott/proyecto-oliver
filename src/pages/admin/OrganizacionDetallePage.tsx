@@ -327,7 +327,7 @@ function SuscripcionTab({ orgId, orgName }: { orgId: string; orgName: string }) 
             placeholder="Ej.: pagó por transferencia"
           />
 
-          {formError && <p className="text-[15px] text-accent-700">{formError}</p>}
+          {formError && <p className="text-[15px] text-alert">{formError}</p>}
 
           <Button type="submit" variant="primary" block disabled={crear.isPending}>
             {crear.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
@@ -359,7 +359,7 @@ function SuscripcionTab({ orgId, orgName }: { orgId: string; orgName: string }) 
                   {s.estado === "activa" && (
                     <Button
                       variant="secondary"
-                      className="h-7 px-2 text-[12px]"
+                      size="sm"
                       onClick={() => handleCancelar(s)}
                       disabled={cancelar.isPending}
                     >

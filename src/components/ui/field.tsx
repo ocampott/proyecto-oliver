@@ -14,7 +14,7 @@ const Field = React.forwardRef<HTMLInputElement, FieldProps>(
     const inputId = id ?? autoId;
     return (
       <div className={cn("flex flex-col gap-[5px]", containerClassName)}>
-        <label htmlFor={inputId} className="text-[12px] text-text/70">
+        <label htmlFor={inputId} className="text-[12px] text-text-secondary">
           {label}
         </label>
         {icon ? (
