@@ -330,7 +330,7 @@ export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }
           className="flex h-10 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-[15px] text-text placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         />
         {sugerenciasAbiertas && sugerencias.length > 0 && (
-          <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-[6px] border border-border bg-surface-raised shadow-[0_8px_24px_rgba(23,24,18,.1)]">
+          <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-[10px] border border-border bg-surface-raised shadow-[0_8px_24px_rgba(13,13,17,.1)]">
             {sugerencias.map((s, i) => (
               <li key={s.placeId}>
                 <button
@@ -352,10 +352,10 @@ export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }
       <div className="relative">
         <div
           ref={containerRef}
-          className="h-[280px] w-full rounded-[6px] border border-border"
+          className="h-[280px] w-full rounded-[10px] border border-border"
         />
         {(cargando || buscandoGeo) && (
-          <div className="absolute inset-0 z-[1] grid place-items-center rounded-[6px] bg-surface-raised/80 text-[14px] text-text-secondary">
+          <div className="absolute inset-0 z-[1] grid place-items-center rounded-[10px] bg-surface-raised/80 text-[14px] text-text-secondary">
             {cargando ? "Cargando mapa..." : "Obteniendo tu ubicación..."}
           </div>
         )}

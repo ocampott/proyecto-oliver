@@ -88,7 +88,7 @@ function MultiSelect({
                   ? "border-accent bg-accent-100 text-accent-800 hover:bg-accent-200"
                   : "border-border bg-surface text-text-secondary hover:bg-text/[.04]"
               )
-            : "flex h-10 w-full items-center justify-between rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-left text-[15px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            : "flex h-10 w-full items-center justify-between rounded-[8px] border border-border bg-surface-raised px-3 py-2 text-left text-[15px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         }
       >
         {isChip ? (
@@ -106,7 +106,7 @@ function MultiSelect({
       {open && (
         <div
           className={cn(
-            "absolute left-0 top-[calc(100%+4px)] z-20 flex max-h-72 flex-col overflow-hidden rounded-[6px] border border-border bg-surface-raised shadow-[0_8px_24px_rgba(23,24,18,.1)]",
+            "absolute left-0 top-[calc(100%+4px)] z-20 flex max-h-72 flex-col overflow-hidden rounded-[10px] border border-border bg-surface-raised shadow-[0_8px_24px_rgba(13,13,17,.1)]",
             isChip ? "w-[240px]" : "w-full"
           )}
         >
@@ -127,7 +127,7 @@ function MultiSelect({
                   <button
                     type="button"
                     onClick={() => toggle(o.value)}
-                    className="flex w-full items-center gap-2.5 rounded-[4px] px-2.5 py-2 text-left text-[13.5px] text-text hover:bg-text/[.04]"
+                    className="flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-[13.5px] text-text hover:bg-text/[.04]"
                   >
                     <span
                       className={cn(

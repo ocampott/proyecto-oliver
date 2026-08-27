@@ -54,7 +54,7 @@ function FilterChip({ label, value, defaultValue, options, onChange }: FilterChi
         <ChevronDown className="h-3.5 w-3.5" />
       </button>
       {open && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-20 min-w-[180px] overflow-hidden rounded-[6px] border border-border bg-surface-raised py-1 shadow-[0_8px_24px_rgba(23,24,18,.1)]">
+        <div className="absolute left-0 top-[calc(100%+6px)] z-20 min-w-[180px] overflow-hidden rounded-[10px] border border-border bg-surface-raised py-1 shadow-[0_8px_24px_rgba(13,13,17,.1)]">
           {options.map((o) => (
             <button
               key={o.value}

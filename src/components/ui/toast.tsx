@@ -52,7 +52,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               key={t.id}
               role="status"
               className={cn(
-                "pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-[6px] border bg-surface-raised p-3.5 shadow-[0_8px_24px_rgba(23,24,18,.12)]",
+                "pointer-events-auto flex w-full max-w-sm items-start gap-2.5 rounded-[10px] border bg-surface-raised p-3.5 shadow-[0_8px_24px_rgba(13,13,17,.12)]",
                 t.type === "success" ? "border-success/30" : "border-alert/30"
               )}
             >

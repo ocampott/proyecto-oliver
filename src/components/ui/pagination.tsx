@@ -51,7 +51,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           aria-label="Filas por página"
-          className="h-8 rounded-[4px] border border-border bg-surface-raised px-2 text-[13px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="h-8 rounded-[8px] border border-border bg-surface-raised px-2 text-[13px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           {PAGE_SIZE_OPTIONS.map((n) => (
             <option key={n} value={n}>
@@ -69,7 +69,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-[4px] border border-border bg-surface-raised text-text-secondary hover:bg-text/[.04] disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-border bg-surface-raised text-text-secondary hover:bg-text/[.04] disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Página anterior"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -86,7 +86,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
               onClick={() => onPageChange(p)}
               aria-current={p === page ? "page" : undefined}
               className={cn(
-                "inline-flex h-8 min-w-8 items-center justify-center rounded-[4px] px-2 text-[13px] font-medium",
+                "inline-flex h-8 min-w-8 items-center justify-center rounded-[8px] px-2 text-[13px] font-medium",
                 p === page ? "bg-accent text-white" : "text-text-secondary hover:bg-text/[.04]"
               )}
             >
@@ -98,7 +98,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-[4px] border border-border bg-surface-raised text-text-secondary hover:bg-text/[.04] disabled:cursor-not-allowed disabled:opacity-40"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-border bg-surface-raised text-text-secondary hover:bg-text/[.04] disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Página siguiente"
         >
           <ChevronRight className="h-4 w-4" />

@@ -28,7 +28,7 @@ function Dialog({ open, onClose, title, children, className }: DialogProps) {
     >
       <div
         className={cn(
-          "flex w-full max-w-[440px] flex-col gap-3 rounded-[6px] border border-border bg-surface-raised p-[26px] shadow-[0_16px_48px_rgba(23,24,18,.18)]",
+          "flex w-full max-w-[440px] flex-col gap-3 rounded-[10px] border border-border bg-surface-raised p-[26px] shadow-[0_16px_48px_rgba(13,13,17,.18)]",
           className
         )}
         onClick={(e) => e.stopPropagation()}
@@ -37,7 +37,7 @@ function Dialog({ open, onClose, title, children, className }: DialogProps) {
           <span className="text-[18px] font-semibold tracking-[-0.02em] text-text">{title}</span>
           <button
             onClick={onClose}
-            className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-[4px] bg-text/5 text-text-secondary hover:bg-text/10"
+            className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-text/5 text-text-secondary hover:bg-text/10"
             aria-label="Cerrar"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

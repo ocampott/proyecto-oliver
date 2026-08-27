@@ -74,7 +74,7 @@ export function useHoverTooltip<T extends HTMLElement>(label: string, side: "top
           ref={tooltipRef}
           role="tooltip"
           style={style}
-          className="pointer-events-none fixed z-50 whitespace-nowrap rounded-[4px] bg-text px-2 py-1 text-[11.5px] font-medium text-white"
+          className="pointer-events-none fixed z-50 whitespace-nowrap rounded-[6px] bg-text px-2 py-1 text-[11.5px] font-medium text-white"
         >
           {label}
         </span>,
