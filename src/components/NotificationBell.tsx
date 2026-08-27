@@ -61,7 +61,7 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen((v) => !v)}
         aria-label="Notificaciones"
-        className="relative inline-flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[8px] text-white/45 transition-colors hover:bg-white/[.04] hover:text-white/80"
+        className="relative inline-flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[8px] text-text-secondary transition-colors hover:bg-text/[.04] hover:text-text"
       >
         <Bell className="h-[18px] w-[18px]" />
         {noLeidas.length > 0 && (
@@ -69,7 +69,7 @@ export function NotificationBell() {
         )}
       </button>
       {open && (
-        <div className="absolute bottom-[calc(100%+8px)] left-0 z-30 w-[320px] rounded-[10px] border border-border bg-surface-raised p-1.5 shadow-[0_8px_24px_rgba(13,13,17,.1)]">
+        <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-[320px] rounded-[10px] border border-border bg-surface-raised p-1.5 shadow-[0_8px_24px_rgba(13,13,17,.1)]">
           <div className="flex items-center justify-between gap-2 border-b border-border px-2.5 pb-2 pt-1">
             <p className="m-0 text-[13.5px] font-bold text-text">Notificaciones</p>
             {noLeidas.length > 0 && (
