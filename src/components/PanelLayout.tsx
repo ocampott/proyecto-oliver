@@ -31,7 +31,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
           <div className="mx-auto w-full max-w-[1440px] px-6 py-8 md:px-10 md:py-10">{children}</div>
         </main>
       </div>
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      {paletteOpen && <CommandPalette open onClose={() => setPaletteOpen(false)} />}
     </div>
   );
 }

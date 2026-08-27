@@ -10,6 +10,7 @@ import {
   CalendarDays,
   HeartHandshake,
   Settings,
+  ShieldCheck,
   CreditCard,
   UserPlus,
   CalendarPlus,
@@ -46,6 +47,7 @@ interface PaginaItem {
   icon: React.ComponentType<{ className?: string }>;
   modulo?: Modulo;
   soloGestion?: boolean;
+  soloSuperadmin?: boolean;
 }
 
 const PAGINAS: PaginaItem[] = [
@@ -58,6 +60,7 @@ const PAGINAS: PaginaItem[] = [
   { href: "/rrhh", label: "RRHH", icon: HeartHandshake, modulo: "rrhh", soloGestion: true },
   { href: "/configuracion", label: "Configuración", icon: Settings },
   { href: "/plan", label: "Mi plan", icon: CreditCard },
+  { href: "/admin", label: "Panel admin", icon: ShieldCheck, soloSuperadmin: true },
 ];
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
@@ -104,6 +107,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const puedeGestionar = tieneRol(org ?? null, ["owner", "admin"]);
 
   const paginas: ResultItem[] = PAGINAS.filter((p) => {
+    if (p.soloSuperadmin && !ent?.ilimitado) return false;
     if (p.soloGestion && !puedeGestionar) return false;
     if (p.modulo && !tieneModulo(ent, p.modulo)) return false;
     return !q || p.label.toLowerCase().includes(q);
@@ -174,6 +178,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Buscador"
         className="flex w-full max-w-[560px] flex-col overflow-hidden rounded-[10px] border border-border bg-surface-raised shadow-[0_16px_48px_rgba(13,13,17,.18)]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -181,6 +188,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
           <Search className="h-4 w-4 shrink-0 text-text-tertiary" />
           <input
             ref={inputRef}
+            aria-label="Buscar"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}

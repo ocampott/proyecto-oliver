@@ -72,7 +72,7 @@ export function AccountMenu({ collapsed = false }: { collapsed?: boolean }) {
         )}
       </button>
       {open && (
-        <div className="absolute bottom-[calc(100%+8px)] left-0 w-[212px] rounded-[10px] border border-border bg-surface-raised p-1.5 shadow-[0_8px_24px_rgba(13,13,17,.1)]">
+        <div className="absolute bottom-[calc(100%+8px)] left-0 z-30 w-[212px] rounded-[10px] border border-border bg-surface-raised p-1.5 shadow-[0_8px_24px_rgba(13,13,17,.1)]">
           <div className="mb-1 border-b border-border px-2.5 pb-2 pt-1">
             {org && <p className="m-0 text-[13.5px] font-bold text-text">{org.name}</p>}
             <p className="m-0 text-[12px] text-text-tertiary">{user?.email}</p>

@@ -14,6 +14,7 @@ import {
   HeartHandshake,
   Settings,
   LifeBuoy,
+  Lock,
   ChevronLeft,
   ChevronRight,
   X,
@@ -99,7 +100,7 @@ export function Sidebar({
       const el = asideRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      setTogglePos({ left: rect.right, top: rect.top });
+      setTogglePos({ left: rect.right, top: rect.top + 72 });
     }
     medir();
     window.addEventListener("resize", medir);
@@ -364,7 +365,8 @@ function SidebarNavLink({
           <Icon className="h-[18px] w-[18px] shrink-0" />
           <span className={cn("flex flex-1 items-center gap-1.5", collapsed && "md:hidden")}>
             {item.label}
-            <span className="rounded-[6px] bg-white/10 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-white/60">
+            <span className="flex items-center gap-1 rounded-[6px] bg-white/10 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-white/60">
+              <Lock className="h-2.5 w-2.5" />
               {PLAN_NOMBRE[planReq]}
             </span>
           </span>
