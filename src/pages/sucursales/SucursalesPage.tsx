@@ -1,10 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Loader2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, Plus, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
-import { FilterChip } from "../../components/ui/filter-chip";
-import { Status } from "../../components/ui/status";
+import { Select } from "../../components/ui/select";
+import { Toolbar } from "../../components/ui/toolbar";
+import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
+import { Badge } from "../../components/ui/badge";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
@@ -16,8 +19,11 @@ import type { Sucursal } from "../../lib/api";
 import { getOrgResumenActual } from "../../lib/api";
 import { useSucursales, useOrgActual, useCrearSucursal, useEditarSucursal, useEliminarSucursal } from "./hooks";
 import { useQrBlob } from "./useQrBlob";
+import { useEmpleados } from "../empleados/hooks";
+import { useAsistenciaEnVivo } from "../../components/dashboard/useAsistenciaEnVivo";
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { puedeGestionar } from "../../lib/hooks";
+import { cn } from "../../lib/utils";
 
 type EstadoFiltro = "todos" | "activos" | "inactivos";
 
@@ -31,7 +37,10 @@ function coordsDe(suc: Sucursal): Coordenadas | null {
 }
 
 export default function SucursalesPage() {
+  const navigate = useNavigate();
   const { data: org } = useOrgActual();
+  const { data: empleados = [] } = useEmpleados();
+  const live = useAsistenciaEnVivo(org?.id ?? "");
   const crear = useCrearSucursal();
   const editar = useEditarSucursal();
   const eliminar = useEliminarSucursal();
@@ -173,14 +182,6 @@ export default function SucursalesPage() {
       <PageHeader kicker="Operación" title="Sucursales" />
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
-        <Field
-          label="Buscar"
-          placeholder="Nombre de la sucursal"
-          value={busqueda}
-          onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
-          containerClassName="w-64"
-          icon={<Search className="h-[15px] w-[15px]" />}
-        />
         <Button
           variant="primary"
           className="ml-auto"
@@ -202,29 +203,33 @@ export default function SucursalesPage() {
         </Button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <FilterChip
-          label="Estado"
-          value={estadoFiltro}
-          defaultValue="todos"
-          onChange={(v) => { setEstadoFiltro(v as EstadoFiltro); setPage(1); }}
-          options={[
-            { value: "todos", label: "Todos" },
-            { value: "activos", label: "Activos" },
-            { value: "inactivos", label: "Inactivos" },
-          ]}
+      <Toolbar>
+        <Field
+          label="Buscar por nombre"
+          compact
+          placeholder="Buscar por nombre"
+          value={busqueda}
+          onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
+          containerClassName="w-56"
+          icon={<Search className="h-[15px] w-[15px]" />}
         />
-        {filtrosActivos && (
-          <button
-            type="button"
-            onClick={limpiarFiltros}
-            className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text"
-          >
-            <X className="h-3.5 w-3.5" />
-            Limpiar filtros
-          </button>
-        )}
-      </div>
+        <Select
+          label="Estado"
+          compact
+          value={estadoFiltro}
+          onChange={(e) => { setEstadoFiltro(e.target.value as EstadoFiltro); setPage(1); }}
+          options={[
+            { value: "todos", label: "Todas" },
+            { value: "activos", label: "Activas" },
+            { value: "inactivos", label: "Inactivas" },
+          ]}
+          containerClassName="w-36"
+        />
+        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
+        <div className="ml-auto">
+          <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
+        </div>
+      </Toolbar>
 
       {error && !altaOpen && !editando && !eliminarTarget && (
         <ErrorPlan error={error} className="mt-2">
@@ -237,28 +242,43 @@ export default function SucursalesPage() {
           <TableRow>
             <TableHead>Nombre</TableHead>
             <TableHead>Dirección</TableHead>
-            <TableHead>Coordenadas</TableHead>
-            <TableHead>Radio</TableHead>
-            <TableHead>Activa</TableHead>
-            <TableHead className="text-right">Acciones</TableHead>
+            <TableHead className="text-right">Radio</TableHead>
+            <TableHead className="text-right">Empleados</TableHead>
+            <TableHead className="text-right">Activos ahora</TableHead>
+            <TableHead>Estado</TableHead>
+            <TableHead className="text-right"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && <TableSkeleton cols={6} />}
+          {isLoading && <TableSkeleton cols={7} />}
           {!isLoading &&
-            sucursales.map((suc) => (
-              <TableRow key={suc.id} className={suc.activa ? "" : "text-text-muted"}>
+            sucursales.map((suc) => {
+              const plantelCount = empleados.filter((e) => e.sucursal_id === suc.id).length;
+              const activosAhora = live.porSucursal.find((g) => g.sucursalId === suc.id)?.empleados.length ?? 0;
+              return (
+              <TableRow
+                key={suc.id}
+                role="button"
+                tabIndex={0}
+                className={cn("cursor-pointer", !suc.activa && "text-text-muted")}
+                onClick={() => navigate(`/sucursales/${suc.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(`/sucursales/${suc.id}`);
+                  }
+                }}
+              >
                 <TableCell>{suc.nombre}</TableCell>
                 <TableCell>{suc.direccion ?? "—"}</TableCell>
+                <TableCell className="text-right font-mono text-xs text-text-tertiary">{`${suc.radio_metros} m`}</TableCell>
+                <TableCell className="text-right font-mono text-xs">{plantelCount}</TableCell>
+                <TableCell className="text-right font-mono text-xs">{activosAhora}</TableCell>
                 <TableCell>
-                  {suc.lat != null && suc.lon != null ? `${suc.lat}, ${suc.lon}` : "Sin configurar"}
+                  <Badge tone={suc.activa ? "success" : "neutral"}>{suc.activa ? "Activa" : "Inactiva"}</Badge>
                 </TableCell>
-                <TableCell>{`${suc.radio_metros} m`}</TableCell>
-                <TableCell>
-                  <Status tone={suc.activa ? "success" : "neutral"}>{suc.activa ? "Activa" : "Inactiva"}</Status>
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1.5">
+                <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                  <div className="flex justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                     <IconButton
                       onClick={() => abrirEdicion(suc)}
                       disabled={!gestionable}
@@ -319,17 +339,18 @@ export default function SucursalesPage() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           {!isLoading && sucursales.length === 0 && !filtrosActivos && (
             <TableRow>
-              <TableCell colSpan={6} className="py-8 text-center text-text-tertiary">
+              <TableCell colSpan={7} className="py-8 text-center text-text-tertiary">
                 Todavía no hay sucursales cargadas.
               </TableCell>
             </TableRow>
           )}
           {!isLoading && sucursales.length === 0 && filtrosActivos && (
             <TableRow>
-              <TableCell colSpan={6} className="py-8 text-center text-text-tertiary">
+              <TableCell colSpan={7} className="py-8 text-center text-text-tertiary">
                 Ninguna sucursal coincide con el filtro.
               </TableCell>
             </TableRow>
