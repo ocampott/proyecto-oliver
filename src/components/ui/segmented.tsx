@@ -3,6 +3,7 @@ import { cn } from "../../lib/utils";
 export interface SegmentedOption<T extends string> {
   value: T;
   label: string;
+  count?: number;
 }
 
 export interface SegmentedProps<T extends string> {
@@ -23,13 +24,18 @@ function Segmented<T extends string>({ value, onChange, options, className }: Se
           aria-checked={opt.value === value}
           onClick={() => onChange(opt.value)}
           className={cn(
-            "rounded-[6px] px-3 py-1.5 text-[13px] font-medium transition-colors",
+            "inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[13px] font-medium transition-colors",
             opt.value === value
               ? "bg-surface-raised text-text"
               : "text-text-secondary hover:text-text"
           )}
         >
           {opt.label}
+          {opt.count != null && (
+            <span className={cn("font-mono text-[10.5px]", opt.value === value ? "text-text-tertiary" : "text-text-muted")}>
+              {opt.count}
+            </span>
+          )}
         </button>
       ))}
     </div>

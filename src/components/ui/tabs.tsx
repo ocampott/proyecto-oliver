@@ -32,7 +32,12 @@ function Tabs<T extends string>({ value, onChange, items, className }: TabsProps
           >
             {item.label}
             {item.count != null && item.count > 0 && (
-              <span className="rounded-[6px] bg-accent-100 px-1.5 py-0.5 text-[11px] font-mono text-accent-800">
+              <span
+                className={cn(
+                  "rounded-[6px] px-1.5 py-0.5 text-[11px] font-mono",
+                  active ? "bg-accent-100 text-accent-800" : "bg-text/[.06] text-text-tertiary"
+                )}
+              >
                 {item.count}
               </span>
             )}

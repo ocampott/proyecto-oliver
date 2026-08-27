@@ -27,8 +27,8 @@ export function Topbar({
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-semibold leading-tight text-text">{titulo}</p>
-        <p className="hidden truncate text-[11.5px] leading-tight text-text-tertiary sm:block">{org?.name ?? ""}</p>
+        <p className="truncate text-[13px] font-medium leading-tight text-text-secondary">{titulo}</p>
+        <p className="hidden truncate text-[11px] leading-tight text-text-tertiary sm:block">{org?.name ?? ""}</p>
       </div>
 
       <button
