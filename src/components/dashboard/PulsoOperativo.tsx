@@ -9,7 +9,7 @@ import { useAsistenciaEnVivo } from "./useAsistenciaEnVivo";
 import { useOlvidaronSalida } from "./useOlvidaronSalida";
 import { useAusenciasHoy } from "./useAusenciasHoy";
 import { useRechazadas, useResolverRechazada } from "../../pages/asistencia/hooks";
-import { horaLocal, fechaLocal, MOTIVOS_RECHAZO } from "../../pages/asistencia/format";
+import { horaLocal, horaCorta, MOTIVOS_RECHAZO } from "../../pages/asistencia/format";
 import { useEntitlements, tieneModulo } from "../../lib/hooks";
 import type { Ausencia } from "../../lib/api";
 
@@ -33,7 +33,7 @@ function AhoraMismo({ enVivo }: { enVivo: EnVivo }) {
       {enVivo.isError && <p className="mt-4 text-sm text-alert">No pudimos cargar asistencia.</p>}
       {!enVivo.isError && enVivo.isLoading && <p className="mt-4 text-sm text-text-tertiary">Cargando...</p>}
       {!enVivo.isError && !enVivo.isLoading && (
-        <div className="mt-4 flex flex-col gap-4">
+        <div className="mt-4 flex max-h-[280px] flex-col gap-4 overflow-y-auto">
           {enVivo.porSucursal.length === 0 && (
             <p className="text-sm text-text-tertiary">Nadie marcó entrada todavía.</p>
           )}
@@ -47,7 +47,7 @@ function AhoraMismo({ enVivo }: { enVivo: EnVivo }) {
                 {g.empleados.map((e) => (
                   <li key={e.empleadoId} className="flex items-baseline justify-between text-[13px] text-text-secondary">
                     <span className="truncate">{e.empleadoNombre}</span>
-                    <span className="shrink-0 font-mono text-xs text-text-tertiary">desde {horaLocal(e.desde)}</span>
+                    <span className="shrink-0 font-mono text-xs text-text-tertiary">desde {horaCorta(e.desde)}</span>
                   </li>
                 ))}
               </ul>
@@ -71,7 +71,7 @@ function UltimosMovimientos({ enVivo }: { enVivo: EnVivo }) {
             <li key={m.id} className="flex items-baseline justify-between gap-3 text-sm">
               <span className="truncate font-medium">{m.empleadoNombre}</span>
               <span className="shrink-0 font-mono text-xs text-text-tertiary">
-                {m.tipo === "entrada" ? "Entró" : "Salió"} {horaLocal(m.hora)}
+                {m.tipo === "entrada" ? "Entró" : "Salió"} {horaCorta(m.hora)}
               </span>
             </li>
           ))}
@@ -83,7 +83,7 @@ function UltimosMovimientos({ enVivo }: { enVivo: EnVivo }) {
 }
 
 function PendientesRevision() {
-  const { data, isLoading } = useRechazadas({ page: 1, pageSize: 5 });
+  const { data, isLoading, isError } = useRechazadas({ page: 1, pageSize: 5 });
   const resolver = useResolverRechazada();
   const toast = useToast();
   const [resolviendoId, setResolviendoId] = useState<string | null>(null);
@@ -102,7 +102,7 @@ function PendientesRevision() {
     }
   }
 
-  if (!isLoading && total === 0) return null;
+  if (!isLoading && !isError && total === 0) return null;
 
   return (
     <Card>
@@ -111,7 +111,8 @@ function PendientesRevision() {
         {total > 0 && <Status tone="warning">{total}</Status>}
       </div>
       {isLoading && <p className="mt-4 text-sm text-text-tertiary">Revisando marcas...</p>}
-      {!isLoading && (
+      {isError && <p className="mt-4 text-sm text-alert">No pudimos cargar las marcas rechazadas.</p>}
+      {!isLoading && !isError && (
         <ul className="mt-4 flex flex-col gap-3">
           {rechazadas.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-3 text-sm">
@@ -143,8 +144,12 @@ function PendientesRevision() {
           ))}
         </ul>
       )}
-      {total > rechazadas.length && (
-        <Link to="/asistencia" className="mt-3 inline-block text-xs font-medium text-accent-700 hover:underline">
+      {!isError && total > rechazadas.length && (
+        <Link
+          to="/asistencia"
+          state={{ vista: "rechazadas" }}
+          className="mt-3 inline-block text-xs font-medium text-accent-700 hover:underline"
+        >
           Ver todas ({total})
         </Link>
       )}
@@ -165,7 +170,7 @@ function AusenciasHoy() {
       {query.isLoading && <p className="mt-4 text-sm text-text-tertiary">Revisando RRHH...</p>}
       {query.isError && <p className="mt-4 text-sm text-alert">No pudimos cargar RRHH.</p>}
       {!query.isLoading && !query.isError && (
-        <ul className="mt-4 flex flex-col gap-3">
+        <ul className="mt-4 flex max-h-[280px] flex-col gap-3 overflow-y-auto">
           {query.ausencias.map((a) => (
             <li key={a.id} className="flex items-center justify-between gap-3 text-sm">
               <span className="min-w-0 flex-1">
@@ -201,9 +206,7 @@ function PendingHours() {
           {query.turnos.slice(0, 4).map((t) => (
             <li key={`${t.empleadoId}-${t.entradaAt}`} className="flex items-baseline justify-between gap-3 text-sm">
               <span className="truncate font-medium">{t.nombre}</span>
-              <span className="shrink-0 font-mono text-xs text-alert">
-                {fechaLocal(t.entradaAt)} {horaLocal(t.entradaAt)}
-              </span>
+              <span className="shrink-0 font-mono text-xs text-alert">{horaLocal(t.entradaAt)}</span>
             </li>
           ))}
           {query.turnos.length === 0 && <li className="text-sm text-text-tertiary">Todo en orden.</li>}
@@ -218,7 +221,7 @@ export function PulsoOperativo({ orgId }: { orgId: string }) {
   const live = useAsistenciaEnVivo(orgId);
   const ausenciasQuery = useAusenciasHoy();
   const olvidaronQuery = useOlvidaronSalida();
-  const { data: rechazadasData, isLoading: rechazadasLoading } = useRechazadas({ page: 1, pageSize: 5 });
+  const { data: rechazadasData, isLoading: rechazadasLoading, isError: rechazadasError } = useRechazadas({ page: 1, pageSize: 5 });
 
   const totalAdentro = live.porSucursal.reduce((acc, g) => acc + g.empleados.length, 0);
   const rechazadasCount = rechazadasData?.pagination.total ?? 0;
@@ -233,8 +236,8 @@ export function PulsoOperativo({ orgId }: { orgId: string }) {
   }
   stats.push({
     label: "Marcas rechazadas",
-    value: rechazadasLoading ? "—" : rechazadasCount,
-    tone: rechazadasCount > 0 ? "warning" : "default",
+    value: rechazadasLoading || rechazadasError ? "—" : rechazadasCount,
+    tone: rechazadasError ? "alert" : rechazadasCount > 0 ? "warning" : "default",
   });
   if (tieneModulo(ent, "horas")) {
     stats.push({

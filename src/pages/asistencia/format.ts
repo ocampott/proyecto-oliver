@@ -12,6 +12,14 @@ export function horaLocal(iso: string): string {
   });
 }
 
+export function horaCorta(iso: string): string {
+  return new Date(iso).toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: AR_TZ,
+  });
+}
+
 export function fechaLocal(iso: string): string {
   return new Date(iso).toLocaleDateString("es-AR", {
     day: "2-digit",

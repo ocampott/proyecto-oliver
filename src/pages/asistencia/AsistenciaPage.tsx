@@ -1,5 +1,6 @@
-import { useState, useMemo, Fragment } from "react";
+import { useState, Fragment } from "react";
 import { LogIn, LogOut, Download, Loader2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
@@ -42,7 +43,11 @@ function agruparPorFecha(registros: AsistenciaRegistro[]): { fecha: string; regi
 }
 
 export default function AsistenciaPage() {
-  const [vista, setVista] = useState<Vista>("registros");
+  const location = useLocation();
+  const [vista, setVista] = useState<Vista>(() => {
+    const state = location.state as { vista?: Vista } | null;
+    return state?.vista === "rechazadas" ? "rechazadas" : "registros";
+  });
   const [desde, setDesde] = useState(hoyAR());
   const [hasta, setHasta] = useState(hoyAR());
   const [page, setPage] = useState(1);
@@ -62,8 +67,8 @@ export default function AsistenciaPage() {
     tipo: tipoFiltro === "todos" ? undefined : tipoFiltro,
   });
   const registros = data?.data ?? [];
-  const grupos = useMemo(() => agruparPorFecha(registros), [registros]);
-  const { data: rechazadasData } = useRechazadas({ page: rechazadasPage, pageSize: rechazadasPageSize });
+  const grupos = agruparPorFecha(registros);
+  const { data: rechazadasData, isError: rechazadasError } = useRechazadas({ page: rechazadasPage, pageSize: rechazadasPageSize });
   const rechazadas = rechazadasData?.data ?? [];
   const { data: empleados = [] } = useEmpleados();
   const { data: sucursalesData } = useSucursales();
@@ -231,7 +236,19 @@ export default function AsistenciaPage() {
                       </TableCell>
                     </TableRow>
                     {grupo.registros.map((r) => (
-                      <TableRow key={r.id} className="cursor-pointer" onClick={() => setDetalle(r)}>
+                      <TableRow
+                        key={r.id}
+                        role="button"
+                        tabIndex={0}
+                        className="cursor-pointer"
+                        onClick={() => setDetalle(r)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setDetalle(r);
+                          }
+                        }}
+                      >
                         <TableCell>{horaLocal(r.created_at)}</TableCell>
                         <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
                         <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
@@ -324,7 +341,14 @@ export default function AsistenciaPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {rechazadas.length === 0 && (
+              {rechazadasError && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-alert">
+                    No pudimos cargar las marcas rechazadas. Probá de nuevo.
+                  </TableCell>
+                </TableRow>
+              )}
+              {!rechazadasError && rechazadas.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-text-tertiary">
                     No hay marcas rechazadas pendientes.
