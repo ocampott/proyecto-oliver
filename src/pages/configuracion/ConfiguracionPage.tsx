@@ -96,7 +96,7 @@ export default function ConfiguracionPage() {
     <>
       <PageHeader kicker="Espacio de trabajo" title="Configuración" description="Organización, equipo y permisos." />
 
-      <div className="mt-4">
+      <div className="mt-6">
         <Tabs
           value={tab}
           onChange={setTab}

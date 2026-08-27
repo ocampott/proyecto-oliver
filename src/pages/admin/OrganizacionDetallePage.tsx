@@ -74,7 +74,7 @@ export default function OrganizacionDetallePage() {
         title={org?.name ?? "Organización"}
       />
 
-      <div className="mt-4">
+      <div className="mt-6">
         <Tabs
           value={tab}
           onChange={setTab}

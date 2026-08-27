@@ -124,7 +124,7 @@ export default function AdminPage() {
         />
         <div className="ml-auto">
           <span className="font-mono text-xs text-text-tertiary">
-            {data?.pagination.total ?? 0} organizaciones
+            {data?.pagination.total ?? 0} resultados
           </span>
         </div>
       </Toolbar>
