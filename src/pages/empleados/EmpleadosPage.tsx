@@ -280,14 +280,6 @@ export default function EmpleadosPage() {
       <PageHeader title="Empleados" />
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
-        <Field
-          label="Buscar"
-          placeholder="Nombre del empleado"
-          value={busqueda}
-          onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
-          containerClassName="w-64"
-          icon={<Search className="h-[15px] w-[15px]" />}
-        />
         <Button
           variant="primary"
           className="ml-auto"
@@ -310,6 +302,14 @@ export default function EmpleadosPage() {
       </div>
 
       <Toolbar>
+        <Field
+          label="Buscar"
+          placeholder="Nombre del empleado"
+          value={busqueda}
+          onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
+          containerClassName="w-56"
+          icon={<Search className="h-[15px] w-[15px]" />}
+        />
         <Select
           label="Estado"
           value={estadoFiltro}
@@ -416,7 +416,7 @@ export default function EmpleadosPage() {
                     {ESTADO_LABELS[emp.estado]}
                   </Status>
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
+                <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-1.5">
                     <IconButton
                       onClick={() => abrirEdicion(emp)}

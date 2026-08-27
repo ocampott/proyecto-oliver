@@ -23,6 +23,8 @@ import { useHorarios, useCumplimiento } from "../turnos/hooks";
 import { useAsistenciaPaginada } from "../asistencia/hooks";
 import { useAusencias } from "../rrhh/hooks";
 import { calcularHorasEsperadas, ESTADO_INFO } from "../turnos/calculos";
+import { useOrgActual, puedeGestionar } from "../../lib/hooks";
+import { ErrorPlan } from "../../components/ErrorPlan";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -76,18 +78,23 @@ export default function EmpleadoDetallePage() {
   const toast = useToast();
   const [vista, setVista] = useState<Vista>("resumen");
 
+  // ponytail: trae la lista completa de empleados y el mes completo de
+  // turnos para mostrar uno solo — a escala PyME; si una organización
+  // crece mucho, evaluar un endpoint GET /empleados/:id dedicado.
   const { data: empleados, isLoading: empleadosLoading } = useEmpleados();
   const empleado = empleados?.find((e) => e.id === id);
   const { data: sucursalesData } = useSucursales();
   const sucursales = sucursalesData?.data ?? [];
+  const { data: org } = useOrgActual();
+  const gestionable = puedeGestionar(org ?? null);
 
   const desde = inicioDeMesAR();
   const hasta = hoyAR();
-  const { data: horasData } = useHoras(desde, hasta);
+  const { data: horasData, isError: horasError, error: horasErrorObj } = useHoras(desde, hasta);
   const { data: horarios = [] } = useHorarios(id ?? "");
-  const { data: cumplimiento30 = [] } = useCumplimiento({ desde: hace30Dias(), hasta, empleadoId: id });
+  const { data: cumplimiento30 = [], isError: cumplimientoError, error: cumplimientoErrorObj } = useCumplimiento({ desde: hace30Dias(), hasta, empleadoId: id });
   const cumplimientoHoy = cumplimiento30.find((f) => f.fecha === hasta);
-  const { data: ausenciasAnioData } = useAusencias({ empleadoId: id, desde: inicioDeAnioAR(), hasta });
+  const { data: ausenciasAnioData, isError: ausenciasError, error: ausenciasErrorObj } = useAusencias({ empleadoId: id, desde: inicioDeAnioAR(), hasta });
   const ausenciasAnio = ausenciasAnioData?.ausencias ?? [];
   const diasAusenciasAnio = ausenciasAnio.reduce((acc, a) => acc + diasEntre(a.fecha_desde, a.fecha_hasta), 0);
 
@@ -215,22 +222,42 @@ export default function EmpleadoDetallePage() {
         actions={
           <div className="flex gap-2">
             {!empleado.device_token && (
-              <Button variant="secondary" onClick={handleGenerarCodigo} disabled={generando}>
+              <Button
+                variant="secondary"
+                onClick={handleGenerarCodigo}
+                disabled={generando || !gestionable}
+                title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
+              >
                 {generando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                 Vincular dispositivo
               </Button>
             )}
             {empleado.estado === "activo" && (
-              <Button variant="secondary" onClick={() => handleToggleEstado("suspendido")} disabled={editar.isPending}>
+              <Button
+                variant="secondary"
+                onClick={() => handleToggleEstado("suspendido")}
+                disabled={editar.isPending || !gestionable}
+                title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
+              >
                 Suspender
               </Button>
             )}
             {(empleado.estado === "suspendido" || empleado.estado === "de_licencia") && (
-              <Button variant="secondary" onClick={() => handleToggleEstado("activo")} disabled={editar.isPending}>
+              <Button
+                variant="secondary"
+                onClick={() => handleToggleEstado("activo")}
+                disabled={editar.isPending || !gestionable}
+                title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
+              >
                 Reactivar
               </Button>
             )}
-            <Button variant="secondary" onClick={abrirEdicion}>
+            <Button
+              variant="secondary"
+              onClick={abrirEdicion}
+              disabled={!gestionable}
+              title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
+            >
               <Pencil className="h-4 w-4" />
               Editar
             </Button>
@@ -241,6 +268,14 @@ export default function EmpleadoDetallePage() {
       <div className="mt-6">
         <StatRow stats={stats} />
       </div>
+
+      {(horasError || cumplimientoError || ausenciasError) && (
+        <div className="mt-2">
+          <ErrorPlan error={(horasErrorObj ?? cumplimientoErrorObj ?? ausenciasErrorObj) instanceof Error ? (horasErrorObj ?? cumplimientoErrorObj ?? ausenciasErrorObj) as Error : null}>
+            <p className="text-[15px] text-alert">No se pudieron cargar algunos datos de este empleado.</p>
+          </ErrorPlan>
+        </div>
+      )}
 
       <div className="mt-6">
         <Tabs
@@ -304,7 +339,7 @@ export default function EmpleadoDetallePage() {
           <Card>
             <h3 className="text-[14px] font-semibold text-text">Últimas marcas</h3>
             <ul className="mt-3 flex flex-col gap-2.5 text-[13.5px]">
-              {turnosEmpleado.slice(0, 6).map((t, i) => (
+              {turnosEmpleado.slice(-6).reverse().map((t, i) => (
                 <li key={i} className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-1.5 text-text-secondary">
                     {t.salida_at ? <LogOut className="h-3.5 w-3.5" /> : <LogIn className="h-3.5 w-3.5" />}
@@ -430,7 +465,7 @@ function AsistenciaTab({ empleadoId }: { empleadoId: string }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const hoy = hoyAR();
-  const desde = `${hoy.slice(0, 4)}-01-01`;
+  const desde = inicioDeAnioAR();
   const { data, isLoading } = useAsistenciaPaginada(desde, hoy, { page, pageSize, empleadoId });
   const registros = data?.data ?? [];
 
@@ -469,11 +504,16 @@ function AsistenciaTab({ empleadoId }: { empleadoId: string }) {
 }
 
 function AusenciasTab({ empleadoId }: { empleadoId: string }) {
-  const { data, isLoading } = useAusencias({ empleadoId });
+  const { data, isLoading, isError, error } = useAusencias({ empleadoId });
   const ausencias = data?.ausencias ?? [];
 
   return (
     <div className="mt-6">
+      {isError && (
+        <ErrorPlan error={error instanceof Error ? error : null}>
+          <p className="text-[15px] text-alert">No se pudieron cargar las ausencias.</p>
+        </ErrorPlan>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
