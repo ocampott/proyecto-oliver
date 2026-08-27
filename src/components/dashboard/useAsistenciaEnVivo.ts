@@ -95,5 +95,5 @@ export function useAsistenciaEnVivo(orgId: string) {
   const porSucursal = useMemo(() => derivarAdentro(data ?? []), [data]);
   const ultimosMarcados = useMemo(() => derivarUltimosMarcados(data ?? []), [data]);
 
-  return { isLoading, isError, porSucursal, conectado, ultimosMarcados };
+  return { isLoading, isError, porSucursal, conectado, ultimosMarcados, registrosHoy: data ?? [] };
 }
