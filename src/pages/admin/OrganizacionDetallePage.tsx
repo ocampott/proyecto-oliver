@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Loader2, Plus } from "lucide-react";
+import { useParams } from "react-router-dom";
+import { Loader2, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
+import { Tabs } from "../../components/ui/tabs";
+import { PersonCell } from "../../components/ui/avatar";
 import { PageHeader } from "../../components/PageHeader";
 import { Status } from "../../components/ui/status";
 import { Field } from "../../components/ui/field";
@@ -66,28 +68,23 @@ export default function OrganizacionDetallePage() {
 
   return (
     <>
-      <Link to="/admin" className="inline-flex items-center gap-1 text-[13px] text-text-secondary hover:text-text">
-        <ChevronLeft className="h-4 w-4" />
-        Organizaciones
-      </Link>
+      <PageHeader
+        kicker="Superadmin"
+        breadcrumb={[{ label: "Organizaciones", href: "/admin" }]}
+        title={org?.name ?? "Organización"}
+      />
 
       <div className="mt-4">
-        <PageHeader kicker="Superadmin" title={org?.name ?? "Organización"} />
-      </div>
-
-      <div className="mt-4 flex gap-2">
-        <Button variant={tab === "miembros" ? "primary" : "secondary"} onClick={() => setTab("miembros")}>
-          Miembros
-        </Button>
-        <Button variant={tab === "empleados" ? "primary" : "secondary"} onClick={() => setTab("empleados")}>
-          Empleados
-        </Button>
-        <Button variant={tab === "sucursales" ? "primary" : "secondary"} onClick={() => setTab("sucursales")}>
-          Sucursales
-        </Button>
-        <Button variant={tab === "suscripcion" ? "primary" : "secondary"} onClick={() => setTab("suscripcion")}>
-          Suscripción
-        </Button>
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "miembros", label: "Miembros" },
+            { value: "empleados", label: "Empleados" },
+            { value: "sucursales", label: "Sucursales" },
+            { value: "suscripcion", label: "Suscripción" },
+          ]}
+        />
       </div>
 
       {tab === "miembros" && <MiembrosTab orgId={orgId} />}
@@ -161,7 +158,9 @@ function EmpleadosTab({ orgId }: { orgId: string }) {
         {!isLoading &&
           empleados.map((e) => (
             <TableRow key={e.id}>
-              <TableCell>{nombreCompleto(e)}</TableCell>
+              <TableCell>
+                <PersonCell nombre={nombreCompleto(e)} />
+              </TableCell>
               <TableCell>{e.celular ?? "—"}</TableCell>
               <TableCell>
                 <Status tone={ESTADO_TONE[e.estado]}>{ESTADO_LABEL[e.estado]}</Status>
