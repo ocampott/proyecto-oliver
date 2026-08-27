@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
 import { Toolbar } from "../../components/ui/toolbar";
@@ -7,6 +8,7 @@ import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Status } from "../../components/ui/status";
+import { PersonCell } from "../../components/ui/avatar";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { CON_DESVIO, ESTADO_INFO } from "./calculos";
@@ -92,32 +94,37 @@ export default function CumplimientoTab() {
       </Card>
 
       <Toolbar>
-        <Field label="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-40" />
-        <Field label="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-40" />
+        <Segmented
+          value={vista}
+          onChange={setVista}
+          options={[
+            { value: "todos", label: "Todos", count: filas.length },
+            { value: "con_desvio", label: "Con desvío", count: filas.filter((f) => CON_DESVIO.includes(f.estado)).length },
+          ]}
+        />
+        <div className="flex items-center gap-1.5">
+          <Field label="Desde" compact type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-[136px]" />
+          <span className="text-xs text-text-tertiary">→</span>
+          <Field label="Hasta" compact type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-[136px]" />
+        </div>
         <Select
           label="Sucursal"
+          compact
           value={sucursalId}
           onChange={(e) => setSucursalId(e.target.value)}
-          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+          options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
           containerClassName="w-44"
         />
         <Select
           label="Empleado"
+          compact
           value={empleadoId}
           onChange={(e) => setEmpleadoId(e.target.value)}
           options={[{ value: "", label: "Todos" }, ...empleados.map((e) => ({ value: e.id, label: e.nombre }))]}
           containerClassName="w-44"
         />
-        <Segmented
-          value={vista}
-          onChange={setVista}
-          options={[
-            { value: "todos", label: "Todos" },
-            { value: "con_desvio", label: "Con desvío" },
-          ]}
-        />
-        <div className="ml-auto flex items-center gap-3">
-          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        <div className="ml-auto">
           <span className="font-mono text-xs text-text-tertiary">{filasFiltradas.length} resultados</span>
         </div>
       </Toolbar>
@@ -142,7 +149,11 @@ export default function CumplimientoTab() {
           {!isLoading &&
             filasFiltradas.map((f, i) => (
               <TableRow key={i}>
-                <TableCell>{f.nombre}</TableCell>
+                <TableCell>
+                  <Link to={`/empleados/${f.empleado_id}`} className="inline-flex items-center gap-2 hover:underline">
+                    <PersonCell nombre={f.nombre} />
+                  </Link>
+                </TableCell>
                 <TableCell>{f.sucursal_nombre}</TableCell>
                 <TableCell>{f.fecha}</TableCell>
                 <TableCell>

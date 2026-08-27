@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
@@ -12,6 +13,7 @@ import { StatRow, type StatRowItem } from "../../components/ui/stat-row";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Card } from "../../components/ui/card";
 import { Status } from "../../components/ui/status";
+import { PersonCell } from "../../components/ui/avatar";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { PageHeader } from "../../components/PageHeader";
 import { ErrorPlan } from "../../components/ErrorPlan";
@@ -201,8 +203,6 @@ export default function HorasPage() {
       </div>
 
       <Toolbar>
-        <Field label="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-40" />
-        <Field label="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-40" />
         <Segmented
           value={periodo}
           onChange={(p) => {
@@ -217,6 +217,11 @@ export default function HorasPage() {
             { value: "mes", label: "Mes" },
           ]}
         />
+        <div className="flex items-center gap-1.5">
+          <Field label="Desde" compact type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-[136px]" />
+          <span className="text-xs text-text-tertiary">→</span>
+          <Field label="Hasta" compact type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-[136px]" />
+        </div>
         <MultiSelect
           label="Empleados"
           value={empleadosSel}
@@ -227,24 +232,26 @@ export default function HorasPage() {
         />
         <Select
           label="Sucursal"
+          compact
           value={sucursalSel}
           onChange={(e) => setSucursalSel(e.target.value)}
-          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+          options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
           containerClassName="w-44"
         />
         <Select
           label="Orden"
+          compact
           value={orden}
           onChange={(e) => setOrden(e.target.value as Orden)}
           options={[
-            { value: "horas", label: "Más horas" },
-            { value: "extras", label: "Más extras" },
+            { value: "horas", label: "Más horas primero" },
+            { value: "extras", label: "Más extras primero" },
             { value: "nombre", label: "Por nombre" },
           ]}
-          containerClassName="w-40"
+          containerClassName="w-44"
         />
-        <div className="ml-auto flex items-center gap-3">
-          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        <div className="ml-auto">
           <span className="font-mono text-xs text-text-tertiary">{resumen.length} resultados</span>
         </div>
       </Toolbar>
@@ -277,7 +284,9 @@ export default function HorasPage() {
               resumenOrdenado.map((r) => (
                 <TableRow key={r.empleadoId}>
                   <TableCell>
-                    {r.nombre}
+                    <Link to={`/empleados/${r.empleadoId}`} className="inline-flex items-center gap-2 hover:underline">
+                      <PersonCell nombre={r.nombre} />
+                    </Link>
                     {r.enCurso && (
                       <Status tone="accent" className="ml-2">
                         En curso
@@ -319,7 +328,9 @@ export default function HorasPage() {
             {isLoading && <TableSkeleton cols={5} />}
             {turnos.map((t, i) => (
               <TableRow key={`${t.empleado_id}-${t.entrada_at}-${i}`}>
-                <TableCell>{t.nombre}</TableCell>
+                <TableCell>
+                  <PersonCell nombre={t.nombre} />
+                </TableCell>
                 <TableCell>{t.sucursal_nombre}</TableCell>
                 <TableCell>{fechaHoraLocal(t.entrada_at)}</TableCell>
                 <TableCell>
