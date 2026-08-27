@@ -7,6 +7,7 @@ import { Dialog } from "../../components/ui/dialog";
 import { PageHeader } from "../../components/PageHeader";
 import { Field } from "../../components/ui/field";
 import { IconButton } from "../../components/ui/icon-button";
+import { Toolbar } from "../../components/ui/toolbar";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { Pagination } from "../../components/ui/pagination";
@@ -111,16 +112,22 @@ export default function AdminPage() {
         </Button>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-end gap-2">
+      <Toolbar className="mt-4">
         <Field
           label="Buscar"
+          compact
           placeholder="Nombre o slug"
           value={busqueda}
           onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
           containerClassName="w-64"
           icon={<Search className="h-[15px] w-[15px]" />}
         />
-      </div>
+        <div className="ml-auto">
+          <span className="font-mono text-xs text-text-tertiary">
+            {data?.pagination.total ?? 0} organizaciones
+          </span>
+        </div>
+      </Toolbar>
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -138,7 +145,19 @@ export default function AdminPage() {
           {isLoading && <TableSkeleton cols={7} />}
           {!isLoading &&
             organizaciones.map((org) => (
-              <TableRow key={org.id}>
+              <TableRow
+                key={org.id}
+                role="button"
+                tabIndex={0}
+                className="cursor-pointer"
+                onClick={() => navigate(`/admin/organizaciones/${org.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(`/admin/organizaciones/${org.id}`);
+                  }
+                }}
+              >
                 <TableCell>{org.name}</TableCell>
                 <TableCell>{org.slug}</TableCell>
                 <TableCell className="capitalize">{org.plan}</TableCell>
@@ -149,14 +168,13 @@ export default function AdminPage() {
                   <Uso orgId={org.id} />
                 </TableCell>
                 <TableCell>{fechaLocal(org.created_at)}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1.5">
+                <TableCell
+                  className="text-right"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                     <IconButton onClick={() => abrirEditarOrg(org)} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar organización" />
-                    <IconButton
-                      onClick={() => navigate(`/admin/organizaciones/${org.id}`)}
-                      icon={<Search className="h-3.5 w-3.5" />}
-                      label="Ver detalle"
-                    />
                   </div>
                 </TableCell>
               </TableRow>
