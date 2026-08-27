@@ -14,6 +14,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SetPasswordPage = lazy(() => import("./pages/SetPasswordPage"));
 const HomePage = lazy(() => import("./pages/HomePage"));
 const SucursalesPage = lazy(() => import("./pages/sucursales/SucursalesPage"));
+const SucursalDetallePage = lazy(() => import("./pages/sucursales/SucursalDetallePage"));
 const EmpleadosPage = lazy(() => import("./pages/empleados/EmpleadosPage"));
 const EmpleadoDetallePage = lazy(() => import("./pages/empleados/EmpleadoDetallePage"));
 const AsistenciaPage = lazy(() => import("./pages/asistencia/AsistenciaPage"));
@@ -74,6 +75,16 @@ export default function App() {
                 <ProtectedRoute>
                   <PanelLayout>
                     <SucursalesPage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/sucursales/:id"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <SucursalDetallePage />
                   </PanelLayout>
                 </ProtectedRoute>
               }

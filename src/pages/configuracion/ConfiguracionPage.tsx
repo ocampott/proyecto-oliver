@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { Plus, Trash2, Loader2, ChevronRight, Briefcase, CalendarDays } from "lucide-react";
+import { Plus, Trash2, Loader2, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Card } from "../../components/ui/card";
@@ -181,17 +181,6 @@ export default function ConfiguracionPage() {
       <Card className="mt-4">
         <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Otras configuraciones</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Link
-            to="/rrhh"
-            className="flex items-center gap-3 rounded-[6px] border border-border px-4 py-3 transition-colors hover:bg-text/[.04]"
-          >
-            <Briefcase className="h-[18px] w-[18px] text-accent-700" />
-            <span className="flex-1">
-              <span className="block text-[14px] font-semibold text-text">Categorías de motivo</span>
-              <span className="block text-[12.5px] text-text-secondary">Se administran desde RRHH</span>
-            </span>
-            <ChevronRight className="h-4 w-4 text-text-tertiary" />
-          </Link>
           <Link
             to="/turnos"
             className="flex items-center gap-3 rounded-[6px] border border-border px-4 py-3 transition-colors hover:bg-text/[.04]"
