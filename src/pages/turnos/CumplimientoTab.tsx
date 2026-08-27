@@ -6,10 +6,10 @@ import { Segmented } from "../../components/ui/segmented";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
-import { Status, type StatusProps } from "../../components/ui/status";
+import { Status } from "../../components/ui/status";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import type { CumplimientoRow } from "../../lib/api";
+import { CON_DESVIO, ESTADO_INFO } from "./calculos";
 import { useSucursales } from "../sucursales/hooks";
 import { useEmpleados } from "../empleados/hooks";
 import { useCumplimiento, useTolerancia, useGuardarTolerancia } from "./hooks";
@@ -33,16 +33,6 @@ function diffLabel(min: number | null): string {
   if (min <= 0) return "a tiempo";
   return `+${min} min`;
 }
-
-const ESTADO_INFO: Record<CumplimientoRow["estado"], { label: string; tone: StatusProps["tone"] }> = {
-  a_horario: { label: "A horario", tone: "success" },
-  tarde: { label: "Tarde", tone: "warning" },
-  salida_anticipada: { label: "Salida anticipada", tone: "warning" },
-  tarde_y_anticipada: { label: "Tarde y salida anticipada", tone: "warning" },
-  sin_horario: { label: "Sin horario definido", tone: "neutral" },
-};
-
-const CON_DESVIO: CumplimientoRow["estado"][] = ["tarde", "salida_anticipada", "tarde_y_anticipada"];
 
 type VistaCumplimiento = "todos" | "con_desvio";
 

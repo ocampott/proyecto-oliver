@@ -20,7 +20,8 @@ import { useHoras } from "./hooks";
 import { useHorariosDeVarios } from "../turnos/hooks";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
-import { exportarHoras, type Turno, type HorarioEmpleado } from "../../lib/api";
+import { exportarHoras, type Turno } from "../../lib/api";
+import { calcularHorasEsperadas } from "../turnos/calculos";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -51,27 +52,6 @@ function rangoPara(periodo: Periodo): { desde: string; hasta: string } {
   const d = new Date();
   d.setDate(d.getDate() - dias);
   return { desde: d.toLocaleDateString("sv", { timeZone: AR_TZ }), hasta };
-}
-
-// ponytail: cálculo aproximado por día-de-semana × rango — no descuenta
-// ausencias ni feriados. Cruzar contra Ausencias si hace falta precisión,
-// evaluar en una etapa posterior.
-function calcularHorasEsperadas(horarios: HorarioEmpleado[], desde: string, hasta: string): number {
-  const minutosPorDia = new Map<number, number>();
-  for (const h of horarios) {
-    const [hI, mI] = h.hora_inicio.split(":").map(Number);
-    const [hF, mF] = h.hora_fin.split(":").map(Number);
-    const minutos = Math.max(0, hF * 60 + mF - (hI * 60 + mI));
-    minutosPorDia.set(h.dia_semana, (minutosPorDia.get(h.dia_semana) ?? 0) + minutos);
-  }
-  let totalMinutos = 0;
-  const cursor = new Date(`${desde}T00:00:00`);
-  const fin = new Date(`${hasta}T00:00:00`);
-  while (cursor <= fin) {
-    totalMinutos += minutosPorDia.get(cursor.getDay()) ?? 0;
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return totalMinutos / 60;
 }
 
 interface ResumenFila {
