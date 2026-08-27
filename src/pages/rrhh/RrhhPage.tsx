@@ -1,15 +1,19 @@
 import { useState, type FormEvent } from "react";
-import { Plus, Pencil, Trash2, Download, X, Loader2 } from "lucide-react";
+import { Plus, Trash2, Download, X, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
-import { FilterChip } from "../../components/ui/filter-chip";
+import { Toolbar } from "../../components/ui/toolbar";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
+import { SidePanel } from "../../components/ui/side-panel";
 import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Status } from "../../components/ui/status";
+import { StatRow, type StatRowItem } from "../../components/ui/stat-row";
+import { Tabs } from "../../components/ui/tabs";
+import { PersonCell } from "../../components/ui/avatar";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { Pagination } from "../../components/ui/pagination";
 import { PageHeader } from "../../components/PageHeader";
@@ -36,6 +40,10 @@ function finDeMesAR(periodo: string): string {
   return `${periodo}-${String(ultimoDia).padStart(2, "0")}`;
 }
 
+function diasEntre(desde: string, hasta: string): number {
+  return Math.round((new Date(hasta).getTime() - new Date(desde).getTime()) / 86400000) + 1;
+}
+
 const emptyForm = {
   empleado_id: "",
   sucursal_id: "",
@@ -54,8 +62,11 @@ function motivoFinal(f: FormState): string {
   return f.motivoSeleccionado === OTRO ? f.motivoLibre.trim() : f.motivoSeleccionado;
 }
 
+type Vista = "registros" | "categorias";
+
 export default function RrhhPage() {
   const toast = useToast();
+  const [vista, setVista] = useState<Vista>("registros");
   const { data: empleados = [] } = useEmpleados();
   const { data: sucursalesData } = useSucursales();
   const sucursales = sucursalesData?.data ?? [];
@@ -145,6 +156,36 @@ export default function RrhhPage() {
   });
   const ausencias = data?.ausencias ?? [];
   const resumen = data?.resumen;
+
+  // ponytail: un segundo pedido (sin paginar, tope 500) sobre el mismo
+  // rango/filtros solo para los 3 stats que "resumen" no trae del
+  // servidor (en curso/programadas/días) — a escala PyME alcanza; si una
+  // organización acumula más de 500 ausencias en un rango, evaluar que
+  // el backend calcule estos 3 campos junto con el resto de "resumen".
+  const { data: statsData } = useAusencias({
+    desde,
+    hasta,
+    sucursalId: sucursalFiltro || undefined,
+    motivo: motivoFiltro || undefined,
+    page: 1,
+    pageSize: 500,
+  });
+  const statsAusencias = statsData?.ausencias ?? [];
+  const hoy = hoyAR();
+  const enCursoCount = statsAusencias.filter((a) => a.fecha_desde <= hoy && a.fecha_hasta >= hoy).length;
+  const programadasCount = statsAusencias.filter((a) => a.fecha_desde > hoy).length;
+  const diasAcumulados = statsAusencias.reduce((acc, a) => acc + diasEntre(a.fecha_desde, a.fecha_hasta), 0);
+
+  const stats: StatRowItem[] = [
+    { label: "En curso hoy", value: enCursoCount },
+    { label: "Programadas", value: programadasCount, meta: "próximas a comenzar" },
+    {
+      label: "Certificados pendientes",
+      value: resumen?.certificadosPendientes ?? 0,
+      tone: (resumen?.certificadosPendientes ?? 0) > 0 ? "warning" : "default",
+    },
+    { label: "Días acumulados", value: diasAcumulados, meta: "en el período filtrado" },
+  ];
 
   const filtrosActivos = sucursalFiltro !== "" || motivoFiltro !== "";
 
@@ -242,185 +283,168 @@ export default function RrhhPage() {
 
   return (
     <>
-      <PageHeader kicker="Operación" title="RRHH" />
+      <PageHeader
+        title="Ausencias"
+        actions={
+          <Button variant="secondary" onClick={handleDescargarExcel} disabled={descargando}>
+            <Download className="h-4 w-4" />
+            {descargando ? "Generando…" : "Descargar Excel"}
+          </Button>
+        }
+      />
 
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card>
-          <p className="text-[12px] text-text-tertiary">Total</p>
-          {isLoading ? (
-            <div className="mt-1.5 h-[24px] w-10 animate-pulse rounded bg-text/10" />
-          ) : (
-            <p className="data-number text-2xl font-medium text-text">{resumen?.total ?? "—"}</p>
-          )}
-        </Card>
-        <Card>
-          <p className="text-[12px] text-text-tertiary">Certificados pendientes</p>
-          {isLoading ? (
-            <div className="mt-1.5 h-[24px] w-10 animate-pulse rounded bg-text/10" />
-          ) : (
-            <p className="data-number text-2xl font-medium text-text">{resumen?.certificadosPendientes ?? "—"}</p>
-          )}
-        </Card>
-        <Card>
-          <p className="text-[12px] text-text-tertiary">Por sucursal</p>
-          {isLoading ? (
-            <div className="mt-1.5 flex flex-col gap-1.5">
-              <div className="h-[13px] w-28 animate-pulse rounded bg-text/10" />
-              <div className="h-[13px] w-20 animate-pulse rounded bg-text/10" />
-            </div>
-          ) : (
-            <ul className="mt-1 flex flex-col gap-0.5 text-[13px] text-text-secondary">
-              {resumen &&
-                Object.entries(resumen.porSucursal).map(([k, v]) => (
-                  <li key={k}>
-                    {k}: {v}
-                  </li>
-                ))}
-            </ul>
-          )}
-        </Card>
-        <Card>
-          <p className="text-[12px] text-text-tertiary">Por motivo</p>
-          {isLoading ? (
-            <div className="mt-1.5 flex flex-col gap-1.5">
-              <div className="h-[13px] w-28 animate-pulse rounded bg-text/10" />
-              <div className="h-[13px] w-20 animate-pulse rounded bg-text/10" />
-            </div>
-          ) : (
-            <ul className="mt-1 flex flex-col gap-0.5 text-[13px] text-text-secondary">
-              {resumen &&
-                Object.entries(resumen.porMotivo).map(([k, v]) => (
-                  <li key={k}>
-                    {k}: {v}
-                  </li>
-                ))}
-            </ul>
-          )}
-        </Card>
+      <div className="mt-6">
+        <StatRow stats={stats} />
       </div>
 
-      <Card className="mt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Categorías de motivo</h2>
-            <p className="mt-1 text-[13.5px] text-text-secondary">
-              Motivos disponibles al cargar una ausencia.
-            </p>
-          </div>
-          <Button variant="secondary" onClick={() => setCategoriaModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            Nueva categoría
-          </Button>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {categorias.length === 0 && (
-            <p className="text-[13.5px] text-text-tertiary">Todavía no cargaste ninguna categoría.</p>
-          )}
-          {categorias.map((c) => {
-            const quitando = quitandoCategoria === c;
-            return (
-              <span
-                key={c}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-raised py-1 pl-3 pr-1.5 text-[13px] text-text"
-              >
-                {c}
-                <button
-                  type="button"
-                  onClick={() => handleQuitarCategoria(c)}
-                  disabled={quitando}
-                  aria-label={`Quitar categoría ${c}`}
-                  className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-text-muted hover:bg-text/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                >
-                  {quitando ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
-                </button>
-              </span>
-            );
-          })}
-        </div>
-      </Card>
+      <div className="mt-6">
+        <Tabs
+          value={vista}
+          onChange={setVista}
+          items={[
+            { value: "registros", label: "Registros" },
+            { value: "categorias", label: "Categorías", count: categorias.length },
+          ]}
+        />
+      </div>
 
-      <section className="page-section">
-        <div className="flex flex-wrap items-end gap-3">
-          <Field
-            label="Período"
-            type="month"
-            value={periodo}
-            onChange={(e) => handlePeriodoChange(e.target.value)}
-            containerClassName="w-40"
-          />
-          <Field label="Desde" type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setPage(1); }} containerClassName="w-40" />
-          <Field label="Hasta" type="date" value={hasta} onChange={(e) => { setHasta(e.target.value); setPage(1); }} containerClassName="w-40" />
-          <div className="ml-auto flex gap-2">
-            <Button variant="secondary" onClick={handleDescargarExcel} disabled={descargando}>
-              <Download className="h-4 w-4" />
-              {descargando ? "Generando…" : "Descargar Excel"}
-            </Button>
-            <Button variant="primary" onClick={() => setAltaOpen(true)}>
+      {vista === "registros" && (
+        <section className="page-section">
+          <div className="mt-4 flex flex-wrap items-end gap-2">
+            <Button variant="primary" className="ml-auto" onClick={() => setAltaOpen(true)}>
               <Plus className="h-4 w-4" />
               Nueva ausencia
             </Button>
           </div>
-        </div>
 
-        <div className="page-filters">
-          <FilterChip
-            label="Sucursal"
-            value={sucursalFiltro}
-            defaultValue=""
-            onChange={(v) => { setSucursalFiltro(v); setPage(1); }}
-            options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-          />
-          <FilterChip
-            label="Motivo"
-            value={motivoFiltro}
-            defaultValue=""
-            onChange={(v) => { setMotivoFiltro(v); setPage(1); }}
-            options={[{ value: "", label: "Todos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
-          />
-          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
-        </div>
+          <Toolbar>
+            <Field label="Período" compact type="month" value={periodo} onChange={(e) => handlePeriodoChange(e.target.value)} containerClassName="w-32" />
+            <div className="flex items-center gap-1.5">
+              <Field label="Desde" compact type="date" value={desde} onChange={(e) => { setDesde(e.target.value); setPage(1); }} containerClassName="w-[136px]" />
+              <span className="text-xs text-text-tertiary">→</span>
+              <Field label="Hasta" compact type="date" value={hasta} onChange={(e) => { setHasta(e.target.value); setPage(1); }} containerClassName="w-[136px]" />
+            </div>
+            <Select
+              label="Motivo"
+              compact
+              value={motivoFiltro}
+              onChange={(e) => { setMotivoFiltro(e.target.value); setPage(1); }}
+              options={[{ value: "", label: "Todos los motivos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
+              containerClassName="w-40"
+            />
+            <Select
+              label="Sucursal"
+              compact
+              value={sucursalFiltro}
+              onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
+              options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+              containerClassName="w-44"
+            />
+            {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
+            <div className="ml-auto">
+              <span className="font-mono text-xs text-text-tertiary">{resumen?.total ?? 0} resultados</span>
+            </div>
+          </Toolbar>
 
-        {error && !altaOpen && <p className="mt-2 text-[15px] text-alert">{error}</p>}
-
-        <Table containerClassName="mt-4">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Empleado</TableHead>
-              <TableHead>Sucursal</TableHead>
-              <TableHead>Período</TableHead>
-              <TableHead>Motivo</TableHead>
-              <TableHead>Certificado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && <TableSkeleton cols={6} />}
-            {!isLoading &&
-              ausencias.map((a) => (
-                <TableRow key={a.id}>
-                  <TableCell>{a.empleado_nombre}</TableCell>
-                  <TableCell>{a.sucursal_nombre ?? "—"}</TableCell>
-                  <TableCell>{a.fecha_desde === a.fecha_hasta ? a.fecha_desde : `${a.fecha_desde} – ${a.fecha_hasta}`}</TableCell>
-                  <TableCell>{a.motivo}</TableCell>
-                  <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-1.5">
-                      <IconButton onClick={() => abrirDetalle(a)} icon={<Pencil className="h-3.5 w-3.5" />} label="Ver detalle" />
-                      <IconButton onClick={() => setBorrarTarget(a)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            {!isLoading && ausencias.length === 0 && (
+          <Table containerClassName="mt-4">
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-text-tertiary">Sin ausencias en este rango.</TableCell>
+                <TableHead>Empleado</TableHead>
+                <TableHead>Motivo</TableHead>
+                <TableHead>Sucursal</TableHead>
+                <TableHead>Período</TableHead>
+                <TableHead className="text-right">Días</TableHead>
+                <TableHead>Certificado</TableHead>
+                <TableHead className="text-right"></TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {isLoading && <TableSkeleton cols={7} />}
+              {!isLoading &&
+                ausencias.map((a) => (
+                  <TableRow
+                    key={a.id}
+                    role="button"
+                    tabIndex={0}
+                    className="cursor-pointer"
+                    onClick={() => abrirDetalle(a)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        abrirDetalle(a);
+                      }
+                    }}
+                  >
+                    <TableCell>
+                      <PersonCell nombre={a.empleado_nombre} />
+                    </TableCell>
+                    <TableCell>{a.motivo}</TableCell>
+                    <TableCell>{a.sucursal_nombre ?? "—"}</TableCell>
+                    <TableCell className="font-mono text-xs text-text-tertiary">
+                      {a.fecha_desde === a.fecha_hasta ? a.fecha_desde : `${a.fecha_desde} → ${a.fecha_hasta}`}
+                    </TableCell>
+                    <TableCell className="text-right font-mono text-xs">{diasEntre(a.fecha_desde, a.fecha_hasta)}</TableCell>
+                    <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                        <IconButton onClick={() => setBorrarTarget(a)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              {!isLoading && ausencias.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-text-tertiary">Sin ausencias en este rango.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
 
-        {data?.pagination && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
-      </section>
+          {data?.pagination && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+        </section>
+      )}
+
+      {vista === "categorias" && (
+        <Card className="mt-6">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Categorías de motivo</h2>
+              <p className="mt-1 text-[13.5px] text-text-secondary">
+                Motivos disponibles al cargar una ausencia.
+              </p>
+            </div>
+            <Button variant="secondary" onClick={() => setCategoriaModalOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Nueva categoría
+            </Button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {categorias.length === 0 && (
+              <p className="text-[13.5px] text-text-tertiary">Todavía no cargaste ninguna categoría.</p>
+            )}
+            {categorias.map((c) => {
+              const quitando = quitandoCategoria === c;
+              return (
+                <span
+                  key={c}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-raised py-1 pl-3 pr-1.5 text-[13px] text-text"
+                >
+                  {c}
+                  <button
+                    type="button"
+                    onClick={() => handleQuitarCategoria(c)}
+                    disabled={quitando}
+                    aria-label={`Quitar categoría ${c}`}
+                    className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-text-muted hover:bg-text/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  >
+                    {quitando ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <Dialog open={altaOpen} onClose={() => { setAltaOpen(false); setError(null); }} title="Nueva ausencia">
         <form onSubmit={handleAlta} className="flex flex-col gap-3">
@@ -469,7 +493,7 @@ export default function RrhhPage() {
         </form>
       </Dialog>
 
-      <Dialog
+      <SidePanel
         open={editando != null}
         onClose={() => { setEditando(null); setErrorEdit(null); }}
         title={`Ausencia de ${editando?.empleado_nombre ?? ""}`}
@@ -513,7 +537,7 @@ export default function RrhhPage() {
             Guardar
           </Button>
         </form>
-      </Dialog>
+      </SidePanel>
 
       <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar ausencia">
         <p className="text-[15px] text-text-secondary">
