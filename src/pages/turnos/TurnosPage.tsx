@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "../../components/ui/button";
+import { Tabs } from "../../components/ui/tabs";
 import { PageHeader } from "../../components/PageHeader";
 import HorariosTab from "./HorariosTab";
 import CumplimientoTab from "./CumplimientoTab";
@@ -11,25 +11,17 @@ export default function TurnosPage() {
 
   return (
     <>
-      <PageHeader kicker="Operación" title="Turnos" />
+      <PageHeader title="Turnos" />
 
-      <div className="mt-4 flex gap-2" role="tablist">
-        <Button
-          role="tab"
-          aria-selected={tab === "horarios"}
-          variant={tab === "horarios" ? "primary" : "secondary"}
-          onClick={() => setTab("horarios")}
-        >
-          Horarios
-        </Button>
-        <Button
-          role="tab"
-          aria-selected={tab === "cumplimiento"}
-          variant={tab === "cumplimiento" ? "primary" : "secondary"}
-          onClick={() => setTab("cumplimiento")}
-        >
-          Cumplimiento
-        </Button>
+      <div className="mt-6">
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "horarios", label: "Horarios" },
+            { value: "cumplimiento", label: "Cumplimiento" },
+          ]}
+        />
       </div>
 
       {tab === "horarios" ? <HorariosTab /> : <CumplimientoTab />}
