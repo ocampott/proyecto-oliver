@@ -1,6 +1,5 @@
 // src/components/Sidebar.tsx
 import * as React from "react";
-import { createPortal } from "react-dom";
 import { NavLink } from "react-router-dom";
 import {
   Activity,
@@ -14,8 +13,7 @@ import {
   Settings,
   LifeBuoy,
   Lock,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeft,
   X,
 } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -105,62 +103,12 @@ export function Sidebar({
     return () => window.removeEventListener("keydown", handleKey);
   }, [mobileOpen, onMobileClose]);
 
-  const asideRef = React.useRef<HTMLElement>(null);
-  const [togglePos, setTogglePos] = React.useState<{ left: number; top: number } | null>(null);
-
-  React.useLayoutEffect(() => {
-    function medir() {
-      const el = asideRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      setTogglePos({ left: rect.right, top: rect.top + 72 });
-    }
-    medir();
-    window.addEventListener("resize", medir);
-
-    // El <aside> anima su ancho con transition-[width] (200ms) al
-    // colapsar/expandir. Medir una sola vez acá (al toggle) deja al botón
-    // con una posición vieja mientras el borde real sigue animando —
-    // queda "flotando" separado del sidebar durante la transición. Se
-    // sigue el borde cuadro a cuadro con rAF mientras dura la animación,
-    // en vez de dejar que el botón interpole su `left` por su cuenta.
-    let rafId: number;
-    function seguirTransicion() {
-      medir();
-      rafId = requestAnimationFrame(seguirTransicion);
-    }
-    rafId = requestAnimationFrame(seguirTransicion);
-    const timeoutId = window.setTimeout(() => cancelAnimationFrame(rafId), 250);
-
-    return () => {
-      window.removeEventListener("resize", medir);
-      cancelAnimationFrame(rafId);
-      window.clearTimeout(timeoutId);
-    };
-  }, [collapsed]);
-
   return (
     <>
       {mobileOpen && (
         <div className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={onMobileClose} aria-hidden="true" />
       )}
-      {/* Portaleado a document.body: escapa del stacking/overflow del layout
-          (sidebar/main) por completo, en vez de pelear con sus z-index —
-          el mismo problema que resuelve useHoverTooltip. */}
-      {togglePos &&
-        createPortal(
-          <button
-            onClick={() => setCollapsed((v) => !v)}
-            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
-            style={{ left: togglePos.left, top: togglePos.top }}
-            className="fixed z-30 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-surface-raised text-text-secondary shadow-none hover:bg-text/[.04] md:flex"
-          >
-            {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-          </button>,
-          document.body
-        )}
       <aside
-        ref={asideRef}
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-[220px] shrink-0 flex-col border-r border-border-soft bg-bg transition-transform duration-200 md:relative md:z-auto md:translate-x-0 md:transition-[width]",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
@@ -177,16 +125,27 @@ export function Sidebar({
           </button>
         </div>
 
-        <div className={cn("flex items-center gap-2.5 px-4 pb-4 pt-2", collapsed && "md:justify-center md:px-0")}>
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] bg-accent">
-            <Activity className="h-3.5 w-3.5 text-white" />
-          </span>
-          <div className={cn("min-w-0", collapsed && "md:hidden")}>
-            <p className="truncate text-[14px] font-semibold leading-tight text-text">oliver</p>
-            <p className="truncate text-[11.5px] leading-tight text-text-tertiary">
-              {isLoading ? "Cargando…" : (org?.name ?? "")}
+        <div
+          className={cn(
+            "flex items-center gap-2.5 px-4 pb-4 pt-3",
+            collapsed && "md:flex-col md:gap-2 md:px-2"
+          )}
+        >
+          <div className={cn("flex min-w-0 flex-1 items-center gap-2.5", collapsed && "md:flex-none md:justify-center")}>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] bg-text">
+              <Activity className="h-3.5 w-3.5 text-white" />
+            </span>
+            <p className={cn("truncate text-[14px] font-semibold leading-tight text-text", collapsed && "md:hidden")}>
+              oliver
             </p>
           </div>
+          <button
+            onClick={() => setCollapsed((v) => !v)}
+            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+            className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-[6px] text-text-tertiary hover:bg-text/[.06] hover:text-text-secondary md:flex"
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
@@ -250,13 +209,13 @@ function SidebarFooterLink({
           cn(
             "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
             collapsed && "md:justify-center md:px-0",
-            isActive ? "bg-accent-100 text-accent-800" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
+            isActive ? "bg-accent text-white" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
           )
         }
       >
         {({ isActive }) => (
           <>
-            <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-accent")} />
+            <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-white")} />
             <span className={cn("flex-1", collapsed && "md:hidden")}>{label}</span>
           </>
         )}
@@ -378,13 +337,13 @@ function SidebarNavLink({
           cn(
             "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
             collapsed && "md:justify-center md:px-0",
-            isActive ? "bg-accent-100 text-accent-800" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
+            isActive ? "bg-accent text-white" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
           )
         }
       >
         {({ isActive }) => (
           <>
-            <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-accent")} />
+            <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-white")} />
             <span className={cn("flex-1", collapsed && "md:hidden")}>{item.label}</span>
           </>
         )}
