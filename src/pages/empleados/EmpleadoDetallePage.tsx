@@ -10,6 +10,7 @@ import { StatRow, type StatRowItem } from "../../components/ui/stat-row";
 import { Tabs } from "../../components/ui/tabs";
 import { Status } from "../../components/ui/status";
 import { Card } from "../../components/ui/card";
+import { Avatar } from "../../components/ui/avatar";
 import { Meter } from "../../components/ui/meter";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
@@ -213,7 +214,12 @@ export default function EmpleadoDetallePage() {
     <>
       <PageHeader
         breadcrumb={[{ label: "Empleados", href: "/empleados" }]}
-        title={nombreCompleto(empleado)}
+        title={
+          <span className="flex items-center gap-2.5">
+            <Avatar nombre={nombreCompleto(empleado)} />
+            {nombreCompleto(empleado)}
+          </span>
+        }
         meta={
           <Status tone={empleado.estado === "activo" ? "success" : empleado.estado === "baja" ? "neutral" : "warning"}>
             {estadoLabel(empleado.estado)}
