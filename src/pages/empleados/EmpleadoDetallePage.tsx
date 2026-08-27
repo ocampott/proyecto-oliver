@@ -9,6 +9,7 @@ import { Dialog } from "../../components/ui/dialog";
 import { StatRow, type StatRowItem } from "../../components/ui/stat-row";
 import { Tabs } from "../../components/ui/tabs";
 import { Status } from "../../components/ui/status";
+import { Badge } from "../../components/ui/badge";
 import { Card } from "../../components/ui/card";
 import { Avatar } from "../../components/ui/avatar";
 import { Meter } from "../../components/ui/meter";
@@ -491,7 +492,11 @@ function AsistenciaTab({ empleadoId }: { empleadoId: string }) {
             registros.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>{horaLocal(r.created_at)}</TableCell>
-                <TableCell>{r.tipo === "entrada" ? "Entrada" : "Salida"}</TableCell>
+                <TableCell>
+                  <Badge tone={r.tipo === "entrada" ? "success" : "neutral"}>
+                    {r.tipo === "entrada" ? "Entrada" : "Salida"}
+                  </Badge>
+                </TableCell>
                 <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
               </TableRow>
             ))}

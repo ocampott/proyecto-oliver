@@ -214,7 +214,7 @@ export default function AsistenciaPage() {
                 containerClassName="w-[136px]"
               />
             </div>
-            {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+            {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
             <div className="ml-auto">
               <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
             </div>
@@ -264,7 +264,7 @@ export default function AsistenciaPage() {
                         </TableCell>
                         <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
                         <TableCell>
-                          <Badge tone={r.tipo === "entrada" ? "ok" : "neutral"}>
+                          <Badge tone={r.tipo === "entrada" ? "success" : "neutral"}>
                             {r.tipo === "entrada" ? "Entrada" : "Salida"}
                           </Badge>
                         </TableCell>

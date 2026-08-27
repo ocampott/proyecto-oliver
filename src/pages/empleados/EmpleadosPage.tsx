@@ -358,7 +358,7 @@ export default function EmpleadosPage() {
           ]}
           containerClassName="w-36"
         />
-        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
         <div className="ml-auto">
           <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
         </div>

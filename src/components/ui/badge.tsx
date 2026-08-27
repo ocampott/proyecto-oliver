@@ -18,11 +18,11 @@ const badgeVariants = cva(
   }
 );
 
-export type BadgeTone = "ok" | "warn" | "danger" | "info" | "neutral";
+export type BadgeTone = "success" | "warning" | "danger" | "info" | "neutral";
 
 const TONE_CLASSES: Record<BadgeTone, string> = {
-  ok: "bg-success-100 text-success-700",
-  warn: "bg-warning/15 text-warning",
+  success: "bg-success-100 text-success-700",
+  warning: "bg-warning/15 text-warning",
   danger: "bg-alert-100 text-alert",
   info: "bg-accent-100 text-accent-800",
   neutral: "bg-text/[.06] text-text-secondary",

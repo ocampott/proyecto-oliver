@@ -224,6 +224,7 @@ export default function HorasPage() {
         </div>
         <MultiSelect
           label="Empleados"
+          variant="chip"
           value={empleadosSel}
           onChange={setEmpleadosSel}
           options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
@@ -250,7 +251,7 @@ export default function HorasPage() {
           ]}
           containerClassName="w-44"
         />
-        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
         <div className="ml-auto">
           <span className="font-mono text-xs text-text-tertiary">{resumen.length} resultados</span>
         </div>

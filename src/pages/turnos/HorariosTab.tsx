@@ -377,6 +377,7 @@ export default function HorariosTab() {
       <div className="page-filters">
         <Select
           label="Empleado"
+          compact
           value={empleadoId}
           onChange={(e) => setEmpleadoIdManual(e.target.value)}
           options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
