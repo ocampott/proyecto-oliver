@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Field } from "../../components/ui/field";
-import { FilterChip } from "../../components/ui/filter-chip";
+import { Select } from "../../components/ui/select";
+import { Toolbar } from "../../components/ui/toolbar";
+import { Segmented } from "../../components/ui/segmented";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -40,11 +42,16 @@ const ESTADO_INFO: Record<CumplimientoRow["estado"], { label: string; tone: Stat
   sin_horario: { label: "Sin horario definido", tone: "neutral" },
 };
 
+const CON_DESVIO: CumplimientoRow["estado"][] = ["tarde", "salida_anticipada", "tarde_y_anticipada"];
+
+type VistaCumplimiento = "todos" | "con_desvio";
+
 export default function CumplimientoTab() {
   const [desde, setDesde] = useState(inicioDeMesAR());
   const [hasta, setHasta] = useState(hoyAR());
   const [sucursalId, setSucursalId] = useState("");
   const [empleadoId, setEmpleadoId] = useState("");
+  const [vista, setVista] = useState<VistaCumplimiento>("todos");
   const [toleranciaInput, setToleranciaInput] = useState("");
   const toast = useToast();
 
@@ -77,6 +84,8 @@ export default function CumplimientoTab() {
     }
   }
 
+  const filasFiltradas = vista === "con_desvio" ? filas.filter((f) => CON_DESVIO.includes(f.estado)) : filas;
+
   return (
     <>
       <Card className="mt-4">
@@ -92,28 +101,36 @@ export default function CumplimientoTab() {
         </div>
       </Card>
 
-      <div className="flex flex-wrap items-end gap-3">
+      <Toolbar>
         <Field label="Desde" type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-40" />
         <Field label="Hasta" type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-40" />
-      </div>
-
-      <div className="page-filters">
-        <FilterChip
+        <Select
           label="Sucursal"
           value={sucursalId}
-          defaultValue=""
-          onChange={setSucursalId}
+          onChange={(e) => setSucursalId(e.target.value)}
           options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+          containerClassName="w-44"
         />
-        <FilterChip
+        <Select
           label="Empleado"
           value={empleadoId}
-          defaultValue=""
-          onChange={setEmpleadoId}
+          onChange={(e) => setEmpleadoId(e.target.value)}
           options={[{ value: "", label: "Todos" }, ...empleados.map((e) => ({ value: e.id, label: e.nombre }))]}
+          containerClassName="w-44"
         />
-        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
-      </div>
+        <Segmented
+          value={vista}
+          onChange={setVista}
+          options={[
+            { value: "todos", label: "Todos" },
+            { value: "con_desvio", label: "Con desvío" },
+          ]}
+        />
+        <div className="ml-auto flex items-center gap-3">
+          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+          <span className="font-mono text-xs text-text-tertiary">{filasFiltradas.length} resultados</span>
+        </div>
+      </Toolbar>
 
       {isError && (
         <p className="mt-2 text-[15px] text-alert">No se pudo cargar el cumplimiento. Probá de nuevo.</p>
@@ -133,7 +150,7 @@ export default function CumplimientoTab() {
         <TableBody>
           {isLoading && <TableSkeleton cols={6} />}
           {!isLoading &&
-            filas.map((f, i) => (
+            filasFiltradas.map((f, i) => (
               <TableRow key={i}>
                 <TableCell>{f.nombre}</TableCell>
                 <TableCell>{f.sucursal_nombre}</TableCell>
@@ -151,7 +168,7 @@ export default function CumplimientoTab() {
                 </TableCell>
               </TableRow>
             ))}
-          {!isLoading && filas.length === 0 && (
+          {!isLoading && filasFiltradas.length === 0 && (
             <TableRow>
               <TableCell colSpan={6} className="text-text-tertiary">Sin turnos en este rango.</TableCell>
             </TableRow>
