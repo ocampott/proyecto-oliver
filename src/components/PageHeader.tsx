@@ -1,22 +1,54 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { cn } from "../lib/utils";
+
+export interface PageHeaderBreadcrumb {
+  label: string;
+  href?: string;
+}
 
 export interface PageHeaderProps {
-  kicker: string;
+  kicker?: string;
   title: ReactNode;
   description?: ReactNode;
   meta?: ReactNode;
+  actions?: ReactNode;
+  breadcrumb?: PageHeaderBreadcrumb[];
 }
 
-/** Encabezado editorial compartido por todas las pantallas internas — mismo tratamiento que Resumen. */
-export function PageHeader({ kicker, title, description, meta }: PageHeaderProps) {
+/** Encabezado compartido por todas las pantallas internas. */
+export function PageHeader({ kicker, title, description, meta, actions, breadcrumb }: PageHeaderProps) {
   return (
-    <header className="flex flex-col gap-2 border-b border-border pb-6 md:flex-row md:items-end md:justify-between">
-      <div>
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-accent">{kicker}</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-[-0.06em] text-text md:text-5xl">{title}</h1>
-        {description && <p className="mt-2 text-sm text-text-secondary">{description}</p>}
+    <header className="flex flex-col gap-3 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
+      <div className="min-w-0">
+        {breadcrumb && breadcrumb.length > 0 && (
+          <nav aria-label="Breadcrumb" className="mb-1.5 flex items-center gap-1.5 text-[12.5px] text-text-tertiary">
+            {breadcrumb.map((b, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                {i > 0 && <span aria-hidden="true">/</span>}
+                {b.href ? (
+                  <Link to={b.href} className="hover:text-text-secondary">
+                    {b.label}
+                  </Link>
+                ) : (
+                  <span className="text-text-secondary">{b.label}</span>
+                )}
+              </span>
+            ))}
+          </nav>
+        )}
+        {kicker && <p className="font-mono text-xs uppercase tracking-[0.18em] text-accent">{kicker}</p>}
+        <h1 className={cn("text-[26px] font-semibold tracking-[-0.02em] text-text md:text-[28px]", kicker && "mt-1")}>
+          {title}
+        </h1>
+        {description && <p className="mt-1.5 text-sm text-text-secondary">{description}</p>}
       </div>
-      {meta && <p className="font-mono text-xs text-text-tertiary">{meta}</p>}
+      {(meta || actions) && (
+        <div className="flex shrink-0 items-center gap-3">
+          {meta && <p className="font-mono text-xs text-text-tertiary">{meta}</p>}
+          {actions}
+        </div>
+      )}
     </header>
   );
 }
