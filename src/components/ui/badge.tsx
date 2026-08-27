@@ -18,11 +18,36 @@ const badgeVariants = cva(
   }
 );
 
+export type BadgeTone = "ok" | "warn" | "danger" | "info" | "neutral";
+
+const TONE_CLASSES: Record<BadgeTone, string> = {
+  ok: "bg-success-100 text-success-700",
+  warn: "bg-warning/15 text-warning",
+  danger: "bg-alert-100 text-alert",
+  info: "bg-accent-100 text-accent-800",
+  neutral: "bg-text/[.06] text-text-secondary",
+};
+
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement>,
-    VariantProps<typeof badgeVariants> {}
+    VariantProps<typeof badgeVariants> {
+  /** Pastilla de tono (estilo R3) — mutuamente excluyente con `variant`. */
+  tone?: BadgeTone;
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, tone, ...props }: BadgeProps) {
+  if (tone) {
+    return (
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-[6px] px-1.5 py-0.5 text-[11px] font-medium leading-4",
+          TONE_CLASSES[tone],
+          className
+        )}
+        {...props}
+      />
+    );
+  }
   return <span className={cn(badgeVariants({ variant }), className)} {...props} />;
 }
 
