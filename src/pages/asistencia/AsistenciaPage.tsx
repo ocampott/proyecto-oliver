@@ -2,14 +2,16 @@ import { useState } from "react";
 import { LogIn, LogOut, Download, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
-import { FilterChip } from "../../components/ui/filter-chip";
+import { Select } from "../../components/ui/select";
+import { Toolbar } from "../../components/ui/toolbar";
+import { Tabs } from "../../components/ui/tabs";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
-import { Badge } from "../../components/ui/badge";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import type { MotivoRechazo, AsistenciaRegistro, TipoMarca } from "../../lib/api";
+import type { AsistenciaRegistro, TipoMarca } from "../../lib/api";
 import { useAsistenciaPaginada, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
+import { horaLocal, MOTIVOS_RECHAZO } from "./format";
 import { Pagination } from "../../components/ui/pagination";
 import { PageHeader } from "../../components/PageHeader";
 import { exportarAsistencia } from "../../lib/api";
@@ -18,31 +20,14 @@ import { useSucursales } from "../sucursales/hooks";
 import { useEntitlements, useOrgActual, tieneModulo, puedeGestionar } from "../../lib/hooks";
 
 type TipoFiltro = "todos" | TipoMarca;
-
-const AR_TZ = "America/Argentina/Buenos_Aires";
+type Vista = "registros" | "rechazadas";
 
 function hoyAR(): string {
-  return new Date().toLocaleDateString("sv", { timeZone: AR_TZ });
+  return new Date().toLocaleDateString("sv", { timeZone: "America/Argentina/Buenos_Aires" });
 }
-
-function horaLocal(iso: string): string {
-  return new Date(iso).toLocaleString("es-AR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: AR_TZ,
-  });
-}
-
-const MOTIVOS: Record<MotivoRechazo, string> = {
-  fuera_de_rango: "Fuera de rango",
-  sucursal_sin_gps: "Sucursal sin GPS configurado",
-  nombre_no_encontrado: "Nombre no encontrado en la nómina",
-  dispositivo_ya_vinculado: "Ya vinculado a otro dispositivo",
-};
 
 export default function AsistenciaPage() {
+  const [vista, setVista] = useState<Vista>("registros");
   const [desde, setDesde] = useState(hoyAR());
   const [hasta, setHasta] = useState(hoyAR());
   const [page, setPage] = useState(1);
@@ -123,15 +108,143 @@ export default function AsistenciaPage() {
 
   return (
     <>
-      <PageHeader kicker="Operación" title="Asistencia" />
+      <PageHeader
+        title="Asistencia"
+        actions={
+          <Button
+            variant="secondary"
+            onClick={handleDescargarExcel}
+            disabled={descargando || sinReportes || !gestionable}
+            title={
+              !gestionable
+                ? "Tu rol no tiene acceso a exportar."
+                : sinReportes
+                  ? "Exportar es una función del plan Básico. Pasate a un plan superior para usarla."
+                  : undefined
+            }
+          >
+            <Download className="h-4 w-4" />
+            {descargando ? "Generando…" : "Descargar Excel"}
+          </Button>
+        }
+      />
 
-      {(rechazadasData?.pagination.total ?? 0) > 0 && (
-        <section className="mt-6">
-          <div className="flex items-center gap-2">
-            <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-text">Intentos rechazados</h2>
-            <Badge variant="alert">{rechazadasData?.pagination.total ?? rechazadas.length} pendientes</Badge>
-          </div>
-          <Table containerClassName="mt-2 border-alert/25">
+      <div className="mt-6">
+        <Tabs
+          value={vista}
+          onChange={setVista}
+          items={[
+            { value: "registros", label: "Registros" },
+            { value: "rechazadas", label: "Rechazadas", count: rechazadasData?.pagination.total },
+          ]}
+        />
+      </div>
+
+      {vista === "registros" && (
+        <section className="page-section">
+          <Toolbar>
+            <Field
+              label="Desde"
+              type="date"
+              value={desde}
+              onChange={(e) => { setDesde(e.target.value); setPage(1); }}
+              containerClassName="w-40"
+            />
+            <Field
+              label="Hasta"
+              type="date"
+              value={hasta}
+              onChange={(e) => { setHasta(e.target.value); setPage(1); }}
+              containerClassName="w-40"
+            />
+            <Select
+              label="Empleado"
+              value={empleadoFiltro}
+              onChange={(e) => { setEmpleadoFiltro(e.target.value); setPage(1); }}
+              options={[{ value: "todos", label: "Todos" }, ...empleados.map((emp) => ({ value: emp.id, label: emp.nombre }))]}
+              containerClassName="w-44"
+            />
+            <Select
+              label="Sucursal"
+              value={sucursalFiltro}
+              onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
+              options={[{ value: "todos", label: "Todos" }, ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre }))]}
+              containerClassName="w-44"
+            />
+            <Select
+              label="Tipo"
+              value={tipoFiltro}
+              onChange={(e) => { setTipoFiltro(e.target.value as TipoFiltro); setPage(1); }}
+              options={[
+                { value: "todos", label: "Todos" },
+                { value: "entrada", label: "Entrada" },
+                { value: "salida", label: "Salida" },
+              ]}
+              containerClassName="w-36"
+            />
+            <div className="ml-auto flex items-center gap-3">
+              {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+              <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
+            </div>
+          </Toolbar>
+
+          {isError && <p className="mt-2 text-[15px] text-alert">No se pudieron cargar los registros. Probá de nuevo.</p>}
+
+          <Table containerClassName="mt-4">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Fecha y hora</TableHead>
+                <TableHead>Empleado</TableHead>
+                <TableHead>Sucursal</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead className="text-right"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && <TableSkeleton cols={5} />}
+              {registros.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell>{horaLocal(r.created_at)}</TableCell>
+                  <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
+                  <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
+                  <TableCell>
+                    {r.tipo === "entrada" ? (
+                      <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-success-700">
+                        <LogIn className="h-3 w-3" /> Entrada
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-text-secondary">
+                        <LogOut className="h-3 w-3" /> Salida
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end">
+                      {gestionable && (
+                        <Button variant="secondary" size="default" onClick={() => setBorrarTarget(r)}>
+                          Borrar
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!isLoading && registros.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-text-tertiary">
+                    No hay registros en este rango.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+        </section>
+      )}
+
+      {vista === "rechazadas" && (
+        <section className="page-section">
+          <Table containerClassName="mt-2">
             <TableHeader>
               <TableRow>
                 <TableHead>Fecha</TableHead>
@@ -148,7 +261,7 @@ export default function AsistenciaPage() {
                   <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
                   <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
                   <TableCell>
-                    {MOTIVOS[r.motivo] ?? r.motivo}
+                    {MOTIVOS_RECHAZO[r.motivo] ?? r.motivo}
                     {r.motivo === "fuera_de_rango" && r.distancia_metros != null && (
                       <span className="text-text-tertiary"> (a {r.distancia_metros} m)</span>
                     )}
@@ -177,6 +290,13 @@ export default function AsistenciaPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {rechazadas.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-text-tertiary">
+                    No hay marcas rechazadas pendientes.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
           {rechazadasData && (
@@ -188,132 +308,6 @@ export default function AsistenciaPage() {
           )}
         </section>
       )}
-
-      <section className="page-section">
-        <div className="flex flex-wrap items-end gap-3">
-          <Field
-            label="Desde"
-            type="date"
-            value={desde}
-            onChange={(e) => { setDesde(e.target.value); setPage(1); }}
-            containerClassName="w-40"
-          />
-          <Field
-            label="Hasta"
-            type="date"
-            value={hasta}
-            onChange={(e) => { setHasta(e.target.value); setPage(1); }}
-            containerClassName="w-40"
-          />
-          <Button
-            variant="secondary"
-            className="ml-auto"
-            onClick={handleDescargarExcel}
-            disabled={descargando || sinReportes || !gestionable}
-            title={
-              !gestionable
-                ? "Tu rol no tiene acceso a exportar."
-                : sinReportes
-                  ? "Exportar es una función del plan Básico. Pasate a un plan superior para usarla."
-                  : undefined
-            }
-          >
-            <Download className="h-4 w-4" />
-            {descargando ? "Generando…" : "Descargar Excel"}
-          </Button>
-        </div>
-
-        <div className="page-filters">
-          <FilterChip
-            label="Empleado"
-            value={empleadoFiltro}
-            defaultValue="todos"
-            onChange={(v) => { setEmpleadoFiltro(v); setPage(1); }}
-            options={[
-              { value: "todos", label: "Todos" },
-              ...empleados.map((emp) => ({ value: emp.id, label: emp.nombre })),
-            ]}
-          />
-          <FilterChip
-            label="Sucursal"
-            value={sucursalFiltro}
-            defaultValue="todos"
-            onChange={(v) => { setSucursalFiltro(v); setPage(1); }}
-            options={[
-              { value: "todos", label: "Todos" },
-              ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre })),
-            ]}
-          />
-          <FilterChip
-            label="Tipo"
-            value={tipoFiltro}
-            defaultValue="todos"
-            onChange={(v) => { setTipoFiltro(v as TipoFiltro); setPage(1); }}
-            options={[
-              { value: "todos", label: "Todos" },
-              { value: "entrada", label: "Entrada" },
-              { value: "salida", label: "Salida" },
-            ]}
-          />
-          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
-        </div>
-
-        {isError && (
-          <p className="mt-2 text-[15px] text-alert">
-            No se pudieron cargar los registros. Probá de nuevo.
-          </p>
-        )}
-
-        <Table containerClassName="mt-4">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fecha y hora</TableHead>
-              <TableHead>Empleado</TableHead>
-              <TableHead>Sucursal</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead className="text-right"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && <TableSkeleton cols={5} />}
-            {registros.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>{horaLocal(r.created_at)}</TableCell>
-                <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
-                <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
-                <TableCell>
-                  {r.tipo === "entrada" ? (
-                    <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-success-700">
-                      <LogIn className="h-3 w-3" /> Entrada
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-text-secondary">
-                      <LogOut className="h-3 w-3" /> Salida
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end">
-                    {gestionable && (
-                      <Button variant="secondary" size="default" onClick={() => setBorrarTarget(r)}>
-                        Borrar
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {!isLoading && registros.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-text-tertiary">
-                  No hay registros en este rango.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
-      </section>
 
       <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar registro">
         <p className="text-[15px] text-text-secondary">
