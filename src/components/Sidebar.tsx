@@ -37,7 +37,7 @@ const LINKS: NavItem[] = [
   { href: "/sucursales", label: "Sucursales", icon: Building2 },
   { href: "/horas", label: "Horas", icon: Clock, modulo: "horas", soloGestion: true },
   { href: "/turnos", label: "Turnos", icon: CalendarDays, modulo: "turnos", soloGestion: true },
-  { href: "/rrhh", label: "RRHH", icon: HeartHandshake, modulo: "rrhh", soloGestion: true },
+  { href: "/rrhh", label: "Ausencias", icon: HeartHandshake, modulo: "rrhh", soloGestion: true },
 ];
 
 const PLAN_REQUERIDO: Record<Modulo, PlanSlug> = {

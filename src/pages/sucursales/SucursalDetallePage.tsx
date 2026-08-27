@@ -47,14 +47,16 @@ export default function SucursalDetallePage() {
   const { data: org } = useOrgActual();
   const gestionable = puedeGestionar(org ?? null);
 
-  // ponytail: trae hasta 500 sucursales y busca la que corresponde — sin
-  // endpoint GET /sucursales/:id dedicado, mismo patrón que Detalle de
-  // empleado. A escala PyME alcanza de sobra.
-  const { data: sucursalesData, isLoading } = useSucursales({ page: 1, pageSize: 500 });
+  // ponytail: trae hasta 30 sucursales (el máximo que el backend acepta
+  // por página) y busca la que corresponde — sin endpoint GET
+  // /sucursales/:id dedicado, mismo patrón que Detalle de empleado. Si
+  // una organización supera las 30 sucursales, esto deja de alcanzar y
+  // hace falta ese endpoint dedicado.
+  const { data: sucursalesData, isLoading: sucursalesLoading } = useSucursales();
   const sucursal = sucursalesData?.data.find((s) => s.id === id);
 
-  const { data: empleados = [] } = useEmpleados();
-  const plantel = empleados.filter((e) => e.sucursal_id === id);
+  const { data: empleados = [], isLoading: empleadosLoading } = useEmpleados();
+  const plantel = empleados.filter((e) => e.sucursal_id === id && e.estado !== "baja");
 
   const live = useAsistenciaEnVivo(org?.id ?? "");
   const grupoAdentro = live.porSucursal.find((g) => g.sucursalId === id);
@@ -103,8 +105,8 @@ export default function SucursalDetallePage() {
     }
   }
 
-  if (isLoading) {
-    return <p className="text-text-tertiary">Cargando...</p>;
+  if (sucursalesLoading || empleadosLoading) {
+    return <p className="text-text-tertiary">Cargando…</p>;
   }
 
   if (!sucursal) {

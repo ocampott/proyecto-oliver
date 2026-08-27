@@ -57,7 +57,7 @@ const PAGINAS: PaginaItem[] = [
   { href: "/sucursales", label: "Sucursales", icon: Building2 },
   { href: "/horas", label: "Horas", icon: Clock, modulo: "horas", soloGestion: true },
   { href: "/turnos", label: "Turnos", icon: CalendarDays, modulo: "turnos", soloGestion: true },
-  { href: "/rrhh", label: "RRHH", icon: HeartHandshake, modulo: "rrhh", soloGestion: true },
+  { href: "/rrhh", label: "Ausencias", icon: HeartHandshake, modulo: "rrhh", soloGestion: true },
   { href: "/configuracion", label: "Configuración", icon: Settings },
   { href: "/plan", label: "Mi plan", icon: CreditCard },
   { href: "/admin", label: "Panel admin", icon: ShieldCheck, soloSuperadmin: true },

@@ -253,7 +253,7 @@ export default function SucursalesPage() {
           {isLoading && <TableSkeleton cols={7} />}
           {!isLoading &&
             sucursales.map((suc) => {
-              const plantelCount = empleados.filter((e) => e.sucursal_id === suc.id).length;
+              const plantelCount = empleados.filter((e) => e.sucursal_id === suc.id && e.estado !== "baja").length;
               const activosAhora = live.porSucursal.find((g) => g.sucursalId === suc.id)?.empleados.length ?? 0;
               return (
               <TableRow

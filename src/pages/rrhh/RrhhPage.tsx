@@ -157,18 +157,15 @@ export default function RrhhPage() {
   const ausencias = data?.ausencias ?? [];
   const resumen = data?.resumen;
 
-  // ponytail: un segundo pedido (sin paginar, tope 500) sobre el mismo
-  // rango/filtros solo para los 3 stats que "resumen" no trae del
-  // servidor (en curso/programadas/días) — a escala PyME alcanza; si una
-  // organización acumula más de 500 ausencias en un rango, evaluar que
-  // el backend calcule estos 3 campos junto con el resto de "resumen".
+  // Sin page/pageSize: el backend devuelve el set completo sin paginar
+  // cuando ninguno de los dos viene en la query (routes/rrhh.ts) — así
+  // los 3 stats que "resumen" no trae del servidor (en curso/programadas/
+  // días) salen bien sobre el total filtrado, no solo una página.
   const { data: statsData } = useAusencias({
     desde,
     hasta,
     sucursalId: sucursalFiltro || undefined,
     motivo: motivoFiltro || undefined,
-    page: 1,
-    pageSize: 500,
   });
   const statsAusencias = statsData?.ausencias ?? [];
   const hoy = hoyAR();
@@ -302,7 +299,7 @@ export default function RrhhPage() {
           value={vista}
           onChange={setVista}
           items={[
-            { value: "registros", label: "Registros" },
+            { value: "registros", label: "Registros", count: resumen?.total },
             { value: "categorias", label: "Categorías", count: categorias.length },
           ]}
         />
