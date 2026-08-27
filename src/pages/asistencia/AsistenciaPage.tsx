@@ -1,5 +1,5 @@
 import { useState, Fragment } from "react";
-import { LogIn, LogOut, Download, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
@@ -11,6 +11,8 @@ import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
+import { PersonCell } from "../../components/ui/avatar";
+import { Badge } from "../../components/ui/badge";
 import type { AsistenciaRegistro, TipoMarca } from "../../lib/api";
 import { useAsistenciaPaginada, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
 import { horaLocal, fechaLocal, MOTIVOS_RECHAZO } from "../../lib/format";
@@ -156,7 +158,7 @@ export default function AsistenciaPage() {
           value={vista}
           onChange={setVista}
           items={[
-            { value: "registros", label: "Registros" },
+            { value: "registros", label: "Registros", count: data?.pagination.total },
             { value: "rechazadas", label: "Rechazadas", count: rechazadasData?.pagination.total },
           ]}
         />
@@ -165,47 +167,55 @@ export default function AsistenciaPage() {
       {vista === "registros" && (
         <section className="page-section">
           <Toolbar>
-            <Field
-              label="Desde"
-              type="date"
-              value={desde}
-              onChange={(e) => { setDesde(e.target.value); setPage(1); }}
-              containerClassName="w-40"
-            />
-            <Field
-              label="Hasta"
-              type="date"
-              value={hasta}
-              onChange={(e) => { setHasta(e.target.value); setPage(1); }}
-              containerClassName="w-40"
-            />
             <Select
               label="Empleado"
+              compact
               value={empleadoFiltro}
               onChange={(e) => { setEmpleadoFiltro(e.target.value); setPage(1); }}
               options={[{ value: "todos", label: "Todos" }, ...empleados.map((emp) => ({ value: emp.id, label: emp.nombre }))]}
-              containerClassName="w-44"
+              containerClassName="w-40"
             />
             <Select
               label="Sucursal"
+              compact
               value={sucursalFiltro}
               onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
               options={[{ value: "todos", label: "Todos" }, ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre }))]}
-              containerClassName="w-44"
+              containerClassName="w-40"
             />
             <Select
               label="Tipo"
+              compact
               value={tipoFiltro}
               onChange={(e) => { setTipoFiltro(e.target.value as TipoFiltro); setPage(1); }}
               options={[
-                { value: "todos", label: "Todos" },
-                { value: "entrada", label: "Entrada" },
-                { value: "salida", label: "Salida" },
+                { value: "todos", label: "Entradas y salidas" },
+                { value: "entrada", label: "Solo entradas" },
+                { value: "salida", label: "Solo salidas" },
               ]}
               containerClassName="w-36"
             />
-            <div className="ml-auto flex items-center gap-3">
-              {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+            <div className="flex items-center gap-1.5">
+              <Field
+                label="Desde"
+                compact
+                type="date"
+                value={desde}
+                onChange={(e) => { setDesde(e.target.value); setPage(1); }}
+                containerClassName="w-[136px]"
+              />
+              <span className="text-xs text-text-tertiary">→</span>
+              <Field
+                label="Hasta"
+                compact
+                type="date"
+                value={hasta}
+                onChange={(e) => { setHasta(e.target.value); setPage(1); }}
+                containerClassName="w-[136px]"
+              />
+            </div>
+            {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+            <div className="ml-auto">
               <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
             </div>
           </Toolbar>
@@ -215,10 +225,10 @@ export default function AsistenciaPage() {
           <Table containerClassName="mt-4">
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha y hora</TableHead>
                 <TableHead>Empleado</TableHead>
                 <TableHead>Sucursal</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead className="text-right">Hora</TableHead>
                 <TableHead className="text-right"></TableHead>
               </TableRow>
             </TableHeader>
@@ -249,27 +259,23 @@ export default function AsistenciaPage() {
                           }
                         }}
                       >
-                        <TableCell>{horaLocal(r.created_at)}</TableCell>
-                        <TableCell>{r.empleado_nombre ?? "—"}</TableCell>
+                        <TableCell>
+                          <PersonCell nombre={r.empleado_nombre ?? "—"} />
+                        </TableCell>
                         <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
                         <TableCell>
-                          {r.tipo === "entrada" ? (
-                            <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-success-700">
-                              <LogIn className="h-3 w-3" /> Entrada
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-[5px] text-[12.5px] font-semibold text-text-secondary">
-                              <LogOut className="h-3 w-3" /> Salida
-                            </span>
-                          )}
+                          <Badge tone={r.tipo === "entrada" ? "ok" : "neutral"}>
+                            {r.tipo === "entrada" ? "Entrada" : "Salida"}
+                          </Badge>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end">
+                        <TableCell className="text-right font-mono text-xs">{horaLocal(r.created_at)}</TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                          <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                             {gestionable && (
                               <Button
                                 variant="secondary"
                                 size="default"
-                                onClick={(e) => { e.stopPropagation(); setBorrarTarget(r); }}
+                                onClick={() => setBorrarTarget(r)}
                               >
                                 Borrar
                               </Button>
