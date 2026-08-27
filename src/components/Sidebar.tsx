@@ -64,10 +64,13 @@ const EXTRA_TITULOS: Record<string, string> = {
 
 /** Título de sección para el topbar, a partir de la ruta actual. */
 export function tituloDeRuta(pathname: string): string {
-  if (EXTRA_TITULOS[pathname]) return EXTRA_TITULOS[pathname];
-  const item = [...LINKS]
-    .sort((a, b) => b.href.length - a.href.length)
-    .find((l) => pathname === l.href || (l.href !== "/" && pathname.startsWith(`${l.href}/`)));
+  const extraKey = Object.keys(EXTRA_TITULOS).find(
+    (r) => pathname === r || pathname.startsWith(`${r}/`)
+  );
+  if (extraKey) return EXTRA_TITULOS[extraKey];
+  const item = LINKS.find(
+    (l) => pathname === l.href || (l.href !== "/" && pathname.startsWith(`${l.href}/`))
+  );
   return item?.label ?? "oliver";
 }
 
@@ -150,7 +153,7 @@ export function Sidebar({
             onClick={() => setCollapsed((v) => !v)}
             aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
             style={{ left: togglePos.left, top: togglePos.top }}
-            className="fixed z-30 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-surface text-text-secondary shadow-none hover:bg-text/[.04] md:flex"
+            className="fixed z-30 hidden h-6 w-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-border bg-surface-raised text-text-secondary shadow-none hover:bg-text/[.04] md:flex"
           >
             {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </button>,
