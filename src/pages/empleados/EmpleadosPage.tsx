@@ -1,11 +1,14 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Loader2, Copy, X } from "lucide-react";
+import { Search, Plus, Loader2, Copy } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
-import { FilterChip } from "../../components/ui/filter-chip";
+import { Toolbar } from "../../components/ui/toolbar";
+import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Status } from "../../components/ui/status";
+import { cn } from "../../lib/utils";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
@@ -72,6 +75,7 @@ function nombreCompleto(emp: Empleado): string {
 }
 
 export default function EmpleadosPage() {
+  const navigate = useNavigate();
   const { data: org } = useOrgActual();
   const { data: sucursalesData } = useSucursales();
   const sucursales = sucursalesData?.data ?? [];
@@ -273,7 +277,7 @@ export default function EmpleadosPage() {
 
   return (
     <>
-      <PageHeader kicker="Operación" title="Empleados" />
+      <PageHeader title="Empleados" />
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <Field
@@ -305,12 +309,11 @@ export default function EmpleadosPage() {
         </Button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <FilterChip
+      <Toolbar>
+        <Select
           label="Estado"
           value={estadoFiltro}
-          defaultValue="todos"
-          onChange={(v) => { setEstadoFiltro(v as EstadoFiltro); setPage(1); }}
+          onChange={(e) => { setEstadoFiltro(e.target.value as EstadoFiltro); setPage(1); }}
           options={[
             { value: "todos", label: "Todos" },
             { value: "activo", label: "Activo" },
@@ -318,47 +321,42 @@ export default function EmpleadosPage() {
             { value: "suspendido", label: "Suspendido" },
             { value: "baja", label: "Baja" },
           ]}
+          containerClassName="w-40"
         />
-        <FilterChip
+        <Select
           label="Dispositivo"
           value={dispositivoFiltro}
-          defaultValue="todos"
-          onChange={(v) => { setDispositivoFiltro(v as DispositivoFiltro); setPage(1); }}
+          onChange={(e) => { setDispositivoFiltro(e.target.value as DispositivoFiltro); setPage(1); }}
           options={[
             { value: "todos", label: "Todos" },
             { value: "vinculado", label: "Vinculado" },
             { value: "no_vinculado", label: "No vinculado" },
           ]}
+          containerClassName="w-40"
         />
-        <FilterChip
+        <Select
           label="Sucursal"
           value={sucursalFiltro}
-          defaultValue=""
-          onChange={(v) => { setSucursalFiltro(v); setPage(1); }}
+          onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
           options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+          containerClassName="w-44"
         />
-        <FilterChip
+        <Select
           label="CUIL"
           value={cuilFiltro}
-          defaultValue="todos"
-          onChange={(v) => { setCuilFiltro(v as CuilFiltro); setPage(1); }}
+          onChange={(e) => { setCuilFiltro(e.target.value as CuilFiltro); setPage(1); }}
           options={[
             { value: "todos", label: "Todos" },
             { value: "con", label: "Con CUIL" },
             { value: "sin", label: "Sin CUIL" },
           ]}
+          containerClassName="w-36"
         />
-        {filtrosActivos && (
-          <button
-            type="button"
-            onClick={limpiarFiltros}
-            className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text"
-          >
-            <X className="h-3.5 w-3.5" />
-            Limpiar filtros
-          </button>
-        )}
-      </div>
+        <div className="ml-auto flex items-center gap-3">
+          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+          <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
+        </div>
+      </Toolbar>
 
       {error && !altaOpen && !editando && !eliminarTarget && (
         <ErrorPlan error={error} className="mt-2">
@@ -383,7 +381,19 @@ export default function EmpleadosPage() {
           {isLoading && <TableSkeleton cols={8} />}
           {!isLoading &&
             empleados.map((emp) => (
-              <TableRow key={emp.id} className={emp.estado === "baja" ? "text-text-muted" : ""}>
+              <TableRow
+                key={emp.id}
+                role="button"
+                tabIndex={0}
+                className={cn("cursor-pointer", emp.estado === "baja" && "text-text-muted")}
+                onClick={() => navigate(`/empleados/${emp.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navigate(`/empleados/${emp.id}`);
+                  }
+                }}
+              >
                 <TableCell>{nombreCompleto(emp)}</TableCell>
                 <Celda value={emp.celular} />
                 <Celda value={emp.cuil ? formatCuil(emp.cuil) : null} />
@@ -406,7 +416,7 @@ export default function EmpleadosPage() {
                     {ESTADO_LABELS[emp.estado]}
                   </Status>
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-1.5">
                     <IconButton
                       onClick={() => abrirEdicion(emp)}
