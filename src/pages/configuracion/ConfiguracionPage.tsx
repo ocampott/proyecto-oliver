@@ -10,6 +10,7 @@ import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { PageHeader } from "../../components/PageHeader";
 import { useToast } from "../../components/ui/toast";
+import { Tabs } from "../../components/ui/tabs";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { useAuth } from "../../lib/auth";
 import { useOrgActual, tieneRol } from "../../lib/hooks";
@@ -38,6 +39,7 @@ export default function ConfiguracionPage() {
   const eliminar = useEliminarMiembro();
   const toast = useToast();
 
+  const [tab, setTab] = useState<"organizacion" | "equipo">("organizacion");
   const [editOrgOpen, setEditOrgOpen] = useState(false);
   const [nombreOrg, setNombreOrg] = useState("");
   const [errorOrg, setErrorOrg] = useState<string | null>(null);
@@ -94,33 +96,77 @@ export default function ConfiguracionPage() {
     <>
       <PageHeader kicker="Espacio de trabajo" title="Configuración" description="Organización, equipo y permisos." />
 
-      <Card className="mt-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Organización</h2>
-            <p className="mt-1 text-[15px] text-text">{org?.name ?? "—"}</p>
-          </div>
-          <Button
-            variant="secondary"
-            onClick={abrirEditarOrg}
-            disabled={!esOwner}
-            title={!esOwner ? "Solo el dueño de la organización puede editar este dato." : undefined}
-          >
-            Editar
-          </Button>
-        </div>
-      </Card>
+      <div className="mt-4">
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "organizacion", label: "Organización" },
+            { value: "equipo", label: "Equipo", count: puedeVerEquipo ? miembros.length : undefined },
+          ]}
+        />
+      </div>
 
-      {puedeVerEquipo && (
+      {tab === "organizacion" && (
+        <>
+          <Card className="mt-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[15px] text-text">{org?.name ?? "—"}</p>
+              <Button
+                variant="secondary"
+                onClick={abrirEditarOrg}
+                disabled={!esOwner}
+                title={!esOwner ? "Solo el dueño de la organización puede editar este dato." : undefined}
+              >
+                Editar
+              </Button>
+            </div>
+          </Card>
+
+          <Card className="mt-4">
+            <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Otras configuraciones</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <Link
+                to="/turnos"
+                className="flex items-center gap-3 rounded-[6px] border border-border px-4 py-3 transition-colors hover:bg-text/[.04]"
+              >
+                <CalendarDays className="h-[18px] w-[18px] text-accent-700" />
+                <span className="flex-1">
+                  <span className="block text-[14px] font-semibold text-text">Tolerancia de horarios</span>
+                  <span className="block text-[12.5px] text-text-secondary">Se administra desde Turnos</span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-text-tertiary" />
+              </Link>
+            </div>
+          </Card>
+
+          {esOwner && (
+            <Card className="mt-4 border-alert/30">
+              <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-alert">Zona sensible</h2>
+              <p className="mt-1 text-[13.5px] text-text-secondary">
+                ¿Necesitás dar de baja esta organización? Escribinos y nos encargamos del resto.
+              </p>
+              <Button variant="secondary" className="mt-3" asChild>
+                <a
+                  href={`mailto:soporte@oliver.app?subject=${encodeURIComponent(
+                    `Baja de organización: ${org?.name ?? ""}`
+                  )}`}
+                >
+                  Solicitar baja de la organización
+                </a>
+              </Button>
+            </Card>
+          )}
+        </>
+      )}
+
+      {tab === "equipo" && puedeVerEquipo && (
         <Card className="mt-4">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Equipo</h2>
-              <p className="mt-1 text-[13.5px] text-text-secondary">
-                Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
-                tienen el mismo acceso, sin importar el rol.
-              </p>
-            </div>
+            <p className="text-[13.5px] text-text-secondary">
+              Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
+              tienen el mismo acceso, sin importar el rol.
+            </p>
             {esOwner && (
               <Button variant="secondary" onClick={() => { setErrorInvitar(null); setInvitarOpen(true); }}>
                 <Plus className="h-4 w-4" />
@@ -177,23 +223,6 @@ export default function ConfiguracionPage() {
           </Table>
         </Card>
       )}
-
-      <Card className="mt-4">
-        <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Otras configuraciones</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <Link
-            to="/turnos"
-            className="flex items-center gap-3 rounded-[6px] border border-border px-4 py-3 transition-colors hover:bg-text/[.04]"
-          >
-            <CalendarDays className="h-[18px] w-[18px] text-accent-700" />
-            <span className="flex-1">
-              <span className="block text-[14px] font-semibold text-text">Tolerancia de horarios</span>
-              <span className="block text-[12.5px] text-text-secondary">Se administra desde Turnos</span>
-            </span>
-            <ChevronRight className="h-4 w-4 text-text-tertiary" />
-          </Link>
-        </div>
-      </Card>
 
       <Dialog open={editOrgOpen} onClose={() => setEditOrgOpen(false)} title="Editar organización">
         <form onSubmit={handleGuardarOrg} className="flex flex-col gap-3">
