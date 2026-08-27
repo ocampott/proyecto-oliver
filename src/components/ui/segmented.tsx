@@ -14,18 +14,18 @@ export interface SegmentedProps<T extends string> {
 
 function Segmented<T extends string>({ value, onChange, options, className }: SegmentedProps<T>) {
   return (
-    <div role="tablist" className={cn("inline-flex items-center gap-0.5 rounded-[8px] bg-surface p-0.5", className)}>
+    <div role="radiogroup" className={cn("inline-flex items-center gap-0.5 rounded-[8px] bg-surface p-0.5", className)}>
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
-          role="tab"
-          aria-selected={opt.value === value}
+          role="radio"
+          aria-checked={opt.value === value}
           onClick={() => onChange(opt.value)}
           className={cn(
             "rounded-[6px] px-3 py-1.5 text-[13px] font-medium transition-colors",
             opt.value === value
-              ? "bg-surface-raised text-text shadow-[0_1px_2px_rgba(13,13,17,.08)]"
+              ? "bg-surface-raised text-text"
               : "text-text-secondary hover:text-text"
           )}
         >

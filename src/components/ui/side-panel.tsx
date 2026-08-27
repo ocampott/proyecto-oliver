@@ -30,7 +30,7 @@ function SidePanel({ open, onClose, title, children, footer, className }: SidePa
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "flex h-full w-full max-w-[420px] flex-col border-l border-border bg-surface-raised",
+          "flex h-full w-full max-w-[420px] flex-col border-l border-border bg-surface-raised shadow-[-16px_0_48px_rgba(13,13,17,.18)]",
           className
         )}
         onClick={(e) => e.stopPropagation()}

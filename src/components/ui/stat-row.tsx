@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
 
-export interface Stat {
+export interface StatRowItem {
   label: string;
   value: React.ReactNode;
   meta?: React.ReactNode;
@@ -9,7 +9,7 @@ export interface Stat {
 }
 
 export interface StatRowProps extends React.HTMLAttributes<HTMLDivElement> {
-  stats: Stat[];
+  stats: StatRowItem[];
 }
 
 const TONE_CLASS = {
@@ -18,11 +18,11 @@ const TONE_CLASS = {
   alert: "text-alert",
 } as const;
 
-function StatRow({ stats, className, ...props }: StatRowProps) {
+function StatRow({ stats, className, style, ...props }: StatRowProps) {
   return (
     <div
       className={cn("grid divide-x divide-border overflow-hidden rounded-[10px] border border-border bg-surface-raised", className)}
-      style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))` }}
+      style={{ gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`, ...style }}
       {...props}
     >
       {stats.map((s, i) => (

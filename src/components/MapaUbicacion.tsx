@@ -327,7 +327,7 @@ export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }
           onFocus={() => sugerencias.length > 0 && setSugerenciasAbiertas(true)}
           onBlur={() => setTimeout(cerrarSugerencias, 150)}
           placeholder="Buscá una dirección..."
-          className="flex h-10 w-full rounded-[4px] border border-border bg-surface-raised px-3 py-2 text-[15px] text-text placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex h-10 w-full rounded-[8px] border border-border bg-surface-raised px-3 py-2 text-[15px] text-text placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         />
         {sugerenciasAbiertas && sugerencias.length > 0 && (
           <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-[10px] border border-border bg-surface-raised shadow-[0_8px_24px_rgba(13,13,17,.1)]">
