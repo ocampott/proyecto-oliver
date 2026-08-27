@@ -353,10 +353,15 @@ git commit -m "feat: componente CommandPalette (⌘K) — navegación, acciones 
 - Modify: `src/components/NotificationBell.tsx`
 
 **Interfaces:**
-- `Sidebar` gana un prop nuevo: `onOpenSearch: () => void` (además de los
-  ya existentes `mobileOpen`/`onMobileClose`) — lo va a pasar
-  `PanelLayout.tsx` en el Task 3, conectado al estado del
-  `CommandPalette`.
+- `Sidebar` gana un prop nuevo **opcional** `onOpenSearch?: () => void`
+  (además de los ya existentes `mobileOpen`/`onMobileClose`) — opcional a
+  propósito: `PanelLayout.tsx` todavía no pasa este prop en este punto del
+  plan (se conecta recién en el Task 3); si fuera obligatorio, el
+  call-site viejo de `PanelLayout.tsx` (`<Sidebar mobileOpen={...}
+  onMobileClose={...} />`, sin `onOpenSearch`) dejaría de compilar antes
+  de que el Task 3 lo actualice. El botón de búsqueda llama
+  `onOpenSearch?.()` — un no-op inerte hasta que el Task 3 lo conecte de
+  verdad.
 - `AccountMenu` gana un prop nuevo **opcional** `collapsed?: boolean`
   (default `false`) — opcional a propósito: `TopBar.tsx` todavía existe
   en este punto del plan (se borra en el Task 3) y sigue llamando
@@ -441,7 +446,7 @@ export function Sidebar({
 }: {
   mobileOpen: boolean;
   onMobileClose: () => void;
-  onOpenSearch: () => void;
+  onOpenSearch?: () => void;
 }) {
   const { data: org, isLoading } = useOrgActual();
   const ent = org?.entitlements ?? null;
@@ -552,7 +557,7 @@ export function Sidebar({
         <div className={cn("px-3 pb-3", collapsed && "md:px-2")}>
           <button
             type="button"
-            onClick={onOpenSearch}
+            onClick={() => onOpenSearch?.()}
             className={cn(
               "flex h-9 w-full items-center gap-2 rounded-[8px] border border-white/10 bg-white/[.04] px-3 text-[13px] text-white/45 hover:bg-white/[.07] hover:text-white/70",
               collapsed && "md:w-9 md:justify-center md:px-0"
@@ -1035,7 +1040,8 @@ git commit -m "feat: sidebar oscura estilo R1 (header+búsqueda+nav+pie) con Acc
 - Delete: `src/components/TopBar.tsx`
 
 **Interfaces:**
-- Consumes: `Sidebar` (Task 2, ahora requiere `onOpenSearch`),
+- Consumes: `Sidebar` (Task 2, acepta `onOpenSearch` opcional — este task
+  es quien lo conecta de verdad por primera vez),
   `CommandPalette` (Task 1), `useOrgActual` (`src/lib/hooks.ts`).
 - `PanelLayout` mantiene su firma pública (`{ children }: { children:
   ReactNode }`) — nada de lo que la consume en `src/App.tsx` (11 rutas)
