@@ -1,55 +1,73 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card } from "../ui/card";
 import { Status } from "../ui/status";
+import { Button } from "../ui/button";
+import { StatRow, type StatRowItem } from "../ui/stat-row";
+import { useToast } from "../ui/toast";
 import { useAsistenciaEnVivo } from "./useAsistenciaEnVivo";
 import { useOlvidaronSalida } from "./useOlvidaronSalida";
 import { useAusenciasHoy } from "./useAusenciasHoy";
+import { useRechazadas, useResolverRechazada } from "../../pages/asistencia/hooks";
+import { horaLocal, fechaLocal, MOTIVOS_RECHAZO } from "../../pages/asistencia/format";
 import { useEntitlements, tieneModulo } from "../../lib/hooks";
-
-function horaLocal(iso: string): string {
-  return new Date(iso).toLocaleTimeString("es-AR", {
-    timeZone: "America/Argentina/Buenos_Aires",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function fechaLocal(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
-}
+import type { Ausencia } from "../../lib/api";
 
 type EnVivo = ReturnType<typeof useAsistenciaEnVivo>;
 
-function LiveCount({ enVivo }: { enVivo: EnVivo }) {
-  const total = enVivo.porSucursal.reduce((acc, group) => acc + group.empleados.length, 0);
+function diasAusencia(a: Pick<Ausencia, "fecha_desde" | "fecha_hasta">): number {
+  const desde = new Date(a.fecha_desde).getTime();
+  const hasta = new Date(a.fecha_hasta).getTime();
+  return Math.round((hasta - desde) / 86400000) + 1;
+}
+
+function AhoraMismo({ enVivo }: { enVivo: EnVivo }) {
   return (
-    <Card className="border-accent bg-accent text-surface-raised">
+    <Card>
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Adentro ahora</span>
-        <Status tone={enVivo.conectado ? "success" : "neutral"} className="bg-surface-raised/15 text-surface-raised">
+        <h3 className="text-sm font-semibold">Ahora mismo</h3>
+        <Status tone={enVivo.conectado ? "success" : "neutral"}>
           {enVivo.conectado ? "En vivo" : "Actualizando"}
         </Status>
       </div>
-      {enVivo.isError ? (
-        <p className="mt-4 text-sm text-surface-raised/70">No pudimos cargar asistencia.</p>
-      ) : (
-        <>
-          <p className="data-number mt-4 text-6xl font-medium">{enVivo.isLoading ? "—" : total}</p>
-          <p className="mt-2 text-sm text-surface-raised/70">personas fichadas</p>
-        </>
+      {enVivo.isError && <p className="mt-4 text-sm text-alert">No pudimos cargar asistencia.</p>}
+      {!enVivo.isError && enVivo.isLoading && <p className="mt-4 text-sm text-text-tertiary">Cargando...</p>}
+      {!enVivo.isError && !enVivo.isLoading && (
+        <div className="mt-4 flex flex-col gap-4">
+          {enVivo.porSucursal.length === 0 && (
+            <p className="text-sm text-text-tertiary">Nadie marcó entrada todavía.</p>
+          )}
+          {enVivo.porSucursal.map((g) => (
+            <div key={g.sucursalId}>
+              <p className="flex items-center justify-between text-[13px] font-semibold text-text">
+                {g.sucursalNombre}
+                <span className="data-number font-mono text-text-tertiary">{g.empleados.length}</span>
+              </p>
+              <ul className="mt-1.5 flex flex-col gap-1">
+                {g.empleados.map((e) => (
+                  <li key={e.empleadoId} className="flex items-baseline justify-between text-[13px] text-text-secondary">
+                    <span className="truncate">{e.empleadoNombre}</span>
+                    <span className="shrink-0 font-mono text-xs text-text-tertiary">desde {horaLocal(e.desde)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       )}
     </Card>
   );
 }
 
-function Recent({ enVivo }: { enVivo: EnVivo }) {
+function UltimosMovimientos({ enVivo }: { enVivo: EnVivo }) {
   return (
     <Card>
-      <h3 className="text-sm font-semibold">Últimos en marcar</h3>
+      <h3 className="text-sm font-semibold">Últimos movimientos</h3>
       {enVivo.isLoading && <p className="mt-5 text-sm text-text-tertiary">Cargando actividad...</p>}
       {enVivo.isError && <p className="mt-5 text-sm text-alert">No pudimos cargar asistencia.</p>}
       {!enVivo.isLoading && !enVivo.isError && (
         <ul className="mt-4 flex flex-col gap-3">
-          {enVivo.ultimosMarcados.slice(0, 4).map((m) => (
+          {enVivo.ultimosMarcados.map((m) => (
             <li key={m.id} className="flex items-baseline justify-between gap-3 text-sm">
               <span className="truncate font-medium">{m.empleadoNombre}</span>
               <span className="shrink-0 font-mono text-xs text-text-tertiary">
@@ -58,6 +76,113 @@ function Recent({ enVivo }: { enVivo: EnVivo }) {
             </li>
           ))}
           {enVivo.ultimosMarcados.length === 0 && <li className="text-sm text-text-tertiary">Sin marcas hoy todavía.</li>}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+function PendientesRevision() {
+  const { data, isLoading } = useRechazadas({ page: 1, pageSize: 5 });
+  const resolver = useResolverRechazada();
+  const toast = useToast();
+  const [resolviendoId, setResolviendoId] = useState<string | null>(null);
+  const rechazadas = data?.data ?? [];
+  const total = data?.pagination.total ?? 0;
+
+  async function handleResolver(id: string, accion: "aprobar" | "descartar") {
+    setResolviendoId(id);
+    try {
+      await resolver.mutateAsync({ id, accion });
+      toast.success(accion === "aprobar" ? "Intento aprobado." : "Intento descartado.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo resolver el intento.");
+    } finally {
+      setResolviendoId(null);
+    }
+  }
+
+  if (!isLoading && total === 0) return null;
+
+  return (
+    <Card>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Pendientes de revisión</h3>
+        {total > 0 && <Status tone="warning">{total}</Status>}
+      </div>
+      {isLoading && <p className="mt-4 text-sm text-text-tertiary">Revisando marcas...</p>}
+      {!isLoading && (
+        <ul className="mt-4 flex flex-col gap-3">
+          {rechazadas.map((r) => (
+            <li key={r.id} className="flex items-center justify-between gap-3 text-sm">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{r.empleado_nombre ?? "—"}</span>
+                <span className="block truncate text-xs text-text-tertiary">
+                  {r.sucursal_nombre ?? "—"} · {MOTIVOS_RECHAZO[r.motivo] ?? r.motivo}
+                </span>
+              </span>
+              <span className="flex shrink-0 gap-1.5">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleResolver(r.id, "aprobar")}
+                  disabled={resolviendoId === r.id}
+                >
+                  Aprobar
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleResolver(r.id, "descartar")}
+                  disabled={resolviendoId === r.id}
+                >
+                  Descartar
+                </Button>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {total > rechazadas.length && (
+        <Link to="/asistencia" className="mt-3 inline-block text-xs font-medium text-accent-700 hover:underline">
+          Ver todas ({total})
+        </Link>
+      )}
+    </Card>
+  );
+}
+
+function AusenciasHoy() {
+  const query = useAusenciasHoy();
+  return (
+    <Card>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Ausencias de hoy</h3>
+        <Link to="/rrhh" className="text-xs font-medium text-accent-700 hover:underline">
+          Ver todas
+        </Link>
+      </div>
+      {query.isLoading && <p className="mt-4 text-sm text-text-tertiary">Revisando RRHH...</p>}
+      {query.isError && <p className="mt-4 text-sm text-alert">No pudimos cargar RRHH.</p>}
+      {!query.isLoading && !query.isError && (
+        <ul className="mt-4 flex flex-col gap-3">
+          {query.ausencias.map((a) => (
+            <li key={a.id} className="flex items-center justify-between gap-3 text-sm">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">{a.empleado_nombre}</span>
+                <span className="block truncate text-xs text-text-tertiary">{a.sucursal_nombre ?? "—"}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-2">
+                {a.certificado_pendiente ? (
+                  <Status tone="warning">Certificado pendiente</Status>
+                ) : (
+                  <span className="text-xs text-text-tertiary">{a.motivo}</span>
+                )}
+                <span className="font-mono text-xs text-text-tertiary">{diasAusencia(a)}d</span>
+              </span>
+            </li>
+          ))}
+          {query.ausencias.length === 0 && <li className="text-sm text-text-tertiary">Sin ausencias hoy.</li>}
         </ul>
       )}
     </Card>
@@ -88,42 +213,47 @@ function PendingHours() {
   );
 }
 
-function Absences() {
-  const query = useAusenciasHoy();
-  return (
-    <Card>
-      <h3 className="text-sm font-semibold">Ausencias hoy</h3>
-      {query.isLoading && <p className="mt-5 text-sm text-text-tertiary">Revisando RRHH...</p>}
-      {query.isError && <p className="mt-5 text-sm text-alert">No pudimos cargar RRHH.</p>}
-      {!query.isLoading && !query.isError && (
-        <ul className="mt-4 flex flex-col gap-3">
-          {query.ausencias.slice(0, 4).map((a) => (
-            <li key={a.id} className="flex items-center justify-between gap-3 text-sm">
-              <span className="truncate font-medium">{a.empleado_nombre}</span>
-              {a.certificado_pendiente ? (
-                <Status tone="warning">Pendiente</Status>
-              ) : (
-                <span className="text-text-tertiary">{a.motivo}</span>
-              )}
-            </li>
-          ))}
-          {query.ausencias.length === 0 && <li className="text-sm text-text-tertiary">Sin ausencias hoy.</li>}
-        </ul>
-      )}
-    </Card>
-  );
-}
-
 export function PulsoOperativo({ orgId }: { orgId: string }) {
   const ent = useEntitlements();
   const live = useAsistenciaEnVivo(orgId);
+  const ausenciasQuery = useAusenciasHoy();
+  const olvidaronQuery = useOlvidaronSalida();
+  const { data: rechazadasData, isLoading: rechazadasLoading } = useRechazadas({ page: 1, pageSize: 5 });
+
+  const totalAdentro = live.porSucursal.reduce((acc, g) => acc + g.empleados.length, 0);
+  const rechazadasCount = rechazadasData?.pagination.total ?? 0;
+
+  const stats: StatRowItem[] = [{ label: "Adentro ahora", value: live.isLoading ? "—" : totalAdentro }];
+  if (tieneModulo(ent, "rrhh")) {
+    stats.push({
+      label: "Ausencias hoy",
+      value: ausenciasQuery.isLoading ? "—" : ausenciasQuery.ausencias.length,
+      tone: ausenciasQuery.ausencias.length > 0 ? "warning" : "default",
+    });
+  }
+  stats.push({
+    label: "Marcas rechazadas",
+    value: rechazadasLoading ? "—" : rechazadasCount,
+    tone: rechazadasCount > 0 ? "warning" : "default",
+  });
+  if (tieneModulo(ent, "horas")) {
+    stats.push({
+      label: "Olvidaron salida",
+      value: olvidaronQuery.isLoading ? "—" : olvidaronQuery.turnos.length,
+      tone: olvidaronQuery.turnos.length > 0 ? "alert" : "default",
+    });
+  }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <LiveCount enVivo={live} />
-      <Recent enVivo={live} />
-      {tieneModulo(ent, "horas") && <PendingHours />}
-      {tieneModulo(ent, "rrhh") && <Absences />}
+    <div className="flex flex-col gap-4">
+      <StatRow stats={stats} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <AhoraMismo enVivo={live} />
+        {tieneModulo(ent, "rrhh") && <AusenciasHoy />}
+        <PendientesRevision />
+        {tieneModulo(ent, "horas") && <PendingHours />}
+        <UltimosMovimientos enVivo={live} />
+      </div>
     </div>
   );
 }

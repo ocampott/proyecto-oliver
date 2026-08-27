@@ -31,7 +31,7 @@ interface Marca {
 function derivarUltimosMarcados(registros: AsistenciaRegistro[]): Marca[] {
   return [...registros]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 3)
+    .slice(0, 6)
     .map((r) => ({
       id: r.id,
       empleadoNombre: r.empleado_nombre ?? "Empleado",

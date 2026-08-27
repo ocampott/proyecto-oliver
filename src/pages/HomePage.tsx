@@ -122,7 +122,6 @@ export default function HomePage() {
   return (
     <div className="animate-appear">
       <PageHeader
-        kicker="Panel de control"
         title={org.name}
         meta={new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "long" }).format(new Date())}
       />
