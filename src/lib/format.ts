@@ -1,4 +1,4 @@
-import type { MotivoRechazo } from "../../lib/api";
+import type { MotivoRechazo } from "./api";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 

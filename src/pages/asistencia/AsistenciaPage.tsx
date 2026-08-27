@@ -13,7 +13,7 @@ import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import type { AsistenciaRegistro, TipoMarca } from "../../lib/api";
 import { useAsistenciaPaginada, useRechazadas, useBorrarAsistencia, useResolverRechazada } from "./hooks";
-import { horaLocal, fechaLocal, MOTIVOS_RECHAZO } from "./format";
+import { horaLocal, fechaLocal, MOTIVOS_RECHAZO } from "../../lib/format";
 import { Pagination } from "../../components/ui/pagination";
 import { PageHeader } from "../../components/PageHeader";
 import { exportarAsistencia } from "../../lib/api";

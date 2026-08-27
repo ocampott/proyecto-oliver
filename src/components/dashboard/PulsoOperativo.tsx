@@ -9,7 +9,7 @@ import { useAsistenciaEnVivo } from "./useAsistenciaEnVivo";
 import { useOlvidaronSalida } from "./useOlvidaronSalida";
 import { useAusenciasHoy } from "./useAusenciasHoy";
 import { useRechazadas, useResolverRechazada } from "../../pages/asistencia/hooks";
-import { horaLocal, horaCorta, MOTIVOS_RECHAZO } from "../../pages/asistencia/format";
+import { horaLocal, horaCorta, MOTIVOS_RECHAZO } from "../../lib/format";
 import { useEntitlements, tieneModulo } from "../../lib/hooks";
 import type { Ausencia } from "../../lib/api";
 
