@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQueries } from "@tanstack/react-query";
 import { Download } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
@@ -18,9 +17,10 @@ import { PageHeader } from "../../components/PageHeader";
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { useToast } from "../../components/ui/toast";
 import { useHoras } from "./hooks";
+import { useHorariosDeVarios } from "../turnos/hooks";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
-import { exportarHoras, getHorarios, type Turno, type HorarioEmpleado } from "../../lib/api";
+import { exportarHoras, type Turno, type HorarioEmpleado } from "../../lib/api";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -112,7 +112,7 @@ function construirResumen(turnos: Turno[], esperadasPorEmpleado: Map<string, num
       dias: diasPorEmpleado.get(empleadoId)?.size ?? 0,
       horas,
       esperadas,
-      extras: Math.max(0, horas - esperadas),
+      extras: esperadas > 0 ? Math.max(0, horas - esperadas) : 0,
       enCurso: enCursoPorEmpleado.get(empleadoId) ?? false,
     };
   });
@@ -176,9 +176,8 @@ export default function HorasPage() {
   );
 
   const empleadoIdsConTurnos = [...new Set(turnos.map((t) => t.empleado_id))];
-  const horariosQueries = useQueries({
-    queries: empleadoIdsConTurnos.map((id) => ({ queryKey: ["horarios", id], queryFn: () => getHorarios(id) })),
-  });
+  const horariosQueries = useHorariosDeVarios(empleadoIdsConTurnos);
+  const esperadasCargando = horariosQueries.some((q) => q.isLoading);
   const esperadasPorEmpleado = new Map<string, number>();
   empleadoIdsConTurnos.forEach((id, i) => {
     esperadasPorEmpleado.set(id, calcularHorasEsperadas(horariosQueries[i]?.data ?? [], desde, hasta));
@@ -197,11 +196,12 @@ export default function HorasPage() {
 
   const sucursalNombre = new Map(sucursales.map((s) => [s.id, s.nombre]));
 
+  const serie = serieDiaria(turnos);
   const stats: StatRowItem[] = [
     { label: "Horas totales", value: totalHoras.toFixed(1), meta: `${resumen.length} empleados` },
     { label: "Horas extra", value: totalExtras.toFixed(1), tone: totalExtras > 20 ? "warning" : "default" },
     { label: "Por debajo de lo esperado", value: porDebajo, tone: porDebajo > 0 ? "warning" : "default" },
-    { label: "Tendencia", value: <Sparkline data={serieDiaria(turnos)} className="text-accent" /> },
+    { label: "Tendencia", value: serie.length > 1 ? <Sparkline data={serie} className="text-accent" /> : "—" },
   ];
 
   return (
@@ -292,8 +292,8 @@ export default function HorasPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableSkeleton cols={7} />}
-            {!isLoading &&
+            {(isLoading || esperadasCargando) && <TableSkeleton cols={7} />}
+            {!isLoading && !esperadasCargando &&
               resumenOrdenado.map((r) => (
                 <TableRow key={r.empleadoId}>
                   <TableCell>

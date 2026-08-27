@@ -9,8 +9,7 @@ import { MultiSelect } from "../../components/ui/multi-select";
 import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import { getHorarios, type HorarioEmpleado, type TurnoTemplate, type Empleado, type Sucursal } from "../../lib/api";
-import { useQueries } from "@tanstack/react-query";
+import { type HorarioEmpleado, type TurnoTemplate, type Empleado, type Sucursal } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
 import {
@@ -23,6 +22,7 @@ import {
   useCrearPlantilla,
   useEditarPlantilla,
   useBorrarPlantilla,
+  useHorariosDeVarios,
 } from "./hooks";
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -66,9 +66,7 @@ function HorariosOverview({
   sucursales: Sucursal[];
   onSelectEmpleado: (id: string) => void;
 }) {
-  const horariosQueries = useQueries({
-    queries: empleados.map((e) => ({ queryKey: ["horarios", e.id], queryFn: () => getHorarios(e.id) })),
-  });
+  const horariosQueries = useHorariosDeVarios(empleados.map((e) => e.id));
   const cargando = horariosQueries.some((q) => q.isLoading);
   const sucursalNombre = new Map(sucursales.map((s) => [s.id, s.nombre]));
 
@@ -106,7 +104,19 @@ function HorariosOverview({
           {cargando && <TableSkeleton cols={4} />}
           {!cargando &&
             filas.map((f) => (
-              <TableRow key={f.empleado.id} className="cursor-pointer" onClick={() => onSelectEmpleado(f.empleado.id)}>
+              <TableRow
+                key={f.empleado.id}
+                role="button"
+                tabIndex={0}
+                className="cursor-pointer"
+                onClick={() => onSelectEmpleado(f.empleado.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onSelectEmpleado(f.empleado.id);
+                  }
+                }}
+              >
                 <TableCell>{f.empleado.nombre}</TableCell>
                 <TableCell>{f.sucursal}</TableCell>
                 <TableCell>
@@ -114,6 +124,7 @@ function HorariosOverview({
                     {ORDEN_DIAS.map((d) => (
                       <span
                         key={d}
+                        title={DIAS[d]}
                         className={`flex h-5 w-5 items-center justify-center rounded-[4px] font-mono text-[9px] uppercase ${
                           f.diasConBloque.has(d) ? "bg-accent-100 text-accent-800" : "bg-text/[.04] text-text-tertiary"
                         }`}
