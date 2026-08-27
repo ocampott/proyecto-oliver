@@ -9,7 +9,8 @@ import { MultiSelect } from "../../components/ui/multi-select";
 import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import type { HorarioEmpleado, TurnoTemplate } from "../../lib/api";
+import { getHorarios, type HorarioEmpleado, type TurnoTemplate, type Empleado, type Sucursal } from "../../lib/api";
+import { useQueries } from "@tanstack/react-query";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
 import {
@@ -53,6 +54,86 @@ function DiaToggle({ dias, onToggle }: { dias: number[]; onToggle: (d: number) =
         </button>
       ))}
     </div>
+  );
+}
+
+function HorariosOverview({
+  empleados,
+  sucursales,
+  onSelectEmpleado,
+}: {
+  empleados: Empleado[];
+  sucursales: Sucursal[];
+  onSelectEmpleado: (id: string) => void;
+}) {
+  const horariosQueries = useQueries({
+    queries: empleados.map((e) => ({ queryKey: ["horarios", e.id], queryFn: () => getHorarios(e.id) })),
+  });
+  const cargando = horariosQueries.some((q) => q.isLoading);
+  const sucursalNombre = new Map(sucursales.map((s) => [s.id, s.nombre]));
+
+  const filas = empleados.map((e, i) => {
+    const horarios = horariosQueries[i]?.data ?? [];
+    return {
+      empleado: e,
+      horarios,
+      diasConBloque: new Set(horarios.map((h) => h.dia_semana)),
+      sucursal: e.sucursal_id ? (sucursalNombre.get(e.sucursal_id) ?? "—") : "—",
+    };
+  });
+
+  const activosSinHorario = filas.filter((f) => f.empleado.estado === "activo" && f.horarios.length === 0);
+
+  return (
+    <Card className="mb-6">
+      <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Horarios por empleado</h2>
+      {activosSinHorario.length > 0 && (
+        <p className="mt-1 text-[13px] text-warning">
+          {activosSinHorario.length} empleado{activosSinHorario.length === 1 ? "" : "s"} activo
+          {activosSinHorario.length === 1 ? "" : "s"} sin horario cargado.
+        </p>
+      )}
+      <Table containerClassName="mt-3">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Empleado</TableHead>
+            <TableHead>Sucursal</TableHead>
+            <TableHead>Semana</TableHead>
+            <TableHead>Días</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {cargando && <TableSkeleton cols={4} />}
+          {!cargando &&
+            filas.map((f) => (
+              <TableRow key={f.empleado.id} className="cursor-pointer" onClick={() => onSelectEmpleado(f.empleado.id)}>
+                <TableCell>{f.empleado.nombre}</TableCell>
+                <TableCell>{f.sucursal}</TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    {ORDEN_DIAS.map((d) => (
+                      <span
+                        key={d}
+                        className={`flex h-5 w-5 items-center justify-center rounded-[4px] font-mono text-[9px] uppercase ${
+                          f.diasConBloque.has(d) ? "bg-accent-100 text-accent-800" : "bg-text/[.04] text-text-tertiary"
+                        }`}
+                      >
+                        {DIAS[d].slice(0, 1)}
+                      </span>
+                    ))}
+                  </div>
+                </TableCell>
+                <TableCell>{f.diasConBloque.size}</TableCell>
+              </TableRow>
+            ))}
+          {!cargando && filas.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} className="text-text-tertiary">Sin empleados cargados.</TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </Card>
   );
 }
 
@@ -278,6 +359,10 @@ export default function HorariosTab() {
 
   return (
     <>
+      <HorariosOverview empleados={empleados} sucursales={sucursales} onSelectEmpleado={setEmpleadoIdManual} />
+
+      <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Detalle por empleado</h2>
+
       <div className="page-filters">
         <Select
           label="Empleado"
