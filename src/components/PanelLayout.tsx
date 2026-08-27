@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { MobileHeader } from "./MobileHeader";
+import { Topbar } from "./Topbar";
 import { Sidebar } from "./Sidebar";
 import { CommandPalette } from "./CommandPalette";
 
@@ -20,13 +20,9 @@ export function PanelLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-dvh overflow-hidden">
-      <Sidebar
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-        onOpenSearch={() => setPaletteOpen(true)}
-      />
+      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
       <div className="flex min-h-0 flex-1 flex-col">
-        <MobileHeader onMenuClick={() => setMobileOpen(true)} onSearchClick={() => setPaletteOpen(true)} />
+        <Topbar onMenuClick={() => setMobileOpen(true)} onOpenSearch={() => setPaletteOpen(true)} />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-[1440px] px-6 py-8 md:px-10 md:py-10">{children}</div>
         </main>
