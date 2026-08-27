@@ -10,6 +10,7 @@ import { StatRow, type StatRowItem } from "../../components/ui/stat-row";
 import { Tabs } from "../../components/ui/tabs";
 import { Status } from "../../components/ui/status";
 import { Card } from "../../components/ui/card";
+import { Meter } from "../../components/ui/meter";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { Pagination } from "../../components/ui/pagination";
@@ -20,9 +21,12 @@ import { useSucursales } from "../sucursales/hooks";
 import { useHoras } from "../horas/hooks";
 import { useHorarios, useCumplimiento } from "../turnos/hooks";
 import { useAsistenciaPaginada } from "../asistencia/hooks";
+import { useAusencias } from "../rrhh/hooks";
 import { calcularHorasEsperadas, ESTADO_INFO } from "../turnos/calculos";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
+const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const ORDEN_DIAS = [1, 2, 3, 4, 5, 6, 0];
 
 function hoyAR(): string {
   return new Date().toLocaleDateString("sv", { timeZone: AR_TZ });
@@ -30,6 +34,10 @@ function hoyAR(): string {
 
 function inicioDeMesAR(): string {
   return `${hoyAR().slice(0, 7)}-01`;
+}
+
+function inicioDeAnioAR(): string {
+  return `${hoyAR().slice(0, 4)}-01-01`;
 }
 
 function hace30Dias(): string {
@@ -40,6 +48,10 @@ function hace30Dias(): string {
 
 function fechaLocal(iso: string): string {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("es-AR");
+}
+
+function diasEntre(desde: string, hasta: string): number {
+  return Math.round((new Date(hasta).getTime() - new Date(desde).getTime()) / 86400000) + 1;
 }
 
 function nombreCompleto(emp: Empleado): string {
@@ -75,6 +87,9 @@ export default function EmpleadoDetallePage() {
   const { data: horarios = [] } = useHorarios(id ?? "");
   const { data: cumplimiento30 = [] } = useCumplimiento({ desde: hace30Dias(), hasta, empleadoId: id });
   const cumplimientoHoy = cumplimiento30.find((f) => f.fecha === hasta);
+  const { data: ausenciasAnioData } = useAusencias({ empleadoId: id, desde: inicioDeAnioAR(), hasta });
+  const ausenciasAnio = ausenciasAnioData?.ausencias ?? [];
+  const diasAusenciasAnio = ausenciasAnio.reduce((acc, a) => acc + diasEntre(a.fecha_desde, a.fecha_hasta), 0);
 
   const turnosEmpleado = (horasData?.turnos ?? []).filter((t) => t.empleado_id === id);
   const horasTrabajadas = turnosEmpleado.reduce((acc, t) => acc + (t.horas ?? 0), 0);
@@ -184,6 +199,7 @@ export default function EmpleadoDetallePage() {
       meta: "últimos 30 días",
       tone: desviosCount > 0 ? "warning" : "default",
     },
+    { label: "Ausencias", value: ausenciasAnio.length, meta: `${diasAusenciasAnio} días en el año` },
   ];
 
   return (
@@ -305,6 +321,60 @@ export default function EmpleadoDetallePage() {
 
       {vista === "asistencia" && <AsistenciaTab empleadoId={empleado.id} />}
 
+      {vista === "horario" && (
+        <div className="mt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Día</TableHead>
+                <TableHead>Carga</TableHead>
+                <TableHead>Horario</TableHead>
+                <TableHead>Sucursal</TableHead>
+                <TableHead>Tolerancia</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ORDEN_DIAS.map((d) => {
+                const bloques = horarios.filter((h) => h.dia_semana === d);
+                if (bloques.length === 0) {
+                  return (
+                    <TableRow key={d}>
+                      <TableCell>{DIAS[d]}</TableCell>
+                      <TableCell colSpan={4} className="text-text-tertiary">
+                        Franco
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
+                const horasDia =
+                  bloques.reduce((acc, h) => {
+                    const [hI, mI] = h.hora_inicio.split(":").map(Number);
+                    const [hF, mF] = h.hora_fin.split(":").map(Number);
+                    return acc + Math.max(0, hF * 60 + mF - (hI * 60 + mI));
+                  }, 0) / 60;
+                return bloques.map((h, i) => (
+                  <TableRow key={h.id}>
+                    {i === 0 ? <TableCell rowSpan={bloques.length}>{DIAS[d]}</TableCell> : null}
+                    {i === 0 ? (
+                      <TableCell rowSpan={bloques.length}>
+                        <Meter value={horasDia} max={12} />
+                      </TableCell>
+                    ) : null}
+                    <TableCell>
+                      {h.hora_inicio}–{h.hora_fin}
+                    </TableCell>
+                    <TableCell>{h.sucursal_nombre ?? "—"}</TableCell>
+                    <TableCell>{h.tolerancia_min ?? "General"}</TableCell>
+                  </TableRow>
+                ));
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {vista === "ausencias" && <AusenciasTab empleadoId={empleado.id} />}
+
       <Dialog
         open={editOpen}
         onClose={() => {
@@ -394,6 +464,45 @@ function AsistenciaTab({ empleadoId }: { empleadoId: string }) {
         </TableBody>
       </Table>
       {data && <Pagination pagination={data.pagination} onPageChange={setPage} onPageSizeChange={(s) => { setPageSize(s); setPage(1); }} />}
+    </div>
+  );
+}
+
+function AusenciasTab({ empleadoId }: { empleadoId: string }) {
+  const { data, isLoading } = useAusencias({ empleadoId });
+  const ausencias = data?.ausencias ?? [];
+
+  return (
+    <div className="mt-6">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Motivo</TableHead>
+            <TableHead>Desde</TableHead>
+            <TableHead>Hasta</TableHead>
+            <TableHead>Certificado</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading && <TableSkeleton cols={4} />}
+          {!isLoading &&
+            ausencias.map((a) => (
+              <TableRow key={a.id}>
+                <TableCell>{a.motivo}</TableCell>
+                <TableCell>{fechaLocal(a.fecha_desde)}</TableCell>
+                <TableCell>{fechaLocal(a.fecha_hasta)}</TableCell>
+                <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
+              </TableRow>
+            ))}
+          {!isLoading && ausencias.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={4} className="text-text-tertiary">
+                Sin ausencias registradas.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }
