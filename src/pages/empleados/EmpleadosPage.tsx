@@ -8,6 +8,7 @@ import { Select } from "../../components/ui/select";
 import { Toolbar } from "../../components/ui/toolbar";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Status } from "../../components/ui/status";
+import { PersonCell } from "../../components/ui/avatar";
 import { cn } from "../../lib/utils";
 import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
@@ -303,19 +304,29 @@ export default function EmpleadosPage() {
 
       <Toolbar>
         <Field
-          label="Buscar"
-          placeholder="Nombre del empleado"
+          label="Buscar por nombre o CUIL"
+          compact
+          placeholder="Buscar por nombre o CUIL"
           value={busqueda}
           onChange={(e) => { setBusqueda(e.target.value); setPage(1); }}
-          containerClassName="w-56"
+          containerClassName="w-60"
           icon={<Search className="h-[15px] w-[15px]" />}
         />
         <Select
+          label="Sucursal"
+          compact
+          value={sucursalFiltro}
+          onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
+          options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+          containerClassName="w-44"
+        />
+        <Select
           label="Estado"
+          compact
           value={estadoFiltro}
           onChange={(e) => { setEstadoFiltro(e.target.value as EstadoFiltro); setPage(1); }}
           options={[
-            { value: "todos", label: "Todos" },
+            { value: "todos", label: "Todos los estados" },
             { value: "activo", label: "Activo" },
             { value: "de_licencia", label: "De licencia" },
             { value: "suspendido", label: "Suspendido" },
@@ -325,24 +336,19 @@ export default function EmpleadosPage() {
         />
         <Select
           label="Dispositivo"
+          compact
           value={dispositivoFiltro}
           onChange={(e) => { setDispositivoFiltro(e.target.value as DispositivoFiltro); setPage(1); }}
           options={[
-            { value: "todos", label: "Todos" },
+            { value: "todos", label: "Cualquier dispositivo" },
             { value: "vinculado", label: "Vinculado" },
-            { value: "no_vinculado", label: "No vinculado" },
+            { value: "no_vinculado", label: "Sin vincular" },
           ]}
           containerClassName="w-40"
         />
         <Select
-          label="Sucursal"
-          value={sucursalFiltro}
-          onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
-          options={[{ value: "", label: "Todas" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-          containerClassName="w-44"
-        />
-        <Select
           label="CUIL"
+          compact
           value={cuilFiltro}
           onChange={(e) => { setCuilFiltro(e.target.value as CuilFiltro); setPage(1); }}
           options={[
@@ -352,8 +358,8 @@ export default function EmpleadosPage() {
           ]}
           containerClassName="w-36"
         />
-        <div className="ml-auto flex items-center gap-3">
-          {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} />}
+        <div className="ml-auto">
           <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
         </div>
       </Toolbar>
@@ -394,7 +400,9 @@ export default function EmpleadosPage() {
                   }
                 }}
               >
-                <TableCell>{nombreCompleto(emp)}</TableCell>
+                <TableCell>
+                  <PersonCell nombre={nombreCompleto(emp)} />
+                </TableCell>
                 <Celda value={emp.celular} />
                 <Celda value={emp.cuil ? formatCuil(emp.cuil) : null} />
                 <Celda value={sucursales.find((s) => s.id === emp.sucursal_id)?.nombre} />
@@ -417,7 +425,7 @@ export default function EmpleadosPage() {
                   </Status>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end gap-1.5">
+                  <div className="flex justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                     <IconButton
                       onClick={() => abrirEdicion(emp)}
                       disabled={accionandoId === emp.id || !gestionable}
