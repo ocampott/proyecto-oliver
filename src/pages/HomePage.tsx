@@ -132,25 +132,27 @@ export default function HomePage() {
       />
 
       {admin && (
-        <section className="mt-8" aria-labelledby="pulso-title">
-          <div className="mb-4 flex items-center gap-3">
-            <span className="size-2 rounded-full bg-accent" />
-            <h2 id="pulso-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-text">
-              Pulso operativo
-            </h2>
-            <span className="font-mono text-xs text-text-tertiary">en vivo</span>
+        <section className="page-section" aria-labelledby="pulso-title">
+          <h2 id="pulso-title" className="flex items-center gap-3 text-text">
+            <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
+            Pulso operativo
+            <span className="ml-auto font-mono text-xs normal-case tracking-normal text-text-tertiary">
+              en vivo
+            </span>
+          </h2>
+          <div className="mt-4">
+            <PulsoOperativo orgId={org.id} />
           </div>
-          <PulsoOperativo orgId={org.id} />
         </section>
       )}
 
-      <section className="mt-12" aria-labelledby="accesos-title">
-        <div className="flex items-baseline justify-between border-b border-border pb-3">
-          <h2 id="accesos-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-text">
-            Accesos rápidos
-          </h2>
-          <span className="font-mono text-xs text-text-tertiary">{ACCESOS.length.toString().padStart(2, "0")} módulos</span>
-        </div>
+      <section className="page-section" aria-labelledby="accesos-title">
+        <h2 id="accesos-title" className="flex items-baseline gap-3 text-text">
+          Accesos rápidos
+          <span className="ml-auto font-mono text-xs normal-case tracking-normal text-text-tertiary">
+            {ACCESOS.length.toString().padStart(2, "0")} módulos
+          </span>
+        </h2>
         <div className="grid gap-x-8 md:grid-cols-2 lg:grid-cols-3">
           {ACCESOS.map((a, index) => {
             const Icon = a.icon;
@@ -191,7 +193,7 @@ export default function HomePage() {
                   <span className="block font-semibold tracking-[-0.02em]">
                     {a.label}
                     {bloqueado && a.planRequerido && (
-                      <Badge variant="outline" className="ml-2">
+                      <Badge variant="neutral" className="ml-2">
                         {PLAN_NOMBRE[a.planRequerido]}
                       </Badge>
                     )}

@@ -26,7 +26,7 @@ function AhoraMismo({ enVivo }: { enVivo: EnVivo }) {
   return (
     <Card>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Ahora mismo</h3>
+        <h3 className="text-[14px] font-semibold">Ahora mismo</h3>
         <Status tone={enVivo.conectado ? "success" : "neutral"}>
           {enVivo.conectado ? "En vivo" : "Actualizando"}
         </Status>
@@ -63,11 +63,11 @@ function AhoraMismo({ enVivo }: { enVivo: EnVivo }) {
 function UltimosMovimientos({ enVivo }: { enVivo: EnVivo }) {
   return (
     <Card>
-      <h3 className="text-sm font-semibold">Últimos movimientos</h3>
+      <h3 className="text-[14px] font-semibold">Últimos movimientos</h3>
       {enVivo.isLoading && <p className="mt-5 text-sm text-text-tertiary">Cargando actividad...</p>}
       {enVivo.isError && <p className="mt-5 text-sm text-alert">No pudimos cargar asistencia.</p>}
       {!enVivo.isLoading && !enVivo.isError && (
-        <ul className="mt-4 flex flex-col gap-3">
+        <ul className="mt-4 flex max-h-[280px] flex-col gap-3 overflow-y-auto">
           {enVivo.ultimosMarcados.map((m) => (
             <li key={m.id} className="flex items-baseline justify-between gap-3 text-sm">
               <span className="truncate font-medium">{m.empleadoNombre}</span>
@@ -107,18 +107,29 @@ function PendientesRevision() {
 
   return (
     <Card>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Pendientes de revisión</h3>
-        {total > 0 && (
-          <Badge tone="warning" className="font-mono">
-            {total}
-          </Badge>
-        )}
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-[14px] font-semibold">Pendientes de revisión</h3>
+        <span className="flex shrink-0 items-center gap-2">
+          {total > 0 && (
+            <Badge tone="warning" className="font-mono">
+              {total}
+            </Badge>
+          )}
+          {!isError && total > rechazadas.length && (
+            <Link
+              to="/asistencia"
+              state={{ vista: "rechazadas" }}
+              className="text-xs font-medium text-accent-700 hover:underline"
+            >
+              Ver todas
+            </Link>
+          )}
+        </span>
       </div>
       {isLoading && <p className="mt-4 text-sm text-text-tertiary">Revisando marcas...</p>}
       {isError && <p className="mt-4 text-sm text-alert">No pudimos cargar las marcas rechazadas.</p>}
       {!isLoading && !isError && (
-        <ul className="mt-4 flex flex-col gap-3">
+        <ul className="mt-4 flex max-h-[280px] flex-col gap-3 overflow-y-auto">
           {rechazadas.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-3 text-sm">
               <span className="min-w-0 flex-1">
@@ -149,15 +160,6 @@ function PendientesRevision() {
           ))}
         </ul>
       )}
-      {!isError && total > rechazadas.length && (
-        <Link
-          to="/asistencia"
-          state={{ vista: "rechazadas" }}
-          className="mt-3 inline-block text-xs font-medium text-accent-700 hover:underline"
-        >
-          Ver todas ({total})
-        </Link>
-      )}
     </Card>
   );
 }
@@ -167,7 +169,7 @@ function AusenciasHoy() {
   return (
     <Card>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Ausencias de hoy</h3>
+        <h3 className="text-[14px] font-semibold">Ausencias de hoy</h3>
         <Link to="/rrhh" className="text-xs font-medium text-accent-700 hover:underline">
           Ver todas
         </Link>
@@ -203,11 +205,11 @@ function PendingHours() {
   const query = useOlvidaronSalida();
   return (
     <Card>
-      <h3 className="text-sm font-semibold">Olvidaron salida</h3>
+      <h3 className="text-[14px] font-semibold">Olvidaron salida</h3>
       {query.isLoading && <p className="mt-5 text-sm text-text-tertiary">Revisando turnos...</p>}
       {query.isError && <p className="mt-5 text-sm text-alert">No pudimos cargar horas.</p>}
       {!query.isLoading && !query.isError && (
-        <ul className="mt-4 flex flex-col gap-3">
+        <ul className="mt-4 flex max-h-[280px] flex-col gap-3 overflow-y-auto">
           {query.turnos.slice(0, 4).map((t) => (
             <li key={`${t.empleadoId}-${t.entradaAt}`} className="flex items-baseline justify-between gap-3 text-sm">
               <span className="truncate font-medium">{t.nombre}</span>
