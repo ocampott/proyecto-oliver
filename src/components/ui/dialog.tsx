@@ -1,4 +1,5 @@
 import * as React from "react";
+import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export interface DialogProps {
@@ -40,10 +41,7 @@ function Dialog({ open, onClose, title, children, className }: DialogProps) {
             className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-text/5 text-text-secondary hover:bg-text/10"
             aria-label="Cerrar"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 6 6 18" />
-              <path d="M6 6l12 12" />
-            </svg>
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
         {children}

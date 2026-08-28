@@ -2,6 +2,20 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
+/*
+ * Cuándo usar qué (regla del sistema, Etapa 8 del rediseño R1/R3):
+ *
+ *   <Badge tone="…">     → estado de un registro: activo/inactivo,
+ *                          pendiente/suspendido, éxito/alerta de una fila.
+ *   <Status tone="…">    → presencia en vivo / "ahora mismo" ÚNICAMENTE
+ *                          (status.tsx, punto + label). No para estados
+ *                          de datos ni para contadores.
+ *   <Badge variant="…">  → etiqueta estructural: rol (owner/admin),
+ *                          plan requerido, "Actual", "Sin acceso".
+ *
+ * `tone` y `variant` son mutuamente excluyentes: si viene `tone`, gana
+ * `tone` y se ignora `variant`.
+ */
 const badgeVariants = cva(
   "inline-flex items-center rounded-[6px] px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide",
   {
