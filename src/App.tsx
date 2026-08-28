@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./lib/auth";
@@ -30,11 +31,7 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 function PageFallback() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <div
-        className="h-8 w-8 animate-spin rounded-full border-[3px] border-text/15 border-t-accent"
-        role="status"
-        aria-label="Cargando"
-      />
+      <Loader2 className="h-8 w-8 animate-spin text-accent" role="status" aria-label="Cargando" />
     </div>
   );
 }

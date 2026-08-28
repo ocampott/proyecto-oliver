@@ -248,19 +248,18 @@ export default function AsistenciaPage() {
                     {grupo.registros.map((r) => (
                       <TableRow
                         key={r.id}
-                        role="button"
-                        tabIndex={0}
                         className="cursor-pointer"
                         onClick={() => setDetalle(r)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setDetalle(r);
-                          }
-                        }}
                       >
-                        <TableCell>
+                        <TableCell className="relative">
                           <PersonCell nombre={r.empleado_nombre ?? "—"} />
+                          {/* Sin onClick: el click nativo del botón (mouse,
+                              Enter o Espacio) burbujea al onClick de la fila. */}
+                          <button
+                            type="button"
+                            className="absolute inset-0"
+                            aria-label={`Ver detalle de la marca de ${r.empleado_nombre ?? "—"}`}
+                          />
                         </TableCell>
                         <TableCell>{r.sucursal_nombre ?? "—"}</TableCell>
                         <TableCell>
@@ -269,7 +268,7 @@ export default function AsistenciaPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-mono text-xs">{horaLocal(r.created_at)}</TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                             {gestionable && (
                               <Button

@@ -276,7 +276,7 @@ export default function SucursalesPage() {
                 <TableCell>
                   <Badge tone={suc.activa ? "success" : "neutral"}>{suc.activa ? "Activa" : "Inactiva"}</Badge>
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                     <IconButton
                       onClick={() => abrirEdicion(suc)}

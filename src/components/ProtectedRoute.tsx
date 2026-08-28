@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -9,11 +10,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-[3px] border-text/15 border-t-accent"
-          role="status"
-          aria-label="Cargando"
-        />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" role="status" aria-label="Cargando" />
       </main>
     );
   }

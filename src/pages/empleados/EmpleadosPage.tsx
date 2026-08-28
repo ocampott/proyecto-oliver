@@ -389,19 +389,18 @@ export default function EmpleadosPage() {
             empleados.map((emp) => (
               <TableRow
                 key={emp.id}
-                role="button"
-                tabIndex={0}
                 className={cn("cursor-pointer", emp.estado === "baja" && "text-text-muted")}
                 onClick={() => navigate(`/empleados/${emp.id}`)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigate(`/empleados/${emp.id}`);
-                  }
-                }}
               >
-                <TableCell>
+                <TableCell className="relative">
                   <PersonCell nombre={nombreCompleto(emp)} />
+                  {/* Sin onClick: el click nativo del botón (mouse, Enter o
+                      Espacio) burbujea al onClick de la fila. */}
+                  <button
+                    type="button"
+                    className="absolute inset-0"
+                    aria-label={`Ver detalle de ${nombreCompleto(emp)}`}
+                  />
                 </TableCell>
                 <Celda value={emp.celular} />
                 <Celda value={emp.cuil ? formatCuil(emp.cuil) : null} />
@@ -424,7 +423,7 @@ export default function EmpleadosPage() {
                     {ESTADO_LABELS[emp.estado]}
                   </Status>
                 </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                     <IconButton
                       onClick={() => abrirEdicion(emp)}

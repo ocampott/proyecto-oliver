@@ -3,15 +3,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 /*
- * Cuándo usar qué (regla del sistema, Etapa 8 del rediseño R1/R3):
+ * Cuándo usar qué (estado actual del código, no aspiracional):
  *
- *   <Badge tone="…">     → estado de un registro: activo/inactivo,
- *                          pendiente/suspendido, éxito/alerta de una fila.
- *   <Status tone="…">    → presencia en vivo / "ahora mismo" ÚNICAMENTE
- *                          (status.tsx, punto + label). No para estados
- *                          de datos ni para contadores.
- *   <Badge variant="…">  → etiqueta estructural: rol (owner/admin),
+ *   <Badge variant="…">  → etiquetas estructurales: rol (owner/admin),
  *                          plan requerido, "Actual", "Sin acceso".
+ *   <Badge tone="…">     → PREFERIDO para el estado de un registro en
+ *                          código nuevo: activo/inactivo,
+ *                          pendiente/suspendido, éxito/alerta de una fila.
+ *   <Status>             → hoy se usa tanto para presencia en vivo
+ *                          ("en vivo", "ahora mismo") COMO para muchos
+ *                          badges de estado de registro ya existentes.
+ *                          Además expone un tono `accent` que `Badge tone`
+ *                          no tiene. Para badges de estado nuevos preferí
+ *                          `Badge tone`; migrar los usos existentes de
+ *                          `Status` es un cambio aparte.
  *
  * `tone` y `variant` son mutuamente excluyentes: si viene `tone`, gana
  * `tone` y se ignora `variant`.

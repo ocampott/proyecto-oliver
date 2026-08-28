@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { cn } from "../lib/utils";
 
 export interface PageHeaderBreadcrumb {
   label: string;
@@ -8,7 +7,6 @@ export interface PageHeaderBreadcrumb {
 }
 
 export interface PageHeaderProps {
-  kicker?: string;
   title: ReactNode;
   description?: ReactNode;
   meta?: ReactNode;
@@ -17,7 +15,7 @@ export interface PageHeaderProps {
 }
 
 /** Encabezado compartido por todas las pantallas internas. */
-export function PageHeader({ kicker, title, description, meta, actions, breadcrumb }: PageHeaderProps) {
+export function PageHeader({ title, description, meta, actions, breadcrumb }: PageHeaderProps) {
   return (
     <header className="flex flex-col gap-3 border-b border-border pb-5 md:flex-row md:items-end md:justify-between">
       <div className="min-w-0">
@@ -37,8 +35,7 @@ export function PageHeader({ kicker, title, description, meta, actions, breadcru
             ))}
           </nav>
         )}
-        {kicker && <p className="font-mono text-xs uppercase tracking-[0.18em] text-accent">{kicker}</p>}
-        <h1 className={cn("text-[26px] font-semibold tracking-[-0.02em] text-text md:text-[28px]", kicker && "mt-1")}>
+        <h1 className="text-[26px] font-semibold tracking-[-0.02em] text-text md:text-[28px]">
           {title}
         </h1>
         {description && <p className="mt-1.5 text-sm text-text-secondary">{description}</p>}

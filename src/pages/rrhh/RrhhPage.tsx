@@ -384,7 +384,7 @@ export default function RrhhPage() {
                     </TableCell>
                     <TableCell className="text-right font-mono text-xs">{diasEntre(a.fecha_desde, a.fecha_hasta)}</TableCell>
                     <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                         <IconButton onClick={() => setBorrarTarget(a)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
                       </div>

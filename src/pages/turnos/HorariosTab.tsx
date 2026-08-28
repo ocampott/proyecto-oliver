@@ -106,18 +106,19 @@ function HorariosOverview({
             filas.map((f) => (
               <TableRow
                 key={f.empleado.id}
-                role="button"
-                tabIndex={0}
                 className="cursor-pointer"
                 onClick={() => onSelectEmpleado(f.empleado.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelectEmpleado(f.empleado.id);
-                  }
-                }}
               >
-                <TableCell>{f.empleado.nombre}</TableCell>
+                <TableCell className="relative">
+                  {f.empleado.nombre}
+                  {/* Sin onClick: el click nativo del botón (mouse, Enter o
+                      Espacio) burbujea al onClick de la fila. */}
+                  <button
+                    type="button"
+                    className="absolute inset-0"
+                    aria-label={`Ver horario de ${f.empleado.nombre}`}
+                  />
+                </TableCell>
                 <TableCell>{f.sucursal}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">

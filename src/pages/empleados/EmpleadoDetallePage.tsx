@@ -175,7 +175,23 @@ export default function EmpleadoDetallePage() {
   }
 
   if (empleadosLoading) {
-    return <p className="text-text-tertiary">Cargando...</p>;
+    // Misma estructura que la página cargada: PageHeader (breadcrumb +
+    // título) → StatRow → barra de tabs → grid de contenido. Evita el
+    // salto de layout.
+    return (
+      <div className="animate-pulse">
+        <div className="border-b border-border pb-5">
+          <div className="h-4 w-28 rounded-[6px] bg-text/10" />
+          <div className="mt-2 h-8 w-56 rounded-[6px] bg-text/10" />
+        </div>
+        <div className="mt-6 h-[92px] rounded-[6px] bg-text/10" />
+        <div className="mt-6 h-9 w-72 rounded-[6px] bg-text/10" />
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="h-56 rounded-[6px] bg-text/10" />
+          <div className="h-56 rounded-[6px] bg-text/10" />
+        </div>
+      </div>
+    );
   }
 
   if (!empleado) {

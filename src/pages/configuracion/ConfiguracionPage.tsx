@@ -39,6 +39,7 @@ export default function ConfiguracionPage() {
   const toast = useToast();
 
   const [tab, setTab] = useState<"organizacion" | "equipo">("organizacion");
+  const tabEfectivo = tab === "equipo" && !puedeVerEquipo ? "organizacion" : tab;
   const [editOrgOpen, setEditOrgOpen] = useState(false);
   const [nombreOrg, setNombreOrg] = useState("");
   const [errorOrg, setErrorOrg] = useState<string | null>(null);
@@ -97,7 +98,7 @@ export default function ConfiguracionPage() {
 
       <div className="mt-6">
         <Tabs
-          value={tab}
+          value={tabEfectivo}
           onChange={setTab}
           items={[
             { value: "organizacion", label: "Organización" },
@@ -111,7 +112,7 @@ export default function ConfiguracionPage() {
         />
       </div>
 
-      {tab === "organizacion" && (
+      {tabEfectivo === "organizacion" && (
         <div {...tabPanelProps("organizacion")}>
           <Card className="mt-4">
             <div className="flex items-center justify-between gap-3">
@@ -164,7 +165,7 @@ export default function ConfiguracionPage() {
         </div>
       )}
 
-      {tab === "equipo" && puedeVerEquipo && (
+      {tabEfectivo === "equipo" && puedeVerEquipo && (
         <Card {...tabPanelProps("equipo")} className="mt-4">
           <div className="flex items-start justify-between gap-3">
             <p className="text-[13.5px] text-text-secondary">

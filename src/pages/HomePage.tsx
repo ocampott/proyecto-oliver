@@ -136,7 +136,7 @@ export default function HomePage() {
           <h2 id="pulso-title" className="flex items-center gap-3 text-text">
             <span className="size-2 rounded-full bg-accent" aria-hidden="true" />
             Pulso operativo
-            <span className="ml-auto font-mono text-xs normal-case tracking-normal text-text-tertiary">
+            <span className="ml-auto font-mono text-xs font-normal normal-case tracking-normal text-text-tertiary">
               en vivo
             </span>
           </h2>
@@ -149,7 +149,7 @@ export default function HomePage() {
       <section className="page-section" aria-labelledby="accesos-title">
         <h2 id="accesos-title" className="flex items-baseline gap-3 text-text">
           Accesos rápidos
-          <span className="ml-auto font-mono text-xs normal-case tracking-normal text-text-tertiary">
+          <span className="ml-auto font-mono text-xs font-normal normal-case tracking-normal text-text-tertiary">
             {ACCESOS.length.toString().padStart(2, "0")} módulos
           </span>
         </h2>
