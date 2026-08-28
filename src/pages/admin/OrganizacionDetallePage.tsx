@@ -220,7 +220,7 @@ function SucursalesTab({ orgId }: { orgId: string }) {
               <TableCell>{s.nombre}</TableCell>
               <TableCell>{s.direccion ?? "—"}</TableCell>
               <TableCell>
-                <Status tone={s.activa ? "success" : "neutral"}>{s.activa ? "Activa" : "Inactiva"}</Status>
+                <Badge tone={s.activa ? "success" : "neutral"}>{s.activa ? "Activa" : "Inactiva"}</Badge>
               </TableCell>
             </TableRow>
           ))}

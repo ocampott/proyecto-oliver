@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../ui/card";
 import { Status } from "../ui/status";
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { StatRow, type StatRowItem } from "../ui/stat-row";
 import { useToast } from "../ui/toast";
@@ -108,7 +109,11 @@ function PendientesRevision() {
     <Card>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Pendientes de revisión</h3>
-        {total > 0 && <Status tone="warning">{total}</Status>}
+        {total > 0 && (
+          <Badge tone="warning" className="font-mono">
+            {total}
+          </Badge>
+        )}
       </div>
       {isLoading && <p className="mt-4 text-sm text-text-tertiary">Revisando marcas...</p>}
       {isError && <p className="mt-4 text-sm text-alert">No pudimos cargar las marcas rechazadas.</p>}

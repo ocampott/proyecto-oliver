@@ -6,7 +6,6 @@ import { Field } from "../../components/ui/field";
 import { Card } from "../../components/ui/card";
 import { Dialog } from "../../components/ui/dialog";
 import { Badge } from "../../components/ui/badge";
-import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { PageHeader } from "../../components/PageHeader";
 import { useToast } from "../../components/ui/toast";
@@ -203,7 +202,7 @@ export default function ConfiguracionPage() {
                       <Badge variant={m.role === "owner" ? "accent" : "neutral"}>{ROL_LABEL[m.role]}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Status tone={m.activo ? "success" : "warning"}>{m.activo ? "Activo" : "Pendiente"}</Status>
+                      <Badge tone={m.activo ? "success" : "warning"}>{m.activo ? "Activo" : "Pendiente"}</Badge>
                     </TableCell>
                     <TableCell>{fechaLocal(m.createdAt)}</TableCell>
                     <TableCell className="text-right">
