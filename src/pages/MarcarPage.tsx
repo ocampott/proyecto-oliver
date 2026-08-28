@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle, Loader2, LogIn, LogOut, RotateCcw, TriangleAle
 import { Button } from "../components/ui/button";
 import { Field } from "../components/ui/field";
 import { Card } from "../components/ui/card";
+import { cn } from "../lib/utils";
 import { getEstadoMarcado, identificar, verificar, registrarMarca } from "../lib/api";
 
 type Etapa =
@@ -15,13 +16,24 @@ type Etapa =
   | { tipo: "marcar"; nombre: string }
   | { tipo: "rechazado"; nombreMarcar: string; mensaje: string };
 
-function IconCircle({ tone, icon }: { tone: "success" | "alert"; icon: ReactNode }) {
-  return tone === "alert" ? (
-    <span className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-alert-100">
-      {icon}
-    </span>
-  ) : (
-    <span className="flex h-[26px] w-[26px] flex-none items-center justify-center rounded-full bg-success-700">
+function IconCircle({
+  tone,
+  size,
+  icon,
+}: {
+  tone: "success" | "alert";
+  /** Lado del círculo en px. 52 = ícono principal de estado; 26 = adorno inline. */
+  size: 26 | 52;
+  icon: ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "flex flex-none items-center justify-center rounded-full",
+        tone === "alert" ? "bg-alert-100" : "bg-success-700"
+      )}
+      style={{ height: size, width: size }}
+    >
       {icon}
     </span>
   );
@@ -132,7 +144,7 @@ export default function MarcarPage() {
   if (etapa.tipo === "cargando") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
-        <Card className="w-full max-w-sm rounded-[20px] text-center">
+        <Card className="w-full max-w-sm text-center">
           <Loader2
             className="mx-auto h-6 w-6 animate-spin text-text-tertiary"
             role="status"
@@ -146,7 +158,7 @@ export default function MarcarPage() {
   if (etapa.tipo === "invalido") {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
-        <Card className="w-full max-w-sm rounded-[20px] text-center">
+        <Card className="w-full max-w-sm text-center">
           <p className="text-text">
             Este enlace no es válido o la sucursal está desactivada. Pedile el QR correcto a tu encargado.
           </p>
@@ -157,7 +169,7 @@ export default function MarcarPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
-      <Card className="w-full max-w-sm rounded-[20px]">
+      <Card className="w-full max-w-sm">
         <h1 className="text-[20px] font-semibold tracking-[-0.02em] text-text">{sucursalNombre}</h1>
 
         {etapa.tipo === "identificar" && (
@@ -175,7 +187,7 @@ export default function MarcarPage() {
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
             />
-            <Button type="submit" variant="primary" size="lg" className="h-12 justify-between rounded-[12px] text-[15px]" disabled={loading}>
+            <Button type="submit" variant="primary" size="lg" className="h-12 justify-between text-[15px]" disabled={loading}>
               Continuar <ArrowRight className="h-4 w-4" />
             </Button>
           </form>
@@ -223,7 +235,7 @@ export default function MarcarPage() {
               onChange={(e) => setCode(e.target.value.replace(/\s/g, ""))}
               className="text-center text-lg tracking-widest"
             />
-            <Button type="submit" variant="primary" size="lg" className="h-12 rounded-[12px] text-[15px]" disabled={loading}>
+            <Button type="submit" variant="primary" size="lg" className="h-12 text-[15px]" disabled={loading}>
               Vincular
             </Button>
           </form>
@@ -238,7 +250,7 @@ export default function MarcarPage() {
               onClick={() => handleMarcar("entrada")}
               variant="primary"
               size="lg"
-              className="h-12 rounded-[12px] text-[15px]"
+              className="h-12 text-[15px]"
               disabled={loading}
             >
               <LogIn className="h-4 w-4" /> Marcar entrada
@@ -247,7 +259,7 @@ export default function MarcarPage() {
               onClick={() => handleMarcar("salida")}
               variant="secondary"
               size="lg"
-              className="h-12 rounded-[12px] text-[15px]"
+              className="h-12 text-[15px]"
               disabled={loading}
             >
               <LogOut className="h-4 w-4" /> Marcar salida
@@ -257,7 +269,7 @@ export default function MarcarPage() {
 
         {etapa.tipo === "rechazado" && (
           <div className="mt-4 flex flex-col gap-3">
-            <IconCircle tone="alert" icon={<TriangleAlert className="h-[26px] w-[26px] text-alert" />} />
+            <IconCircle tone="alert" size={52} icon={<TriangleAlert className="h-[26px] w-[26px] text-alert" />} />
             <h4 className="text-[20px] font-semibold tracking-[-0.02em] text-text">No pudimos registrar la marca</h4>
             <p className="text-[13px] text-text-secondary">{etapa.mensaje}</p>
             <Button
@@ -271,8 +283,8 @@ export default function MarcarPage() {
         )}
 
         {mensaje && (
-          <div className="mt-4 flex items-center gap-[10px] rounded-xl bg-success-100 px-[14px] py-[13px] text-[13.5px] font-semibold text-success-700">
-            <IconCircle tone="success" icon={<CheckCircle className="h-3.5 w-3.5 text-white" />} />
+          <div className="mt-4 flex items-center gap-[10px] rounded-[10px] bg-success-100 px-[14px] py-[13px] text-[13.5px] font-semibold text-success-700">
+            <IconCircle tone="success" size={26} icon={<CheckCircle className="h-3.5 w-3.5 text-white" />} />
             {mensaje}
           </div>
         )}
