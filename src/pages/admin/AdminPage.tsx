@@ -147,18 +147,20 @@ export default function AdminPage() {
             organizaciones.map((org) => (
               <TableRow
                 key={org.id}
-                role="button"
-                tabIndex={0}
                 className="cursor-pointer"
                 onClick={() => navigate(`/admin/organizaciones/${org.id}`)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigate(`/admin/organizaciones/${org.id}`);
-                  }
-                }}
               >
-                <TableCell>{org.name}</TableCell>
+                <TableCell className="relative">
+                  {org.name}
+                  {/* Sin onClick: el click nativo del botón (mouse, Enter o
+                      Espacio) burbujea al onClick de la fila. Un solo punto
+                      de navegación, un solo tab-stop, cero cambio visual. */}
+                  <button
+                    type="button"
+                    className="absolute inset-0"
+                    aria-label={`Ver detalle de ${org.name}`}
+                  />
+                </TableCell>
                 <TableCell>{org.slug}</TableCell>
                 <TableCell className="capitalize">{org.plan}</TableCell>
                 <TableCell>

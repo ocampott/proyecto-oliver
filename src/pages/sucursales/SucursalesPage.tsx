@@ -258,18 +258,19 @@ export default function SucursalesPage() {
               return (
               <TableRow
                 key={suc.id}
-                role="button"
-                tabIndex={0}
                 className={cn("cursor-pointer", !suc.activa && "text-text-muted")}
                 onClick={() => navigate(`/sucursales/${suc.id}`)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navigate(`/sucursales/${suc.id}`);
-                  }
-                }}
               >
-                <TableCell>{suc.nombre}</TableCell>
+                <TableCell className="relative">
+                  {suc.nombre}
+                  {/* Sin onClick: el click nativo del botón (mouse, Enter o
+                      Espacio) burbujea al onClick de la fila. */}
+                  <button
+                    type="button"
+                    className="absolute inset-0"
+                    aria-label={`Ver detalle de ${suc.nombre}`}
+                  />
+                </TableCell>
                 <TableCell>{suc.direccion ?? "—"}</TableCell>
                 <TableCell className="text-right font-mono text-xs text-text-tertiary">{`${suc.radio_metros} m`}</TableCell>
                 <TableCell className="text-right font-mono text-xs">{plantelCount}</TableCell>

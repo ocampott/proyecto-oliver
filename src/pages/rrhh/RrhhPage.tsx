@@ -361,19 +361,18 @@ export default function RrhhPage() {
                 ausencias.map((a) => (
                   <TableRow
                     key={a.id}
-                    role="button"
-                    tabIndex={0}
                     className="cursor-pointer"
                     onClick={() => abrirDetalle(a)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        abrirDetalle(a);
-                      }
-                    }}
                   >
-                    <TableCell>
+                    <TableCell className="relative">
                       <PersonCell nombre={a.empleado_nombre} />
+                      {/* Sin onClick: el click nativo del botón (mouse, Enter
+                          o Espacio) burbujea al onClick de la fila. */}
+                      <button
+                        type="button"
+                        className="absolute inset-0"
+                        aria-label={`Ver detalle de la ausencia de ${a.empleado_nombre}`}
+                      />
                     </TableCell>
                     <TableCell>{a.motivo}</TableCell>
                     <TableCell>{a.sucursal_nombre ?? "—"}</TableCell>
