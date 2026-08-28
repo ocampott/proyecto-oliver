@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tabs } from "../../components/ui/tabs";
+import { Tabs, tabPanelProps } from "../../components/ui/tabs";
 import { PageHeader } from "../../components/PageHeader";
 import HorariosTab from "./HorariosTab";
 import CumplimientoTab from "./CumplimientoTab";
@@ -24,7 +24,15 @@ export default function TurnosPage() {
         />
       </div>
 
-      {tab === "horarios" ? <HorariosTab /> : <CumplimientoTab />}
+      {tab === "horarios" ? (
+        <div {...tabPanelProps("horarios")}>
+          <HorariosTab />
+        </div>
+      ) : (
+        <div {...tabPanelProps("cumplimiento")}>
+          <CumplimientoTab />
+        </div>
+      )}
     </>
   );
 }

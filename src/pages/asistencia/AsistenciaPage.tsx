@@ -5,7 +5,7 @@ import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
 import { Toolbar } from "../../components/ui/toolbar";
-import { Tabs } from "../../components/ui/tabs";
+import { Tabs, tabPanelProps } from "../../components/ui/tabs";
 import { SidePanel } from "../../components/ui/side-panel";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Dialog } from "../../components/ui/dialog";
@@ -165,7 +165,7 @@ export default function AsistenciaPage() {
       </div>
 
       {vista === "registros" && (
-        <section className="page-section">
+        <section {...tabPanelProps("registros")} className="page-section">
           <Toolbar>
             <Select
               label="Empleado"
@@ -300,7 +300,7 @@ export default function AsistenciaPage() {
       )}
 
       {vista === "rechazadas" && (
-        <section className="page-section">
+        <section {...tabPanelProps("rechazadas")} className="page-section">
           <Table containerClassName="mt-2">
             <TableHeader>
               <TableRow>

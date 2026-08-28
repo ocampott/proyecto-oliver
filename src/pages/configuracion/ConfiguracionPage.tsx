@@ -10,7 +10,7 @@ import { Status } from "../../components/ui/status";
 import { IconButton } from "../../components/ui/icon-button";
 import { PageHeader } from "../../components/PageHeader";
 import { useToast } from "../../components/ui/toast";
-import { Tabs } from "../../components/ui/tabs";
+import { Tabs, tabPanelProps } from "../../components/ui/tabs";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { useAuth } from "../../lib/auth";
 import { useOrgActual, tieneRol } from "../../lib/hooks";
@@ -102,13 +102,18 @@ export default function ConfiguracionPage() {
           onChange={setTab}
           items={[
             { value: "organizacion", label: "Organización" },
-            { value: "equipo", label: "Equipo", count: puedeVerEquipo ? miembros.length : undefined },
+            // El contenido de "Equipo" está gateado por rol más abajo; si el
+            // rol no puede verlo, tampoco tiene que ver la pestaña (quedaba
+            // una región vacía para rol `agent`).
+            ...(puedeVerEquipo
+              ? [{ value: "equipo" as const, label: "Equipo", count: miembros.length }]
+              : []),
           ]}
         />
       </div>
 
       {tab === "organizacion" && (
-        <>
+        <div {...tabPanelProps("organizacion")}>
           <Card className="mt-4">
             <div className="flex items-center justify-between gap-3">
               <p className="text-[15px] text-text">{org?.name ?? "—"}</p>
@@ -157,11 +162,11 @@ export default function ConfiguracionPage() {
               </Button>
             </Card>
           )}
-        </>
+        </div>
       )}
 
       {tab === "equipo" && puedeVerEquipo && (
-        <Card className="mt-4">
+        <Card {...tabPanelProps("equipo")} className="mt-4">
           <div className="flex items-start justify-between gap-3">
             <p className="text-[13.5px] text-text-secondary">
               Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados

@@ -12,7 +12,7 @@ import { IconButton } from "../../components/ui/icon-button";
 import { useToast } from "../../components/ui/toast";
 import { Status } from "../../components/ui/status";
 import { StatRow, type StatRowItem } from "../../components/ui/stat-row";
-import { Tabs } from "../../components/ui/tabs";
+import { Tabs, tabPanelProps } from "../../components/ui/tabs";
 import { PersonCell } from "../../components/ui/avatar";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { Pagination } from "../../components/ui/pagination";
@@ -306,7 +306,7 @@ export default function RrhhPage() {
       </div>
 
       {vista === "registros" && (
-        <section className="page-section">
+        <section {...tabPanelProps("registros")} className="page-section">
           <div className="mt-4 flex flex-wrap items-end gap-2">
             <Button variant="primary" className="ml-auto" onClick={() => setAltaOpen(true)}>
               <Plus className="h-4 w-4" />
@@ -402,7 +402,7 @@ export default function RrhhPage() {
       )}
 
       {vista === "categorias" && (
-        <Card className="mt-6">
+        <Card {...tabPanelProps("categorias")} className="mt-6">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Categorías de motivo</h2>

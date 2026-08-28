@@ -4,7 +4,7 @@ import { Loader2, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import { Tabs } from "../../components/ui/tabs";
+import { Tabs, tabPanelProps } from "../../components/ui/tabs";
 import { PersonCell } from "../../components/ui/avatar";
 import { PageHeader } from "../../components/PageHeader";
 import { Status } from "../../components/ui/status";
@@ -87,10 +87,26 @@ export default function OrganizacionDetallePage() {
         />
       </div>
 
-      {tab === "miembros" && <MiembrosTab orgId={orgId} />}
-      {tab === "empleados" && <EmpleadosTab orgId={orgId} />}
-      {tab === "sucursales" && <SucursalesTab orgId={orgId} />}
-      {tab === "suscripcion" && org && <SuscripcionTab orgId={orgId} orgName={org.name} />}
+      {tab === "miembros" && (
+        <div {...tabPanelProps("miembros")}>
+          <MiembrosTab orgId={orgId} />
+        </div>
+      )}
+      {tab === "empleados" && (
+        <div {...tabPanelProps("empleados")}>
+          <EmpleadosTab orgId={orgId} />
+        </div>
+      )}
+      {tab === "sucursales" && (
+        <div {...tabPanelProps("sucursales")}>
+          <SucursalesTab orgId={orgId} />
+        </div>
+      )}
+      {tab === "suscripcion" && org && (
+        <div {...tabPanelProps("suscripcion")}>
+          <SuscripcionTab orgId={orgId} orgName={org.name} />
+        </div>
+      )}
     </>
   );
 }

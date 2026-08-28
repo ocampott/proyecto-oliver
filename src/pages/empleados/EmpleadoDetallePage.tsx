@@ -7,7 +7,7 @@ import { Field } from "../../components/ui/field";
 import { Select } from "../../components/ui/select";
 import { Dialog } from "../../components/ui/dialog";
 import { StatRow, type StatRowItem } from "../../components/ui/stat-row";
-import { Tabs } from "../../components/ui/tabs";
+import { Tabs, tabPanelProps } from "../../components/ui/tabs";
 import { Status } from "../../components/ui/status";
 import { Badge } from "../../components/ui/badge";
 import { Card } from "../../components/ui/card";
@@ -298,7 +298,7 @@ export default function EmpleadoDetallePage() {
       </div>
 
       {vista === "resumen" && (
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div {...tabPanelProps("resumen")} className="mt-6 grid gap-4 md:grid-cols-2">
           <Card>
             <h3 className="text-[14px] font-semibold text-text">Datos personales</h3>
             <dl className="mt-3 flex flex-col gap-3 text-[13.5px]">
@@ -361,10 +361,14 @@ export default function EmpleadoDetallePage() {
         </div>
       )}
 
-      {vista === "asistencia" && <AsistenciaTab empleadoId={empleado.id} />}
+      {vista === "asistencia" && (
+        <div {...tabPanelProps("asistencia")}>
+          <AsistenciaTab empleadoId={empleado.id} />
+        </div>
+      )}
 
       {vista === "horario" && (
-        <div className="mt-6">
+        <div {...tabPanelProps("horario")} className="mt-6">
           <Table>
             <TableHeader>
               <TableRow>
@@ -415,7 +419,11 @@ export default function EmpleadoDetallePage() {
         </div>
       )}
 
-      {vista === "ausencias" && <AusenciasTab empleadoId={empleado.id} />}
+      {vista === "ausencias" && (
+        <div {...tabPanelProps("ausencias")}>
+          <AusenciasTab empleadoId={empleado.id} />
+        </div>
+      )}
 
       <Dialog
         open={editOpen}
