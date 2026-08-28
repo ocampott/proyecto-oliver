@@ -66,7 +66,7 @@ export default function PlanPage() {
 
   return (
     <>
-      <PageHeader kicker="Suscripción" title="Tu plan" />
+      <PageHeader title="Tu plan" />
 
       <Card className="mt-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

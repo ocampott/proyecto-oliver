@@ -69,7 +69,6 @@ export default function OrganizacionDetallePage() {
   return (
     <>
       <PageHeader
-        kicker="Superadmin"
         breadcrumb={[{ label: "Organizaciones", href: "/admin" }]}
         title={org?.name ?? "Organización"}
       />

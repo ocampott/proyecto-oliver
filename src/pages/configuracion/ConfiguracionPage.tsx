@@ -94,7 +94,7 @@ export default function ConfiguracionPage() {
 
   return (
     <>
-      <PageHeader kicker="Espacio de trabajo" title="Configuración" description="Organización, equipo y permisos." />
+      <PageHeader title="Configuración" description="Organización, equipo y permisos." />
 
       <div className="mt-6">
         <Tabs

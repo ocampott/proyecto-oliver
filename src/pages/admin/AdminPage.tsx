@@ -97,7 +97,7 @@ export default function AdminPage() {
 
   return (
     <>
-      <PageHeader kicker="Superadmin" title="Organizaciones" />
+      <PageHeader title="Organizaciones" />
 
       <div className="mt-4 flex justify-end">
         <Button

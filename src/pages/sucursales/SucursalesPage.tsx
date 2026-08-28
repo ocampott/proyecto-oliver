@@ -179,7 +179,7 @@ export default function SucursalesPage() {
 
   return (
     <>
-      <PageHeader kicker="Operación" title="Sucursales" />
+      <PageHeader title="Sucursales" />
 
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <Button
