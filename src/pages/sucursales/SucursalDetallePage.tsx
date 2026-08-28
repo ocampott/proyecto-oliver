@@ -106,7 +106,21 @@ export default function SucursalDetallePage() {
   }
 
   if (sucursalesLoading || empleadosLoading) {
-    return <p className="text-text-tertiary">Cargando…</p>;
+    // Misma estructura que la página cargada: PageHeader (breadcrumb +
+    // título) → StatRow → grid de dos columnas. Evita el salto de layout.
+    return (
+      <div className="animate-pulse">
+        <div className="border-b border-border pb-5">
+          <div className="h-4 w-32 rounded-[6px] bg-text/10" />
+          <div className="mt-2 h-8 w-64 rounded-[6px] bg-text/10" />
+        </div>
+        <div className="mt-6 h-[92px] rounded-[6px] bg-text/10" />
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="h-64 rounded-[6px] bg-text/10" />
+          <div className="h-64 rounded-[6px] bg-text/10" />
+        </div>
+      </div>
+    );
   }
 
   if (!sucursal) {

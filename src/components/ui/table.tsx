@@ -63,7 +63,7 @@ function TableSkeleton({ cols, rows = 4 }: { cols: number; rows?: number }) {
         <TableRow key={i}>
           {Array.from({ length: cols }).map((__, j) => (
             <TableCell key={j}>
-              <div className="h-[14px] animate-pulse rounded bg-text/10" />
+              <div className="h-[14px] animate-pulse rounded-[6px] bg-text/10" />
             </TableCell>
           ))}
         </TableRow>

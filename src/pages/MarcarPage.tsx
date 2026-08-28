@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowRight, CheckCircle, LogIn, LogOut, RotateCcw, TriangleAlert } from "lucide-react";
+import { ArrowRight, CheckCircle, Loader2, LogIn, LogOut, RotateCcw, TriangleAlert } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Field } from "../components/ui/field";
 import { Card } from "../components/ui/card";
@@ -133,7 +133,11 @@ export default function MarcarPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
         <Card className="w-full max-w-sm rounded-[20px] text-center">
-          <p className="text-text-tertiary">Cargando...</p>
+          <Loader2
+            className="mx-auto h-6 w-6 animate-spin text-text-tertiary"
+            role="status"
+            aria-label="Cargando"
+          />
         </Card>
       </main>
     );

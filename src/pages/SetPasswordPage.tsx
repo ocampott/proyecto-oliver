@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { PasswordField } from "../components/ui/password-field";
 import { Card } from "../components/ui/card";
@@ -38,11 +39,7 @@ export default function SetPasswordPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
-        <div
-          className="h-8 w-8 animate-spin rounded-full border-[3px] border-text/15 border-t-accent"
-          role="status"
-          aria-label="Cargando"
-        />
+        <Loader2 className="h-8 w-8 animate-spin text-accent" role="status" aria-label="Cargando" />
       </main>
     );
   }

@@ -82,11 +82,16 @@ export default function HomePage() {
   if (isLoading || (isFetching && !org)) {
     return (
       <div className="animate-pulse">
-        <div className="h-10 w-64 bg-text/10" />
-        <div className="mt-10 grid gap-6 md:grid-cols-4">
-          <div className="h-28 bg-text/5 md:col-span-2" />
-          <div className="h-28 bg-text/5" />
-          <div className="h-28 bg-text/5" />
+        <div className="h-10 w-64 rounded-[6px] bg-text/10" />
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-20 rounded-[6px] bg-text/10" />
+          ))}
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-40 rounded-[6px] bg-text/10" />
+          ))}
         </div>
       </div>
     );

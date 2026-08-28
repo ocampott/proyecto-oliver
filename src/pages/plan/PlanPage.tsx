@@ -51,7 +51,7 @@ export default function PlanPage() {
   if (orgLoading || !ent) {
     return (
       <>
-        <div className="h-8 w-48 animate-pulse rounded-[4px] bg-text/10" />
+        <div className="h-8 w-48 animate-pulse rounded-[6px] bg-text/10" />
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-[320px] animate-pulse rounded-[6px] bg-text/10" />
@@ -134,7 +134,7 @@ function UsoCard({
       <div className="flex items-center justify-between">
         <span className="text-[15px] font-medium text-text">{label}</span>
         {loading ? (
-          <span className="h-5 w-16 animate-pulse rounded bg-text/10" />
+          <span className="h-5 w-16 animate-pulse rounded-[6px] bg-text/10" />
         ) : (
           <span className="text-[15px] font-semibold text-text">{limiteTexto(actual, max)}</span>
         )}
