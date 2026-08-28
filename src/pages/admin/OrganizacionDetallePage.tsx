@@ -288,8 +288,8 @@ function SuscripcionTab({ orgId, orgName }: { orgId: string; orgName: string }) 
 
   return (
     <div className="mt-4 flex flex-col gap-3">
-      <div className="flex justify-end">
-        <Button variant="primary" onClick={() => { setFormError(null); setRegistrarOpen(true); }}>
+      <div className="flex flex-wrap items-end gap-2">
+        <Button variant="primary" className="ml-auto" onClick={() => { setFormError(null); setRegistrarOpen(true); }}>
           <Plus className="h-4 w-4" />
           Registrar suscripción
         </Button>

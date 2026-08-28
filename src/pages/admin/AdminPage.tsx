@@ -99,9 +99,10 @@ export default function AdminPage() {
     <>
       <PageHeader title="Organizaciones" />
 
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex flex-wrap items-end gap-2">
         <Button
           variant="primary"
+          className="ml-auto"
           onClick={() => {
             setFormError(null);
             setAltaOpen(true);
@@ -112,7 +113,7 @@ export default function AdminPage() {
         </Button>
       </div>
 
-      <Toolbar className="mt-4">
+      <Toolbar>
         <Field
           label="Buscar"
           compact
@@ -181,10 +182,17 @@ export default function AdminPage() {
                 </TableCell>
               </TableRow>
             ))}
-          {!isLoading && organizaciones.length === 0 && (
+          {!isLoading && organizaciones.length === 0 && busqueda === "" && (
             <TableRow>
-              <TableCell colSpan={7} className="text-text-tertiary">
+              <TableCell colSpan={7} className="py-8 text-center text-text-tertiary">
                 Todavía no hay organizaciones.
+              </TableCell>
+            </TableRow>
+          )}
+          {!isLoading && organizaciones.length === 0 && busqueda !== "" && (
+            <TableRow>
+              <TableCell colSpan={7} className="py-8 text-center text-text-tertiary">
+                Ninguna organización coincide con el filtro.
               </TableCell>
             </TableRow>
           )}
