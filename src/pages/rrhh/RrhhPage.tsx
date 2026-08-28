@@ -306,8 +306,11 @@ export default function RrhhPage() {
       </div>
 
       {vista === "registros" && (
+        // `page-section` acá se usa solo por su margen superior (2.5rem):
+        // no lleva <h2> porque el título de la región lo da la pestaña
+        // activa de Tabs. Mismo uso que en AsistenciaPage.
         <section {...tabPanelProps("registros")} className="page-section">
-          <div className="mt-4 flex flex-wrap items-end gap-2">
+          <div className="flex flex-wrap items-end gap-2">
             <Button variant="primary" className="ml-auto" onClick={() => setAltaOpen(true)}>
               <Plus className="h-4 w-4" />
               Nueva ausencia
@@ -423,7 +426,7 @@ export default function RrhhPage() {
               return (
                 <span
                   key={c}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-raised py-1 pl-3 pr-1.5 text-[13px] text-text"
+                  className="inline-flex items-center gap-1.5 rounded-[6px] border border-border bg-surface-raised py-1 pl-3 pr-1.5 text-[13px] text-text"
                 >
                   {c}
                   <button
@@ -431,7 +434,7 @@ export default function RrhhPage() {
                     onClick={() => handleQuitarCategoria(c)}
                     disabled={quitando}
                     aria-label={`Quitar categoría ${c}`}
-                    className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full text-text-muted hover:bg-text/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-[6px] text-text-muted hover:bg-text/[.05] hover:text-accent-700 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                   >
                     {quitando ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
                   </button>
