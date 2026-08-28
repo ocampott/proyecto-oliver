@@ -73,7 +73,7 @@ export default function OrganizacionDetallePage() {
         title={org?.name ?? "Organización"}
       />
 
-      <div className="mt-6">
+      <div>
         <Tabs
           value={tab}
           onChange={setTab}
@@ -118,7 +118,7 @@ function MiembrosTab({ orgId }: { orgId: string }) {
 
   return (
     <>
-    <Table containerClassName="mt-4">
+    <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Email</TableHead>
@@ -160,7 +160,7 @@ function EmpleadosTab({ orgId }: { orgId: string }) {
 
   return (
     <>
-    <Table containerClassName="mt-4">
+    <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Nombre</TableHead>
@@ -204,7 +204,7 @@ function SucursalesTab({ orgId }: { orgId: string }) {
 
   return (
     <>
-    <Table containerClassName="mt-4">
+    <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Nombre</TableHead>

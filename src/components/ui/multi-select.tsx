@@ -84,7 +84,7 @@ function MultiSelect({
         aria-label={isCompact ? label : undefined}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex w-full items-center justify-between rounded-[8px] border border-border bg-surface-raised text-left text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          "flex w-full items-center justify-between rounded-[8px] border border-border-strong bg-surface-raised text-left text-text shadow-[0_1px_2px_rgba(13,13,17,0.05)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
           isCompact ? "h-8 px-2.5 text-[13px]" : "h-10 px-3 py-2 text-[15px]"
         )}
       >

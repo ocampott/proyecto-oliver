@@ -96,7 +96,7 @@ export default function ConfiguracionPage() {
     <>
       <PageHeader title="Configuración" description="Organización, equipo y permisos." />
 
-      <div className="mt-6">
+      <div>
         <Tabs
           value={tabEfectivo}
           onChange={setTab}
@@ -113,8 +113,8 @@ export default function ConfiguracionPage() {
       </div>
 
       {tabEfectivo === "organizacion" && (
-        <div {...tabPanelProps("organizacion")}>
-          <Card className="mt-4">
+        <div {...tabPanelProps("organizacion")} className="space-y-4">
+          <Card>
             <div className="flex items-center justify-between gap-3">
               <p className="text-[15px] text-text">{org?.name ?? "—"}</p>
               <Button
@@ -128,7 +128,7 @@ export default function ConfiguracionPage() {
             </div>
           </Card>
 
-          <Card className="mt-4">
+          <Card>
             <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Otras configuraciones</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <Link
@@ -146,7 +146,7 @@ export default function ConfiguracionPage() {
           </Card>
 
           {esOwner && (
-            <Card className="mt-4 border-alert/30">
+            <Card className="border-alert/30">
               <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-alert">Zona sensible</h2>
               <p className="mt-1 text-[13.5px] text-text-secondary">
                 ¿Necesitás dar de baja esta organización? Escribinos y nos encargamos del resto.
@@ -166,7 +166,7 @@ export default function ConfiguracionPage() {
       )}
 
       {tabEfectivo === "equipo" && puedeVerEquipo && (
-        <Card {...tabPanelProps("equipo")} className="mt-4">
+        <Card {...tabPanelProps("equipo")}>
           <div className="flex items-start justify-between gap-3">
             <p className="text-[13.5px] text-text-secondary">
               Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
@@ -180,7 +180,7 @@ export default function ConfiguracionPage() {
             )}
           </div>
 
-          <Table containerClassName="mt-3">
+          <Table containerClassName="mt-4">
             <TableHeader>
               <TableRow>
                 <TableHead>Email</TableHead>

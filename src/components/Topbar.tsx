@@ -1,9 +1,9 @@
 import { Menu, Search } from "lucide-react";
-import { useLocation } from "react-router-dom";
-import { useOrgActual } from "../lib/hooks";
+import { Link, useLocation } from "react-router-dom";
 import { NotificationBell } from "./NotificationBell";
 import { AccountMenu } from "./AccountMenu";
 import { tituloDeRuta } from "./Sidebar";
+import { usePageChrome } from "./PageHeader";
 
 export function Topbar({
   onMenuClick,
@@ -13,11 +13,11 @@ export function Topbar({
   onOpenSearch: () => void;
 }) {
   const location = useLocation();
-  const { data: org } = useOrgActual();
-  const titulo = tituloDeRuta(location.pathname);
+  const fallbackTitulo = tituloDeRuta(location.pathname);
+  const { title, description, meta, actions, breadcrumb } = usePageChrome();
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border-soft bg-bg px-6 md:px-10">
+    <header className="sticky top-0 z-20 flex min-h-14 shrink-0 items-center gap-3 border-b border-border-soft bg-bg px-6 py-2 md:px-10">
       <button
         onClick={onMenuClick}
         aria-label="Abrir menú"
@@ -27,9 +27,34 @@ export function Topbar({
       </button>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-medium leading-tight text-text-secondary">{titulo}</p>
-        <p className="hidden truncate text-[11px] leading-tight text-text-tertiary sm:block">{org?.name ?? ""}</p>
+        {breadcrumb && breadcrumb.length > 0 && (
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] leading-tight text-text-tertiary">
+            {breadcrumb.map((b, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                {i > 0 && <span aria-hidden="true">/</span>}
+                {b.href ? (
+                  <Link to={b.href} className="hover:text-text-secondary">
+                    {b.label}
+                  </Link>
+                ) : (
+                  <span className="text-text-secondary">{b.label}</span>
+                )}
+              </span>
+            ))}
+          </nav>
+        )}
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="truncate text-[17px] font-semibold leading-tight tracking-[-0.01em] text-text">
+            {title ?? fallbackTitulo}
+          </div>
+          {meta && <div className="shrink-0 text-[11px] text-text-tertiary">{meta}</div>}
+        </div>
+        {description && (
+          <p className="truncate text-[11px] leading-tight text-text-tertiary">{description}</p>
+        )}
       </div>
+
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
 
       <button
         type="button"

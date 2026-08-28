@@ -82,8 +82,7 @@ export default function HomePage() {
   if (isLoading || (isFetching && !org)) {
     return (
       <div className="animate-pulse">
-        <div className="h-10 w-64 rounded-[6px] bg-text/10" />
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-20 rounded-[6px] bg-text/10" />
           ))}

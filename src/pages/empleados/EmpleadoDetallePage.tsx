@@ -175,16 +175,12 @@ export default function EmpleadoDetallePage() {
   }
 
   if (empleadosLoading) {
-    // Misma estructura que la página cargada: PageHeader (breadcrumb +
-    // título) → StatRow → barra de tabs → grid de contenido. Evita el
-    // salto de layout.
+    // Misma estructura que la página cargada: StatRow → barra de tabs → grid
+    // de contenido. El encabezado ahora vive en la Topbar. Evita el salto de
+    // layout.
     return (
       <div className="animate-pulse">
-        <div className="border-b border-border pb-5">
-          <div className="h-4 w-28 rounded-[6px] bg-text/10" />
-          <div className="mt-2 h-8 w-56 rounded-[6px] bg-text/10" />
-        </div>
-        <div className="mt-6 h-[92px] rounded-[6px] bg-text/10" />
+        <div className="h-[92px] rounded-[6px] bg-text/10" />
         <div className="mt-6 h-9 w-72 rounded-[6px] bg-text/10" />
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="h-56 rounded-[6px] bg-text/10" />
@@ -288,7 +284,7 @@ export default function EmpleadoDetallePage() {
         }
       />
 
-      <div className="mt-6">
+      <div>
         <StatRow stats={stats} />
       </div>
 
@@ -314,7 +310,7 @@ export default function EmpleadoDetallePage() {
       </div>
 
       {vista === "resumen" && (
-        <div {...tabPanelProps("resumen")} className="mt-6 grid gap-4 md:grid-cols-2">
+        <div {...tabPanelProps("resumen")} className="grid gap-4 md:grid-cols-2">
           <Card>
             <h3 className="text-[14px] font-semibold text-text">Datos personales</h3>
             <dl className="mt-3 flex flex-col gap-3 text-[13.5px]">
@@ -384,7 +380,7 @@ export default function EmpleadoDetallePage() {
       )}
 
       {vista === "horario" && (
-        <div {...tabPanelProps("horario")} className="mt-6">
+        <div {...tabPanelProps("horario")}>
           <Table>
             <TableHeader>
               <TableRow>

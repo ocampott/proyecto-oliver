@@ -290,7 +290,7 @@ export default function RrhhPage() {
         }
       />
 
-      <div className="mt-6">
+      <div>
         <StatRow stats={stats} />
       </div>
 
@@ -306,10 +306,7 @@ export default function RrhhPage() {
       </div>
 
       {vista === "registros" && (
-        // `page-section` acá se usa solo por su margen superior (2.5rem):
-        // no lleva <h2> porque el título de la región lo da la pestaña
-        // activa de Tabs. Mismo uso que en AsistenciaPage.
-        <section {...tabPanelProps("registros")} className="page-section">
+        <section {...tabPanelProps("registros")}>
           <div className="flex flex-wrap items-end gap-2">
             <Button variant="primary" className="ml-auto" onClick={() => setAltaOpen(true)}>
               <Plus className="h-4 w-4" />
@@ -404,7 +401,7 @@ export default function RrhhPage() {
       )}
 
       {vista === "categorias" && (
-        <Card {...tabPanelProps("categorias")} className="mt-6">
+        <Card {...tabPanelProps("categorias")}>
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Categorías de motivo</h2>

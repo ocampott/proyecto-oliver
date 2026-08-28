@@ -278,29 +278,29 @@ export default function EmpleadosPage() {
 
   return (
     <>
-      <PageHeader title="Empleados" />
-
-      <div className="mt-4 flex flex-wrap items-end gap-2">
-        <Button
-          variant="primary"
-          className="ml-auto"
-          disabled={alTope || !gestionable}
-          title={
-            !gestionable
-              ? "Tu rol no tiene acceso a crear empleados."
-              : alTope
-                ? `Llegaste al máximo de ${ent!.maxEmpleados} empleados de tu plan. Pasate a un plan superior para sumar más.`
-                : undefined
-          }
-          onClick={() => {
-            setError(null);
-            setAltaOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          Nuevo empleado
-        </Button>
-      </div>
+      <PageHeader
+        title="Empleados"
+        actions={
+          <Button
+            variant="primary"
+            disabled={alTope || !gestionable}
+            title={
+              !gestionable
+                ? "Tu rol no tiene acceso a crear empleados."
+                : alTope
+                  ? `Llegaste al máximo de ${ent!.maxEmpleados} empleados de tu plan. Pasate a un plan superior para sumar más.`
+                  : undefined
+            }
+            onClick={() => {
+              setError(null);
+              setAltaOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo empleado
+          </Button>
+        }
+      />
 
       <Toolbar>
         <Field

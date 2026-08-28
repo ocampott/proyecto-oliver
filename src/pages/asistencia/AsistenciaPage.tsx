@@ -153,7 +153,7 @@ export default function AsistenciaPage() {
         }
       />
 
-      <div className="mt-6">
+      <div>
         <Tabs
           value={vista}
           onChange={setVista}
@@ -165,7 +165,7 @@ export default function AsistenciaPage() {
       </div>
 
       {vista === "registros" && (
-        <section {...tabPanelProps("registros")} className="page-section">
+        <section {...tabPanelProps("registros")}>
           <Toolbar>
             <Select
               label="Empleado"
@@ -299,8 +299,8 @@ export default function AsistenciaPage() {
       )}
 
       {vista === "rechazadas" && (
-        <section {...tabPanelProps("rechazadas")} className="page-section">
-          <Table containerClassName="mt-2">
+        <section {...tabPanelProps("rechazadas")}>
+          <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Fecha</TableHead>

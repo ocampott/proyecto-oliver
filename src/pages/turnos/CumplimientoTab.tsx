@@ -80,7 +80,7 @@ export default function CumplimientoTab() {
 
   return (
     <>
-      <Card className="mt-4">
+      <Card>
         <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Tolerancia general</h2>
         <p className="mt-1 text-[13.5px] text-text-secondary">
           Minutos de margen antes de marcar un turno como "tarde" o "salida anticipada" — aplica salvo que la franja tenga su propia tolerancia.
@@ -93,7 +93,7 @@ export default function CumplimientoTab() {
         </div>
       </Card>
 
-      <Toolbar>
+      <Toolbar className="mt-6">
         <Segmented
           value={vista}
           onChange={setVista}

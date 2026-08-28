@@ -18,7 +18,7 @@ export interface TabsProps<T extends string> {
  * Props para la región de contenido de la pestaña `value`. Se spreadean
  * sobre el elemento raíz del panel:
  *
- *   <section {...tabPanelProps("registros")} className="page-section">…</section>
+ *   <section {...tabPanelProps("registros")} className="mt-6">…</section>
  *
  * Si el panel es un componente (no un elemento DOM), envolverlo en un div:
  *
@@ -56,7 +56,7 @@ function Tabs<T extends string>({ value, onChange, items, className }: TabsProps
   }
 
   return (
-    <div role="tablist" className={cn("flex items-center gap-5 border-b border-border", className)}>
+    <div role="tablist" className={cn("mb-6 flex items-center gap-5 border-b border-border", className)}>
       {items.map((item, index) => {
         const active = item.value === value;
         return (

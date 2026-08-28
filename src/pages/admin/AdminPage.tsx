@@ -97,21 +97,21 @@ export default function AdminPage() {
 
   return (
     <>
-      <PageHeader title="Organizaciones" />
-
-      <div className="mt-4 flex flex-wrap items-end gap-2">
-        <Button
-          variant="primary"
-          className="ml-auto"
-          onClick={() => {
-            setFormError(null);
-            setAltaOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          Nueva organización
-        </Button>
-      </div>
+      <PageHeader
+        title="Organizaciones"
+        actions={
+          <Button
+            variant="primary"
+            onClick={() => {
+              setFormError(null);
+              setAltaOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Nueva organización
+          </Button>
+        }
+      />
 
       <Toolbar>
         <Field

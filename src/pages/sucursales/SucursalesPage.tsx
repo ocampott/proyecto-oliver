@@ -179,29 +179,29 @@ export default function SucursalesPage() {
 
   return (
     <>
-      <PageHeader title="Sucursales" />
-
-      <div className="mt-4 flex flex-wrap items-end gap-2">
-        <Button
-          variant="primary"
-          className="ml-auto"
-          disabled={alTope || !gestionable}
-          title={
-            !gestionable
-              ? "Tu rol no tiene acceso a crear sucursales."
-              : alTope
-                ? `Llegaste al máximo de ${ent!.maxSucursales} sucursales de tu plan. Pasate a un plan superior para sumar más.`
-                : undefined
-          }
-          onClick={() => {
-            setError(null);
-            setAltaOpen(true);
-          }}
-        >
-          <Plus className="h-4 w-4" />
-          Nueva sucursal
-        </Button>
-      </div>
+      <PageHeader
+        title="Sucursales"
+        actions={
+          <Button
+            variant="primary"
+            disabled={alTope || !gestionable}
+            title={
+              !gestionable
+                ? "Tu rol no tiene acceso a crear sucursales."
+                : alTope
+                  ? `Llegaste al máximo de ${ent!.maxSucursales} sucursales de tu plan. Pasate a un plan superior para sumar más.`
+                  : undefined
+            }
+            onClick={() => {
+              setError(null);
+              setAltaOpen(true);
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Nueva sucursal
+          </Button>
+        }
+      />
 
       <Toolbar>
         <Field

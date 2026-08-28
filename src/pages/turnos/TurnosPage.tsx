@@ -13,7 +13,7 @@ export default function TurnosPage() {
     <>
       <PageHeader title="Turnos" />
 
-      <div className="mt-6">
+      <div>
         <Tabs
           value={tab}
           onChange={setTab}

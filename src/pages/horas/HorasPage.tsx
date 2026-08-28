@@ -198,9 +198,7 @@ export default function HorasPage() {
         }
       />
 
-      <div className="mt-6">
-        <StatRow stats={stats} />
-      </div>
+      <StatRow stats={stats} className="mb-6" />
 
       <Toolbar>
         <Segmented

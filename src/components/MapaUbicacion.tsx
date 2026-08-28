@@ -21,7 +21,7 @@ interface MapaUbicacionProps {
 // src/index.css. Va como hex plano porque las opciones de
 // google.maps.Circle las consume el SDK, no el CSS — si el token cambia,
 // esta constante cambia con él.
-const ACCENT = "#047857";
+const ACCENT = "#5c7a1a";
 
 // Centro por defecto cuando no hay geolocalización disponible (Buenos Aires).
 const DEFAULT_CENTER: Coordenadas = { lat: -34.6037, lon: -58.3816 };

@@ -27,7 +27,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           aria-label={compact ? label : undefined}
           className={cn(
-            "flex w-full appearance-none rounded-[8px] border border-border bg-surface-raised text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50",
+            "flex w-full appearance-none rounded-[8px] border border-border-strong bg-surface-raised text-text shadow-[0_1px_2px_rgba(13,13,17,0.05)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50",
             compact ? "h-8 px-2.5 pr-8 text-[13px]" : "h-10 px-3 py-2 pr-9 text-[15px]",
             className
           )}

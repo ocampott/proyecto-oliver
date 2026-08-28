@@ -26,7 +26,10 @@ function Segmented<T extends string>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={cn("inline-flex items-center gap-0.5 rounded-[8px] bg-surface p-0.5", className)}
+      className={cn(
+        "inline-flex items-center gap-0.5 rounded-[8px] border border-border-strong bg-surface p-0.5 shadow-[inset_0_1px_2px_rgba(13,13,17,0.04)]",
+        className
+      )}
     >
       {options.map((opt) => (
         <button
@@ -38,7 +41,7 @@ function Segmented<T extends string>({
           className={cn(
             "inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[13px] font-medium transition-colors",
             opt.value === value
-              ? "bg-surface-raised text-text"
+              ? "bg-surface-raised text-text shadow-[0_1px_3px_rgba(13,13,17,0.14),0_1px_1px_rgba(13,13,17,0.08)]"
               : "text-text-secondary hover:text-text"
           )}
         >
