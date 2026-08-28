@@ -11,11 +11,23 @@ export interface SegmentedProps<T extends string> {
   onChange: (value: T) => void;
   options: SegmentedOption<T>[];
   className?: string;
+  /** Nombre accesible del grupo: el radiogroup no tiene label visible. */
+  "aria-label"?: string;
 }
 
-function Segmented<T extends string>({ value, onChange, options, className }: SegmentedProps<T>) {
+function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+  className,
+  "aria-label": ariaLabel,
+}: SegmentedProps<T>) {
   return (
-    <div role="radiogroup" className={cn("inline-flex items-center gap-0.5 rounded-[8px] bg-surface p-0.5", className)}>
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className={cn("inline-flex items-center gap-0.5 rounded-[8px] bg-surface p-0.5", className)}
+    >
       {options.map((opt) => (
         <button
           key={opt.value}

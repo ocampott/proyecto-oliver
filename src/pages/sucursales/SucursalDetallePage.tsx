@@ -256,6 +256,14 @@ export default function SucursalDetallePage() {
             <h3 className="text-[14px] font-semibold text-text">Ubicación y geocerca</h3>
             {sucursal.lat != null && sucursal.lon != null ? (
               <>
+                {/* Representación decorativa de la geocerca, a propósito.
+                    MapaUbicacion es un selector: onChange es requerido y el
+                    click en el mapa, el arrastre del pin y el buscador de
+                    direcciones siempre mutan el valor — no tiene modo
+                    lectura. Montarlo acá además cargaría el SDK de Google
+                    Maps en cada visita al detalle. Las coordenadas y el
+                    radio exactos están en el <dl> de abajo, y el mapa real
+                    está en el diálogo de edición. */}
                 <div className="relative mt-3 h-32 overflow-hidden rounded-[8px] border border-border bg-surface">
                   <div className="absolute inset-0 opacity-60 [background-image:linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] [background-size:16px_16px]" />
                   <div className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent-300 bg-accent-100/50" />

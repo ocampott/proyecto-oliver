@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Loader2 } from "lucide-react";
+import { Search, Plus, Loader2, Pencil, Power, QrCode, Trash2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
-import { Select } from "../../components/ui/select";
+import { Segmented } from "../../components/ui/segmented";
 import { Toolbar } from "../../components/ui/toolbar";
 import { ClearFiltersButton } from "../../components/ui/clear-filters-button";
 import { Badge } from "../../components/ui/badge";
@@ -213,17 +213,15 @@ export default function SucursalesPage() {
           containerClassName="w-56"
           icon={<Search className="h-[15px] w-[15px]" />}
         />
-        <Select
-          label="Estado"
-          compact
+        <Segmented
+          aria-label="Estado"
           value={estadoFiltro}
-          onChange={(e) => { setEstadoFiltro(e.target.value as EstadoFiltro); setPage(1); }}
+          onChange={(v) => { setEstadoFiltro(v); setPage(1); }}
           options={[
             { value: "todos", label: "Todas" },
             { value: "activos", label: "Activas" },
             { value: "inactivos", label: "Inactivas" },
           ]}
-          containerClassName="w-36"
         />
         {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
         <div className="ml-auto">
@@ -284,11 +282,7 @@ export default function SucursalesPage() {
                       onClick={() => abrirEdicion(suc)}
                       disabled={!gestionable}
                       title={!gestionable ? "Tu rol no tiene acceso a editar sucursales." : undefined}
-                      icon={
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                        </svg>
-                      }
+                      icon={<Pencil className="h-3.5 w-3.5" />}
                       label="Editar"
                     />
                     <IconButton
@@ -299,41 +293,21 @@ export default function SucursalesPage() {
                         accionandoId === suc.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2v6" />
-                            <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
-                          </svg>
+                          <Power className="h-3.5 w-3.5" />
                         )
                       }
                       label={suc.activa ? "Desactivar" : "Activar"}
                     />
                     <IconButton
                       onClick={() => setQrId(suc.id)}
-                      icon={
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="3" width="7" height="7" />
-                          <rect x="14" y="3" width="7" height="7" />
-                          <rect x="3" y="14" width="7" height="7" />
-                          <path d="M14 14h3v3" />
-                          <path d="M14 21h7v-4" />
-                          <path d="M21 14v3" />
-                        </svg>
-                      }
+                      icon={<QrCode className="h-3.5 w-3.5" />}
                       label="Ver QR"
                     />
                     {gestionable && !suc.activa && !suc.tiene_asistencia && (
                       <IconButton
                         onClick={() => setEliminarTarget(suc)}
                         disabled={loading}
-                        icon={
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18" />
-                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6" />
-                            <path d="M14 11v6" />
-                          </svg>
-                        }
+                        icon={<Trash2 className="h-3.5 w-3.5" />}
                         label="Eliminar"
                       />
                     )}
