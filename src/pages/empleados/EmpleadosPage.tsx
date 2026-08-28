@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, Loader2, Copy } from "lucide-react";
+import { Search, Plus, Loader2, Copy, Pencil, Power, Unlink, KeyRound, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/button";
 import { Field } from "../../components/ui/field";
@@ -430,11 +430,7 @@ export default function EmpleadosPage() {
                       onClick={() => abrirEdicion(emp)}
                       disabled={accionandoId === emp.id || !gestionable}
                       title={!gestionable ? "Tu rol no tiene acceso a editar empleados." : undefined}
-                      icon={
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                        </svg>
-                      }
+                      icon={<Pencil className="h-3.5 w-3.5" />}
                       label="Editar"
                     />
                     <IconButton
@@ -445,10 +441,7 @@ export default function EmpleadosPage() {
                         accionandoId === emp.id ? (
                           <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 2v6" />
-                            <path d="M18.4 6.6a9 9 0 1 1-12.8 0" />
-                          </svg>
+                          <Power className="h-3.5 w-3.5" />
                         )
                       }
                       label={emp.estado === "baja" ? "Activar" : "Dar de baja"}
@@ -461,10 +454,7 @@ export default function EmpleadosPage() {
                           accionandoId === emp.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-                              <line x1="12" y1="2" x2="12" y2="12" />
-                            </svg>
+                            <Unlink className="h-3.5 w-3.5" />
                           )
                         }
                         label="Desvincular"
@@ -478,10 +468,7 @@ export default function EmpleadosPage() {
                           accionandoId === emp.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="11" width="18" height="11" rx="2" />
-                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
+                            <KeyRound className="h-3.5 w-3.5" />
                           )
                         }
                         label={emp.otp ? "Código nuevo" : "Generar código"}
@@ -491,15 +478,7 @@ export default function EmpleadosPage() {
                       <IconButton
                         onClick={() => setEliminarTarget(emp)}
                         disabled={loading}
-                        icon={
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18" />
-                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                            <path d="M10 11v6" />
-                            <path d="M14 11v6" />
-                          </svg>
-                        }
+                        icon={<Trash2 className="h-3.5 w-3.5" />}
                         label="Eliminar"
                       />
                     )}
@@ -665,10 +644,7 @@ export default function EmpleadosPage() {
 
       <Dialog open={codigoDialog != null} onClose={() => setCodigoDialog(null)} title="Código de vinculación">
         <div className="mx-auto -mt-1 flex h-[52px] w-[52px] items-center justify-center rounded-[6px] bg-accent-100">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-accent" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg>
+          <KeyRound className="h-[26px] w-[26px] text-accent" strokeWidth={1.8} />
         </div>
         <div className="data-number text-center text-4xl font-medium tracking-[0.14em] text-text">
           {codigoDialog ? formatCode(codigoDialog.code) : ""}
