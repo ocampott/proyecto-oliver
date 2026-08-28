@@ -36,12 +36,12 @@ export default function LoginPage() {
   return (
     <main className="grid min-h-screen bg-bg md:grid-cols-[minmax(280px,0.8fr)_minmax(380px,1.2fr)]">
       <section className="hidden flex-col justify-between bg-accent p-10 text-surface-raised md:flex">
-        <div className="text-[22px] font-bold tracking-[-0.08em]">
+        <div className="text-[22px] font-bold tracking-[-0.03em]">
           oliver<span className="text-accent-300">.</span>
         </div>
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.18em] text-accent-200">Control de asistencia</p>
-          <p className="mt-4 max-w-xs text-3xl font-semibold leading-tight tracking-[-0.06em]">
+          <p className="mt-4 max-w-xs text-3xl font-semibold leading-tight tracking-[-0.03em]">
             El pulso de tu equipo, sin ruido.
           </p>
         </div>
@@ -53,7 +53,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="mb-4">
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-accent">Bienvenido</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-[-0.07em] text-text">Iniciar sesión</h1>
+              <h1 className="mt-3 text-4xl font-semibold tracking-[-0.02em] text-text">Iniciar sesión</h1>
               <p className="mt-3 text-sm text-text-secondary">Ingresá para ver el estado de tu organización.</p>
             </div>
             <Field

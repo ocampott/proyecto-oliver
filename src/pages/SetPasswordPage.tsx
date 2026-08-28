@@ -47,7 +47,7 @@ export default function SetPasswordPage() {
   if (!session) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
-        <Card className="w-full max-w-sm p-8 text-center">
+        <Card className="w-full max-w-sm text-center">
           <h1 className="text-2xl font-semibold tracking-[-0.03em] text-text">Este enlace no es válido</h1>
           <p className="mt-2 text-[15px] text-text-secondary">
             El link de invitación ya se usó o venció. Pedile a quien te invitó que te mande uno nuevo.
@@ -59,7 +59,7 @@ export default function SetPasswordPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
-      <Card className="w-full max-w-sm p-8">
+      <Card className="w-full max-w-sm">
         <form onSubmit={handleSubmit} className="space-y-4">
           <h1 className="text-2xl font-semibold tracking-[-0.03em] text-text">Elegí tu contraseña</h1>
           <p className="text-[15px] text-text-secondary">
