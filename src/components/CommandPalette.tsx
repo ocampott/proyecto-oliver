@@ -70,11 +70,11 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const navigate = useNavigate();
   const { data: org } = useOrgActual();
   const ent = org?.entitlements ?? null;
-  const { data: empleados = [] } = useEmpleados();
+  const { data: empleados = [], isLoading: empleadosLoading } = useEmpleados();
   // ponytail: pageSize 30 fijo (default del hook) — orgs con más de 30
   // sucursales no van a tener cobertura completa acá; pasar a q server-side
   // si algún cliente real llega a ese tamaño.
-  const { data: sucursalesPage } = useSucursales();
+  const { data: sucursalesPage, isLoading: sucursalesLoading } = useSucursales();
   const sucursales = sucursalesPage?.data ?? [];
 
   React.useEffect(() => {
@@ -104,6 +104,10 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   }
 
   const q = query.trim().toLowerCase();
+  // Con query escrita y las queries de empleados/sucursales todavía en
+  // vuelo, los grupos rinden vacío: sin esto el usuario ve "Sin resultados."
+  // como si de verdad no hubiera match.
+  const buscando = q !== "" && (empleadosLoading || sucursalesLoading);
   const puedeGestionar = tieneRol(org ?? null, ["owner", "admin"]);
 
   const paginas: ResultItem[] = PAGINAS.filter((p) => {
@@ -168,6 +172,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     }
   }
 
+  // La lista tiene max-h-[360px]: al moverse con flechas hay que arrastrar
+  // el item activo a la vista.
+  const activeRef = React.useRef<HTMLButtonElement>(null);
+  React.useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
+
   if (!open) return null;
 
   let renderedIndex = -1;
@@ -198,7 +209,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         </div>
         <div className="max-h-[360px] overflow-y-auto p-2">
           {flat.length === 0 && (
-            <p className="px-3 py-6 text-center text-[13.5px] text-text-tertiary">Sin resultados.</p>
+            <p className="px-3 py-6 text-center text-[13.5px] text-text-tertiary">
+              {buscando ? "Buscando…" : "Sin resultados."}
+            </p>
           )}
           {grupos.map((group) => (
             <div key={group.heading} className="mb-1 last:mb-0">
@@ -212,6 +225,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                 return (
                   <button
                     key={item.key}
+                    ref={isActive ? activeRef : undefined}
                     type="button"
                     onMouseEnter={() => setActiveIndex(renderedIndex)}
                     onClick={item.onSelect}

@@ -15,8 +15,12 @@ export interface MultiSelectProps {
   onChange: (value: string[]) => void;
   placeholder?: string;
   containerClassName?: string;
-  /** "field" (default): labeled box, matches Field/Select. "chip": pill trigger for a filter row, matches FilterChip. */
-  variant?: "field" | "chip";
+  /**
+   * "field" (default): caja con label arriba, igual que Field/Select.
+   * "compact": trigger h-8 para la fila de filtros del Toolbar, con el
+   * mismo aspecto que <Select compact> — el label pasa a aria-label.
+   */
+  variant?: "field" | "compact";
 }
 
 function MultiSelect({
@@ -65,12 +69,11 @@ function MultiSelect({
         ? (options.find((o) => o.value === value[0])?.label ?? "1 seleccionado")
         : `${value.length} seleccionados`;
 
-  const isChip = variant === "chip";
-  const active = value.length > 0;
+  const isCompact = variant === "compact";
 
   return (
-    <div ref={ref} className={cn(isChip ? "relative" : "relative flex flex-col gap-[5px]", containerClassName)}>
-      {!isChip && (
+    <div ref={ref} className={cn(isCompact ? "relative" : "relative flex flex-col gap-[5px]", containerClassName)}>
+      {!isCompact && (
         <label htmlFor={autoId} className="text-[12px] text-text-secondary">
           {label}
         </label>
@@ -78,36 +81,25 @@ function MultiSelect({
       <button
         id={autoId}
         type="button"
-        aria-label={isChip ? label : undefined}
+        aria-label={isCompact ? label : undefined}
         onClick={() => setOpen((v) => !v)}
-        className={
-          isChip
-            ? cn(
-                "inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 font-mono text-[11px] font-medium uppercase tracking-[0.04em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                active
-                  ? "border-accent bg-accent-100 text-accent-800 hover:bg-accent-200"
-                  : "border-border bg-surface text-text-secondary hover:bg-text/[.04]"
-              )
-            : "flex h-10 w-full items-center justify-between rounded-[8px] border border-border bg-surface-raised px-3 py-2 text-left text-[15px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        }
-      >
-        {isChip ? (
-          <>
-            {active ? `${label}: ${summary}` : label}
-            <ChevronDown className="h-3.5 w-3.5" />
-          </>
-        ) : (
-          <>
-            <span className={cn("truncate", value.length === 0 && "text-text-tertiary")}>{summary}</span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-text-tertiary" />
-          </>
+        className={cn(
+          "flex w-full items-center justify-between rounded-[8px] border border-border bg-surface-raised text-left text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          isCompact ? "h-8 px-2.5 text-[13px]" : "h-10 px-3 py-2 text-[15px]"
         )}
+      >
+        <span className={cn("truncate", value.length === 0 && "text-text-tertiary")}>
+          {isCompact && value.length > 0 ? `${label}: ${summary}` : summary}
+        </span>
+        <ChevronDown
+          className={cn("shrink-0 text-text-tertiary", isCompact ? "h-3.5 w-3.5" : "h-4 w-4")}
+        />
       </button>
       {open && (
         <div
           className={cn(
             "absolute left-0 top-[calc(100%+4px)] z-20 flex max-h-72 flex-col overflow-hidden rounded-[10px] border border-border bg-surface-raised shadow-[0_8px_24px_rgba(13,13,17,.1)]",
-            isChip ? "w-[240px]" : "w-full"
+            isCompact ? "w-[240px]" : "w-full"
           )}
         >
           <div className="border-b border-border p-2">

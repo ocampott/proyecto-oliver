@@ -204,6 +204,7 @@ export default function HorasPage() {
 
       <Toolbar>
         <Segmented
+          aria-label="Período"
           value={periodo}
           onChange={(p) => {
             setPeriodo(p);
@@ -222,9 +223,12 @@ export default function HorasPage() {
           <span className="text-xs text-text-tertiary">→</span>
           <Field label="Hasta" compact type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-[136px]" />
         </div>
+        {/* Selección multi-empleado real (empleadosSel es string[]): no se
+            puede reemplazar por <Select compact>, así que el trigger se
+            estila igual que uno y la diferencia queda solo en el popover. */}
         <MultiSelect
           label="Empleados"
-          variant="chip"
+          variant="compact"
           value={empleadosSel}
           onChange={setEmpleadosSel}
           options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}

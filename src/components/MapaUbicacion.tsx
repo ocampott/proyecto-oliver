@@ -17,6 +17,12 @@ interface MapaUbicacionProps {
   direccionInicial?: string | null;
 }
 
+// Único color de marca del sistema: el token --color-accent de
+// src/index.css. Va como hex plano porque las opciones de
+// google.maps.Circle las consume el SDK, no el CSS — si el token cambia,
+// esta constante cambia con él.
+const ACCENT = "#047857";
+
 // Centro por defecto cuando no hay geolocalización disponible (Buenos Aires).
 const DEFAULT_CENTER: Coordenadas = { lat: -34.6037, lon: -58.3816 };
 const DEFAULT_ZOOM = 12;
@@ -205,10 +211,10 @@ export function MapaUbicacion({ value, onChange, radioMetros, direccionInicial }
       circleRef.current = new google.maps.Circle({
         map,
         center: pos,
-        strokeColor: "#2563eb",
+        strokeColor: ACCENT,
         strokeWeight: 1.5,
         strokeOpacity: 0.7,
-        fillColor: "#2563eb",
+        fillColor: ACCENT,
         fillOpacity: 0.12,
         clickable: false,
       });
