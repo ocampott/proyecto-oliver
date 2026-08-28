@@ -3,6 +3,7 @@ import { Check, X } from "lucide-react";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
+import { Meter } from "../../components/ui/meter";
 import { PageHeader } from "../../components/PageHeader";
 import { useOrgActual } from "../../lib/hooks";
 import { getPlanes, getOrgResumenActual, type PlanDef } from "../../lib/api";
@@ -27,11 +28,6 @@ function fechaLocal(iso: string): string {
 function limiteTexto(actual: number, max: number | null): string {
   if (max === null) return `${actual} de ilimitados`;
   return `${actual} de ${max}`;
-}
-
-function porcentajeUso(actual: number, max: number | null): number {
-  if (max === null || max === 0) return 0;
-  return Math.min((actual / max) * 100, 100);
 }
 
 export default function PlanPage() {
@@ -72,7 +68,7 @@ export default function PlanPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[13px] font-medium uppercase tracking-wide text-text-secondary">Plan actual</p>
-            <p className="text-2xl font-semibold tracking-[-0.02em] text-text">{ent.plan.nombre}</p>
+            <p className="text-[16px] font-semibold tracking-[-0.02em] text-text">{ent.plan.nombre}</p>
             {ent.suscripcion ? (
               <p className="text-[15px] text-text-secondary">
                 Vence el {fechaLocal(ent.suscripcion.venceAt)} · período de {ent.suscripcion.periodoMeses}{" "}
@@ -103,17 +99,19 @@ export default function PlanPage() {
         </div>
       </Card>
 
-      <h2 className="mt-8 text-2xl font-semibold tracking-[-0.02em] text-text">Comparativa de planes</h2>
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        {catLoading &&
-          Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-[320px] animate-pulse rounded-[6px] bg-text/10" />
-          ))}
-        {!catLoading &&
-          planes.map((plan) => (
-            <PlanCard key={plan.slug} plan={plan} actual={ent.plan.slug === plan.slug} />
-          ))}
-      </div>
+      <section className="page-section">
+        <h2 className="text-text">Comparativa de planes</h2>
+        <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          {catLoading &&
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-[320px] animate-pulse rounded-[6px] bg-text/10" />
+            ))}
+          {!catLoading &&
+            planes.map((plan) => (
+              <PlanCard key={plan.slug} plan={plan} actual={ent.plan.slug === plan.slug} />
+            ))}
+        </div>
+      </section>
     </>
   );
 }
@@ -140,12 +138,7 @@ function UsoCard({
         )}
       </div>
       {max !== null && (
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-text/[.08]">
-          <div
-            className="h-full rounded-full bg-accent transition-all"
-            style={{ width: `${loading ? 0 : porcentajeUso(actual, max)}%` }}
-          />
-        </div>
+        <Meter value={loading ? 0 : actual} max={max} block className="mt-2" />
       )}
     </Card>
   );
@@ -155,7 +148,7 @@ function PlanCard({ plan, actual }: { plan: PlanDef & { precios: { meses: number
   return (
     <Card className={actual ? "border-accent-700 ring-1 ring-accent-700" : undefined}>
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold tracking-[-0.02em] text-text">{plan.nombre}</h3>
+        <h3 className="text-[16px] font-semibold tracking-[-0.02em] text-text">{plan.nombre}</h3>
         {actual && <Badge variant="accent">Actual</Badge>}
       </div>
 
@@ -179,7 +172,7 @@ function PlanCard({ plan, actual }: { plan: PlanDef & { precios: { meses: number
             </div>
           </>
         ) : (
-          <p className="text-4xl font-semibold tracking-[-0.02em] text-text">Gratis</p>
+          <p className="text-4xl font-medium tracking-[-0.02em] text-text">Gratis</p>
         )}
       </div>
 
