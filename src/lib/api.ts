@@ -272,6 +272,7 @@ export interface EmpleadoOtp {
 }
 
 export type EstadoEmpleado = "activo" | "de_licencia" | "suspendido" | "baja";
+export type TipoPago = "mensual" | "hora" | "dia";
 
 export interface Empleado {
   id: string;
@@ -287,6 +288,10 @@ export interface Empleado {
   created_at: string;
   otp: EmpleadoOtp | null;
   tiene_asistencia: boolean;
+  tipo_pago: TipoPago | null;
+  sueldo_mensual: number | null;
+  valor_hora: number | null;
+  valor_dia: number | null;
 }
 
 export function listEmpleados(): Promise<Empleado[]> {
@@ -339,6 +344,10 @@ export interface EditarEmpleadoInput {
   fecha_ingreso?: string | null;
   sucursal_id?: string | null;
   estado?: EstadoEmpleado;
+  tipo_pago?: TipoPago | null;
+  sueldo_mensual?: number | null;
+  valor_hora?: number | null;
+  valor_dia?: number | null;
 }
 
 export function updateEmpleado(id: string, patch: EditarEmpleadoInput): Promise<Empleado | { ok: true }> {
@@ -687,6 +696,7 @@ export interface Ausencia {
   detalle: string | null;
   contacto: string | null;
   certificado_pendiente: boolean;
+  origen: "admin" | "empleado";
   created_at: string;
 }
 
@@ -827,4 +837,244 @@ export function exportarAusencias(filters: ExportarAusenciasFilters): Promise<vo
   if (filters.sucursalId) params.set("sucursalId", filters.sucursalId);
   if (filters.motivo) params.set("motivo", filters.motivo);
   return descargarArchivo(`/api/ausencias/export?${params}`, `rrhh_${filters.desde}_${filters.hasta}.xlsx`);
+}
+
+// ── Liquidación de sueldos ────────────────────────────────────────────────
+
+export interface LiquidacionEmpleado {
+  empleado_id: string;
+  nombre: string;
+  tipo_pago: TipoPago | null;
+  sueldo_mensual: number | null;
+  valor_hora: number | null;
+  valor_dia: number | null;
+  horas_trabajadas: number | null;
+  horas_en_curso: boolean;
+  horas_pactadas: number | null;
+  valor_hora_equivalente: number | null;
+  minutos_perdidos: number;
+  descuento_tardanza: number;
+  dias_ausencia: number;
+  horas_ausencia: number;
+  descuento_ausencia: number;
+  dias_ausencia_justificada: number;
+  horas_ausencia_justificada: number;
+  dias_trabajados: number | null;
+  horas_extra: number | null;
+  total_por_horas: number | null;
+  total: number;
+  advertencias: string[];
+}
+
+export interface LiquidacionResponse {
+  desde: string;
+  hasta: string;
+  filas: LiquidacionEmpleado[];
+}
+
+export interface LiquidacionFiltros {
+  desde?: string;
+  hasta?: string;
+  empleadoIds?: string[];
+}
+
+function paramsLiquidacion(filters: LiquidacionFiltros): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.desde) params.set("desde", filters.desde);
+  if (filters.hasta) params.set("hasta", filters.hasta);
+  if (filters.empleadoIds && filters.empleadoIds.length > 0) params.set("empleadoIds", filters.empleadoIds.join(","));
+  return params;
+}
+
+export function getLiquidacion(filters: LiquidacionFiltros): Promise<LiquidacionResponse> {
+  return request(`/api/liquidacion?${paramsLiquidacion(filters)}`);
+}
+
+export function exportarLiquidacion(filters: LiquidacionFiltros): Promise<void> {
+  const desde = filters.desde ?? "periodo";
+  const hasta = filters.hasta ?? "actual";
+  return descargarArchivo(`/api/liquidacion/export?${paramsLiquidacion(filters)}`, `liquidacion_${desde}_a_${hasta}.xlsx`);
+}
+
+// ── Vacaciones ──────────────────────────────────────────────────────────
+
+export interface SaldoVacaciones {
+  empleado_id: string;
+  nombre: string;
+  fecha_ingreso: string | null;
+  antiguedad_anios: number | null;
+  dias_asignados: number | null;
+  dias_usados: number;
+  saldo: number | null;
+  advertencia: string | null;
+}
+
+export function getVacaciones(anio?: number): Promise<SaldoVacaciones[]> {
+  return request(`/api/vacaciones${anio ? `?anio=${anio}` : ""}`);
+}
+
+// ── Legajos ─────────────────────────────────────────────────────────────
+
+export interface LegajoResumen {
+  empleado_id: string;
+  nombre: string;
+  estado: EstadoEmpleado;
+  cantidad_archivos: number;
+  ultimo_archivo_at: string | null;
+}
+
+export function getLegajos(params: { page: number; pageSize: number; q?: string }): Promise<Paginated<LegajoResumen>> {
+  const qs = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
+  if (params.q) qs.set("q", params.q);
+  return request(`/api/legajos?${qs}`);
+}
+
+export interface LegajoArchivo {
+  id: string;
+  empleado_id: string;
+  ausencia_id: string | null;
+  nombre_original: string;
+  storage_path: string;
+  mimetype: string;
+  tamanio_bytes: number;
+  origen: "manual" | "chat_empleado";
+  subido_por: string | null;
+  created_at: string;
+}
+
+export interface LegajoDetalle {
+  empleado: Empleado;
+  archivos: LegajoArchivo[];
+}
+
+export function getLegajo(empleadoId: string): Promise<LegajoDetalle> {
+  return request(`/api/legajos/${empleadoId}`);
+}
+
+export async function subirLegajoArchivo(empleadoId: string, file: File): Promise<LegajoArchivo> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_URL}/api/legajos/${empleadoId}`, {
+    method: "POST",
+    credentials: "include",
+    headers: session ? { Authorization: `Bearer ${session.access_token}` } : undefined,
+    body: formData,
+  });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) throw new ApiError(body?.error ?? "No se pudo subir el archivo.", res.status, body);
+  return body as LegajoArchivo;
+}
+
+export function eliminarLegajoArchivo(empleadoId: string, archivoId: string): Promise<{ ok: true }> {
+  return request(`/api/legajos/${empleadoId}/${archivoId}`, { method: "DELETE" });
+}
+
+export async function abrirLegajoArchivo(empleadoId: string, archivoId: string): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("No se pudo abrir el archivo.");
+
+  const res = await fetch(`${API_URL}/api/legajos/${empleadoId}/${archivoId}`, {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  if (!res.ok) throw new Error("No se pudo abrir el archivo.");
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank", "noopener,noreferrer");
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+// ── Chat de empleados (RRHH web, público, sin login) ──────────────────────
+
+export interface ChatEstado {
+  vinculado: boolean;
+  empleadoNombre?: string;
+}
+
+export function getChatEstado(orgSlug: string): Promise<ChatEstado> {
+  return request(`/api/chat/estado?org=${encodeURIComponent(orgSlug)}`);
+}
+
+export type ChatPaso =
+  | "menu"
+  | "ausencia_motivo"
+  | "enfermedad_cert"
+  | "fecha_inicio"
+  | "fecha_fin"
+  | "datos"
+  | "certificado_elegir"
+  | "certificado_esperando_archivo"
+  | "cierre";
+
+export type ChatEntrada = "menu" | "fecha" | "texto" | "archivo";
+
+export interface ChatOpcion {
+  value: string;
+  label: string;
+}
+
+export interface ChatMensaje {
+  remitente: "empleado" | "sistema";
+  texto: string;
+  created_at: string;
+}
+
+export interface ChatHistorial {
+  mensajes: ChatMensaje[];
+  paso: ChatPaso;
+  entrada: ChatEntrada;
+  opciones?: ChatOpcion[];
+}
+
+export interface ChatRespuesta {
+  mensajes: string[];
+  paso: ChatPaso;
+  entrada: ChatEntrada;
+  opciones?: ChatOpcion[];
+}
+
+// Sin sesión de Supabase — la identidad del empleado en el chat viene de la
+// cookie de dispositivo (oliver_device, httpOnly), no de un Bearer token.
+function chatRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  return fetch(`${API_URL}${path}`, { ...init, credentials: "include" }).then(async (res) => {
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new ApiError(body?.error ?? "Algo salió mal. Probá de nuevo.", res.status, body);
+    return body as T;
+  });
+}
+
+export function getChatHistorial(): Promise<ChatHistorial> {
+  return chatRequest("/api/chat/historial");
+}
+
+export function enviarChatMensaje(texto: string): Promise<ChatRespuesta> {
+  return chatRequest("/api/chat/mensaje", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ texto }),
+  });
+}
+
+export async function subirChatCertificado(file: File): Promise<ChatRespuesta> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return chatRequest("/api/chat/certificado", { method: "POST", body: formData });
+}
+
+// ── Avisos urgentes (chat de empleados, vistos desde RRHH) ────────────────
+
+export interface AvisoUrgente {
+  empleado_id: string;
+  empleado_nombre: string;
+  texto: string;
+  created_at: string;
+}
+
+export function getAvisosUrgentes(): Promise<AvisoUrgente[]> {
+  return request("/api/rrhh/avisos-urgentes");
 }

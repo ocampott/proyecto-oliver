@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { ArrowRight, CheckCircle, Loader2, LogIn, LogOut, RotateCcw, TriangleAlert } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Field } from "../components/ui/field";
@@ -264,6 +264,11 @@ export default function MarcarPage() {
             >
               <LogOut className="h-4 w-4" /> Marcar salida
             </Button>
+            {org && (
+              <Link to={`/chat/${org}`} className="block text-center text-[13.5px] text-text-secondary underline hover:text-text">
+                Hablar con RRHH →
+              </Link>
+            )}
           </div>
         )}
 

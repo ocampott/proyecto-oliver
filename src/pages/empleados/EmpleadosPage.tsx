@@ -14,7 +14,7 @@ import { IconButton } from "../../components/ui/icon-button";
 import { Dialog } from "../../components/ui/dialog";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
-import type { Empleado } from "../../lib/api";
+import type { Empleado, TipoPago } from "../../lib/api";
 import { getOrgResumenActual } from "../../lib/api";
 import {
   useEmpleadosPaginado,
@@ -23,12 +23,14 @@ import {
   useEliminarEmpleado,
   useDesvincularDispositivo,
   useGenerarOtp,
+  useVacaciones,
 } from "./hooks";
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { useOrgActual, puedeGestionar } from "../../lib/hooks";
 import { useSucursales } from "../sucursales/hooks";
 import { Pagination } from "../../components/ui/pagination";
 import { PageHeader } from "../../components/PageHeader";
+import { formatMoneda } from "../../lib/format";
 
 function formatCode(code: string): string {
   return `${code.slice(0, 3)} ${code.slice(3)}`;
@@ -71,6 +73,13 @@ const ESTADO_LABELS: Record<Empleado["estado"], string> = {
   baja: "Baja",
 };
 
+const TIPO_PAGO_OPCIONES = [
+  { value: "", label: "Sin definir" },
+  { value: "mensual", label: "Mensual" },
+  { value: "hora", label: "Por hora" },
+  { value: "dia", label: "Por día" },
+];
+
 function nombreCompleto(emp: Empleado): string {
   return emp.apellido ? `${emp.apellido}, ${emp.nombre}` : emp.nombre;
 }
@@ -80,6 +89,8 @@ export default function EmpleadosPage() {
   const { data: org } = useOrgActual();
   const { data: sucursalesData } = useSucursales();
   const sucursales = sucursalesData?.data ?? [];
+  const { data: saldosVacaciones = [] } = useVacaciones();
+  const saldosPorEmpleado = new Map(saldosVacaciones.map((s) => [s.empleado_id, s]));
   const crear = useCrearEmpleado();
   const editar = useEditarEmpleado();
   const eliminar = useEliminarEmpleado();
@@ -102,6 +113,10 @@ export default function EmpleadosPage() {
   const [editFechaIngreso, setEditFechaIngreso] = useState("");
   const [editSucursalId, setEditSucursalId] = useState("");
   const [editEstado, setEditEstado] = useState<Empleado["estado"]>("activo");
+  const [editTipoPago, setEditTipoPago] = useState<"" | TipoPago>("");
+  const [editSueldoMensual, setEditSueldoMensual] = useState("");
+  const [editValorHora, setEditValorHora] = useState("");
+  const [editValorDia, setEditValorDia] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<EstadoFiltro>("todos");
   const [dispositivoFiltro, setDispositivoFiltro] = useState<DispositivoFiltro>("todos");
@@ -190,6 +205,10 @@ export default function EmpleadosPage() {
     setEditFechaIngreso(emp.fecha_ingreso ?? "");
     setEditSucursalId(emp.sucursal_id ?? "");
     setEditEstado(emp.estado);
+    setEditTipoPago(emp.tipo_pago ?? "");
+    setEditSueldoMensual(emp.sueldo_mensual !== null ? String(emp.sueldo_mensual) : "");
+    setEditValorHora(emp.valor_hora !== null ? String(emp.valor_hora) : "");
+    setEditValorDia(emp.valor_dia !== null ? String(emp.valor_dia) : "");
   }
 
   async function handleGuardarEdicion(e: FormEvent) {
@@ -207,6 +226,10 @@ export default function EmpleadosPage() {
           fecha_ingreso: editFechaIngreso || null,
           sucursal_id: editSucursalId || null,
           estado: editEstado,
+          tipo_pago: editTipoPago || null,
+          sueldo_mensual: editTipoPago === "mensual" && editSueldoMensual.trim() ? Number(editSueldoMensual) : null,
+          valor_hora: editTipoPago && editValorHora.trim() ? Number(editValorHora) : null,
+          valor_dia: editTipoPago === "dia" && editValorDia.trim() ? Number(editValorDia) : null,
         },
       });
       setEditando(null);
@@ -379,12 +402,14 @@ export default function EmpleadosPage() {
             <TableHead>Sucursal</TableHead>
             <TableHead>Fecha de ingreso</TableHead>
             <TableHead>Dispositivo</TableHead>
+            <TableHead>Pago</TableHead>
+            <TableHead>Vacaciones</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {isLoading && <TableSkeleton cols={8} />}
+          {isLoading && <TableSkeleton cols={10} />}
           {!isLoading &&
             empleados.map((emp) => (
               <TableRow
@@ -417,6 +442,30 @@ export default function EmpleadosPage() {
                   ) : (
                     <Status tone="neutral">Sin vincular</Status>
                   )}
+                </TableCell>
+                <TableCell>
+                  {emp.tipo_pago === "mensual" ? (
+                    <span className="text-text">Mensual{emp.sueldo_mensual ? ` · ${formatMoneda(emp.sueldo_mensual)}` : ""}</span>
+                  ) : emp.tipo_pago === "hora" ? (
+                    <span className="text-text">Por hora{emp.valor_hora ? ` · ${formatMoneda(emp.valor_hora)}` : ""}</span>
+                  ) : emp.tipo_pago === "dia" ? (
+                    <span className="text-text">Por día{emp.valor_dia ? ` · ${formatMoneda(emp.valor_dia)}` : ""}</span>
+                  ) : (
+                    <span className="text-text-tertiary">Sin definir</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {(() => {
+                    const saldo = saldosPorEmpleado.get(emp.id);
+                    if (!saldo || saldo.advertencia) {
+                      return <span className="text-warning">{saldo?.advertencia ?? "—"}</span>;
+                    }
+                    return (
+                      <span className={saldo.saldo !== null && saldo.saldo < 0 ? "font-medium text-alert" : "text-text"}>
+                        {saldo.dias_usados}/{saldo.dias_asignados} días
+                      </span>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
                   <Status tone={emp.estado === "activo" ? "success" : emp.estado === "baja" ? "neutral" : "warning"}>
@@ -487,14 +536,14 @@ export default function EmpleadosPage() {
             ))}
           {!isLoading && empleados.length === 0 && !filtrosActivos && (
             <TableRow>
-              <TableCell colSpan={8} className="py-8 text-center text-text-tertiary">
+              <TableCell colSpan={10} className="py-8 text-center text-text-tertiary">
                 Todavía no hay empleados cargados.
               </TableCell>
             </TableRow>
           )}
           {!isLoading && empleados.length === 0 && filtrosActivos && (
             <TableRow>
-              <TableCell colSpan={8} className="py-8 text-center text-text-tertiary">
+              <TableCell colSpan={10} className="py-8 text-center text-text-tertiary">
                 Ningún empleado coincide con el filtro.
               </TableCell>
             </TableRow>
@@ -630,6 +679,58 @@ export default function EmpleadosPage() {
             ]}
             containerClassName="w-full"
           />
+          <Select
+            label="Tipo de pago"
+            value={editTipoPago}
+            onChange={(e) => setEditTipoPago(e.target.value as "" | TipoPago)}
+            options={TIPO_PAGO_OPCIONES}
+            containerClassName="w-full"
+          />
+          {editTipoPago === "mensual" && (
+            <div className="flex gap-3">
+              <Field
+                label="Sueldo mensual"
+                type="number"
+                value={editSueldoMensual}
+                onChange={(e) => setEditSueldoMensual(e.target.value)}
+                containerClassName="w-full"
+              />
+              <Field
+                label="Valor hora (referencia)"
+                type="number"
+                value={editValorHora}
+                onChange={(e) => setEditValorHora(e.target.value)}
+                containerClassName="w-full"
+              />
+            </div>
+          )}
+          {editTipoPago === "hora" && (
+            <Field
+              label="Valor hora"
+              type="number"
+              value={editValorHora}
+              onChange={(e) => setEditValorHora(e.target.value)}
+              containerClassName="w-full"
+            />
+          )}
+          {editTipoPago === "dia" && (
+            <div className="flex gap-3">
+              <Field
+                label="Valor día"
+                type="number"
+                value={editValorDia}
+                onChange={(e) => setEditValorDia(e.target.value)}
+                containerClassName="w-full"
+              />
+              <Field
+                label="Valor hora (extra)"
+                type="number"
+                value={editValorHora}
+                onChange={(e) => setEditValorHora(e.target.value)}
+                containerClassName="w-full"
+              />
+            </div>
+          )}
           {error && (
             <ErrorPlan error={error}>
               <p className="text-[15px] text-alert">{error.message}</p>

@@ -29,6 +29,10 @@ export function fechaLocal(iso: string): string {
   });
 }
 
+export function formatMoneda(n: number): string {
+  return n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+}
+
 export const MOTIVOS_RECHAZO: Record<MotivoRechazo, string> = {
   fuera_de_rango: "Fuera de rango",
   sucursal_sin_gps: "Sucursal sin GPS configurado",

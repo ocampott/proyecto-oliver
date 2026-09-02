@@ -6,9 +6,14 @@ import {
   deleteAusencia,
   getRrhhCategorias,
   setRrhhCategorias,
+  getAvisosUrgentes,
   type CrearAusenciaInput,
   type EditarAusenciaInput,
 } from "../../lib/api";
+
+export function useAvisosUrgentes() {
+  return useQuery({ queryKey: ["avisos-urgentes"], queryFn: getAvisosUrgentes });
+}
 
 export function useAusencias(filters: {
   desde?: string;

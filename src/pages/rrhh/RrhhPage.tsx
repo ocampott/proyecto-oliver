@@ -20,7 +20,15 @@ import { PageHeader } from "../../components/PageHeader";
 import type { Ausencia } from "../../lib/api";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
-import { useAusencias, useCrearAusencia, useEditarAusencia, useBorrarAusencia, useRrhhCategorias, useGuardarCategorias } from "./hooks";
+import {
+  useAusencias,
+  useCrearAusencia,
+  useEditarAusencia,
+  useBorrarAusencia,
+  useRrhhCategorias,
+  useGuardarCategorias,
+  useAvisosUrgentes,
+} from "./hooks";
 import { exportarAusencias } from "../../lib/api";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
@@ -70,6 +78,7 @@ export default function RrhhPage() {
   const { data: empleados = [] } = useEmpleados();
   const { data: sucursalesData } = useSucursales();
   const sucursales = sucursalesData?.data ?? [];
+  const { data: avisosUrgentes = [] } = useAvisosUrgentes();
   const { data: categoriasData } = useRrhhCategorias();
   const categorias = categoriasData?.categorias ?? [];
   const opcionesMotivo = [...categorias.map((c) => ({ value: c, label: c })), { value: OTRO, label: "Otro" }];
@@ -290,6 +299,25 @@ export default function RrhhPage() {
         }
       />
 
+      {avisosUrgentes.length > 0 && (
+        <Card className="border-warning/30 bg-warning/[.06]">
+          <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">⚠ Avisos recientes</h2>
+          <p className="mt-1 text-[13.5px] text-text-secondary">Urgencias reportadas por empleados desde el chat.</p>
+          <ul className="mt-3 flex flex-col gap-2">
+            {avisosUrgentes.map((a, i) => (
+              <li key={i} className="text-[13.5px] text-text">
+                <span className="font-medium">{a.empleado_nombre}</span>
+                {" — "}
+                {a.texto.replace(/^⚠️ URGENCIA de [^:]+:\s*/, "")}
+                <span className="ml-2 text-[12px] text-text-tertiary">
+                  {new Date(a.created_at).toLocaleString("es-AR", { timeZone: AR_TZ })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
       <div>
         <StatRow stats={stats} />
       </div>
@@ -365,7 +393,10 @@ export default function RrhhPage() {
                     onClick={() => abrirDetalle(a)}
                   >
                     <TableCell className="relative">
-                      <PersonCell nombre={a.empleado_nombre} />
+                      <PersonCell
+                        nombre={a.empleado_nombre}
+                        meta={a.origen === "empleado" ? "Reportado por el empleado" : undefined}
+                      />
                       {/* Sin onClick: el click nativo del botón (mouse, Enter
                           o Espacio) burbujea al onClick de la fila. */}
                       <button
