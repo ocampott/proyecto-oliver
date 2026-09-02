@@ -10,6 +10,8 @@ import {
   Clock,
   CalendarDays,
   HeartHandshake,
+  Wallet,
+  FolderOpen,
   Settings,
   LifeBuoy,
   Lock,
@@ -38,6 +40,8 @@ const LINKS: NavItem[] = [
   { href: "/horas", label: "Horas", icon: Clock, modulo: "horas", soloGestion: true },
   { href: "/turnos", label: "Turnos", icon: CalendarDays, modulo: "turnos", soloGestion: true },
   { href: "/rrhh", label: "Ausencias", icon: HeartHandshake, modulo: "rrhh", soloGestion: true },
+  { href: "/liquidacion", label: "Liquidación", icon: Wallet, modulo: "rrhh", soloGestion: true },
+  { href: "/legajos", label: "Legajos", icon: FolderOpen, modulo: "rrhh", soloGestion: true },
 ];
 
 const PLAN_REQUERIDO: Record<Modulo, PlanSlug> = {

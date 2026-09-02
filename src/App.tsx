@@ -27,6 +27,10 @@ const OrganizacionDetallePage = lazy(() => import("./pages/admin/OrganizacionDet
 const PlanPage = lazy(() => import("./pages/plan/PlanPage"));
 const ConfiguracionPage = lazy(() => import("./pages/configuracion/ConfiguracionPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+const LiquidacionPage = lazy(() => import("./pages/liquidacion/LiquidacionPage"));
+const LegajosPage = lazy(() => import("./pages/legajos/LegajosPage"));
+const LegajoDetallePage = lazy(() => import("./pages/legajos/LegajoDetallePage"));
+const ChatEmpleadoPage = lazy(() => import("./pages/ChatEmpleadoPage"));
 
 function PageFallback() {
   return (
@@ -186,7 +190,38 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/liquidacion"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <LiquidacionPage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/legajos"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <LegajosPage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/legajos/:id"
+              element={
+                <ProtectedRoute>
+                  <PanelLayout>
+                    <LegajoDetallePage />
+                  </PanelLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/marcar/:org/:sucursal" element={<MarcarPage />} />
+            <Route path="/chat/:orgSlug" element={<ChatEmpleadoPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           </Suspense>

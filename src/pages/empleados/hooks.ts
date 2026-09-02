@@ -7,6 +7,7 @@ import {
   eliminarEmpleado,
   desvincularDispositivo,
   generarOtp,
+  getVacaciones,
   type CrearEmpleadoInput,
   type EditarEmpleadoInput,
   type ListEmpleadosParams,
@@ -16,6 +17,10 @@ const QUERY_KEY = ["empleados"];
 
 export function useEmpleados() {
   return useQuery({ queryKey: QUERY_KEY, queryFn: listEmpleados });
+}
+
+export function useVacaciones() {
+  return useQuery({ queryKey: ["vacaciones"], queryFn: () => getVacaciones() });
 }
 
 export function useEmpleadosPaginado(params: ListEmpleadosParams) {
