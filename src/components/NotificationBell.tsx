@@ -31,7 +31,7 @@ export function NotificationBell() {
         <Bell className="h-5 w-5" />
         {hayPendientes && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-accent" />}
       </button>
-      {open && <div className="absolute right-0 z-50 mt-2 w-72 space-y-3 rounded-lg border border-border bg-surface-raised p-4 shadow-lg">
+      {open && <div className="absolute -right-10 z-50 mt-2 w-72 max-w-[calc(100vw-2rem)] sm:right-0 space-y-3 rounded-lg border border-border bg-surface-raised p-4 shadow-lg">
         <h2 className="font-semibold">Pendientes reales</h2>
         {isLoading && <p role="status" className="text-sm">Cargando…</p>}
         {isError && <p role="alert" className="text-sm">No se pudieron consultar los pendientes.</p>}

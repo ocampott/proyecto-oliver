@@ -316,7 +316,7 @@ export default function EmpleadoDetallePage() {
         <div {...tabPanelProps("resumen")} className="grid gap-4 md:grid-cols-2">
           <Card>
             <h3 className="text-[14px] font-semibold text-text">Datos personales</h3>
-            <dl className="mt-3 flex flex-col gap-3 text-[13.5px]">
+            <dl className="mt-3 flex flex-col gap-3 text-[14px]">
               <div className="flex justify-between gap-3">
                 <dt className="text-text-tertiary">CUIL</dt>
                 <dd className="text-text">{empleado.cuil ?? "—"}</dd>
@@ -360,7 +360,7 @@ export default function EmpleadoDetallePage() {
 
           <Card>
             <h3 className="text-[14px] font-semibold text-text">Últimas marcas</h3>
-            <ul className="mt-3 flex flex-col gap-2.5 text-[13.5px]">
+            <ul className="mt-3 flex flex-col gap-2.5 text-[14px]">
               {turnosEmpleado.slice(-6).reverse().map((t, i) => (
                 <li key={i} className="flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-1.5 text-text-secondary">
@@ -482,7 +482,7 @@ export default function EmpleadoDetallePage() {
         <div className="data-number text-center text-4xl font-medium tracking-[0.14em] text-text">
           {codigoDialog ? formatCode(codigoDialog.code) : ""}
         </div>
-        <p className="text-center text-[13.5px] text-text-secondary">Vence en 10 minutos. Dictáselo a {empleado.nombre}.</p>
+        <p className="text-center text-[14px] text-text-secondary">Vence en 10 minutos. Dictáselo a {empleado.nombre}.</p>
         <Button variant="ghost" block onClick={() => setCodigoDialog(null)}>
           Cerrar
         </Button>

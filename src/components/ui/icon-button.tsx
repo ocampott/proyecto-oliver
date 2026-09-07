@@ -43,7 +43,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
             onBlur?.(e);
           }}
           className={cn(
-            "inline-flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[8px] border border-border bg-surface-raised text-text-secondary transition-colors hover:bg-text/[.04] disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-45",
+            "inline-flex h-10 w-10 md:h-8 md:w-8 cursor-pointer items-center justify-center rounded-[8px] border border-border bg-surface-raised text-text-secondary transition-colors hover:bg-text/[.04] disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-45",
             className
           )}
           {...props}

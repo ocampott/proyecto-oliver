@@ -146,12 +146,12 @@ function FilaLiquidacion({ fila: f, abierto, onToggle }: { fila: LiquidacionEmpl
         <TableCell className="font-medium text-text">
           {f.nombre}
           {f.advertencias.length > 0 && (
-            <span className="ml-2 rounded-[6px] border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[11px] font-medium text-warning">
+            <span className="ml-2 rounded-[6px] border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[12px] font-medium text-warning">
               ⚠ {f.advertencias.length}
             </span>
           )}
           {f.horas_en_curso && (
-            <span className="ml-2 rounded-[6px] border border-accent/30 bg-accent-100 px-1.5 py-0.5 text-[11px] font-medium text-accent-800">
+            <span className="ml-2 rounded-[6px] border border-accent/30 bg-accent-100 px-1.5 py-0.5 text-[12px] font-medium text-accent-800">
               ⏱ en curso
             </span>
           )}
@@ -159,7 +159,7 @@ function FilaLiquidacion({ fila: f, abierto, onToggle }: { fila: LiquidacionEmpl
         <TableCell>
           {f.tipo_pago === "mensual" ? "Mensual" : f.tipo_pago === "hora" ? "Por hora" : f.tipo_pago === "dia" ? "Por día" : "—"}
         </TableCell>
-        <TableCell className="font-mono text-[12.5px] text-text-secondary">
+        <TableCell className="font-mono text-[13px] text-text-secondary">
           {f.tipo_pago === "mensual"
             ? f.sueldo_mensual !== null
               ? formatMoneda(f.sueldo_mensual)
@@ -176,7 +176,7 @@ function FilaLiquidacion({ fila: f, abierto, onToggle }: { fila: LiquidacionEmpl
                     : "—"
                 : "—"}
         </TableCell>
-        <TableCell className="font-mono text-[12.5px] text-alert">{descuentos > 0 ? `- ${formatMoneda(descuentos)}` : "—"}</TableCell>
+        <TableCell className="font-mono text-[13px] text-alert">{descuentos > 0 ? `- ${formatMoneda(descuentos)}` : "—"}</TableCell>
         <TableCell className="text-right font-mono font-semibold text-text">{formatMoneda(f.total)}</TableCell>
         <TableCell className="text-[12px] text-text-tertiary">{abierto ? "▲" : "▼"}</TableCell>
       </TableRow>

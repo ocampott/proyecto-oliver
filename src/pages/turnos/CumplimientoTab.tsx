@@ -82,7 +82,7 @@ export default function CumplimientoTab() {
     <>
       <Card>
         <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Tolerancia general</h2>
-        <p className="mt-1 text-[13.5px] text-text-secondary">
+        <p className="mt-1 text-[14px] text-text-secondary">
           Minutos de margen antes de marcar un turno como "tarde" o "salida anticipada" — aplica salvo que la franja tenga su propia tolerancia.
         </p>
         <div className="mt-3 flex items-end gap-3">

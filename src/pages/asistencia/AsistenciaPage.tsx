@@ -240,7 +240,7 @@ export default function AsistenciaPage() {
                     <TableRow className="hover:bg-transparent">
                       <TableCell
                         colSpan={5}
-                        className="border-b-0 bg-surface py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary"
+                        className="border-b-0 bg-surface py-2 text-[12px] font-semibold uppercase tracking-wide text-text-tertiary"
                       >
                         {grupo.fecha}
                       </TableCell>
@@ -269,7 +269,7 @@ export default function AsistenciaPage() {
                         </TableCell>
                         <TableCell className="text-right font-mono text-xs">{horaLocal(r.created_at)}</TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                          <div className="flex justify-end row-actions transition-opacity">
                             {gestionable && (
                               <Button
                                 variant="secondary"
@@ -392,7 +392,7 @@ export default function AsistenciaPage() {
         }
       >
         {detalle && (
-          <dl className="flex flex-col gap-4 text-[13.5px]">
+          <dl className="flex flex-col gap-4 text-[14px]">
             <div>
               <dt className="text-text-tertiary">Empleado</dt>
               <dd className="font-medium text-text">{detalle.empleado_nombre ?? "—"}</dd>

@@ -25,7 +25,9 @@ for (let attempt = 0; attempt < 100; attempt++) {
 let browser;
 try {
 browser = await chromium.launch({headless:true});
-const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const page = await browser.newPage({ locale: 'es-AR', viewport: { width: 1280, height: 900 } });
+console.log('Capturas:', output);
+page.setDefaultTimeout(15000);
 const errors=[];
 page.on('pageerror', e=>errors.push(e.message));
 let pending=true, cierre=false, history=[];
@@ -42,6 +44,9 @@ await page.addInitScript(()=>{
   const access_token=btoa(JSON.stringify({alg:'HS256',typ:'JWT'}))+'.'+btoa(JSON.stringify(payload))+'.test';
   localStorage.setItem('sb-127-auth-token',JSON.stringify({access_token,refresh_token:'qa-refresh',expires_at:payload.exp,expires_in:36000,token_type:'bearer',user:{id:payload.sub,email:'qa@example.test',aud:'authenticated'}}));
 });
+const paginated = (data) => ({data, pagination:{page:1,pageSize:20,total:data.length,totalPages:1}});
+const suc = {id:'s1',nombre:'Centro',activa:true,created_at:'2026-01-01',lat:null,lon:null,radio_metros:100,direccion:'Av. Colón 123',tiene_asistencia:false};
+Object.assign(emp,{apellido:'Pérez',cuil:'20123456789',sucursal_id:'s1',created_at:'2026-01-01',tipo_pago:'mensual',sueldo_mensual:500000});
 const requests=[];
 await page.route('http://127.0.0.1:3007/**',async route=>{
  const u=new URL(route.request().url()), path=u.pathname;requests.push(path);
@@ -50,8 +55,9 @@ await page.route('http://127.0.0.1:3007/**',async route=>{
  else if(path==='/api/rrhh/pendientes')data={solicitudes:pending?[solicitud]:[],certificados:[],totalSolicitudes:pending?1:0,totalCertificados:0,marcasRechazadas:0};
  else if(path.endsWith('/decision')){pending=false;history=[{id:'h',accion:'UPDATE',actor_email:'qa@example.test',actual:{estado:'aprobada'},comentario:'Certificado revisado',created_at:new Date().toISOString()}];data={...solicitud,estado:'aprobada',revision:2};}
  else if(path.endsWith('/historial') && path.includes('ausencias'))data=history;
- else if(path==='/api/empleados')data=[emp];
- else if(path==='/api/sucursales')data=[];
+ else if(path==='/api/empleados')data=u.searchParams.has('page')?paginated([emp]):[emp];
+ else if(path.endsWith('/qr')) { await route.fulfill({status:404,json:{error:'QR no configurado en fixture'}}); return; }
+ else if(path==='/api/sucursales')data=paginated([suc]);
  else if(path==='/api/rrhh/avisos-urgentes')data=[];
  else if(path==='/api/settings/rrhh-categorias')data={categorias:['Licencia','Vacaciones']};
  else if(path==='/api/ausencias')data={ausencias:[],resumen:{total:0,certificadosPendientes:0,porSucursal:{},porMotivo:{}},pagination:{page:1,pageSize:20,total:0,totalPages:0}};
@@ -65,12 +71,27 @@ await page.route('http://127.0.0.1:3007/**',async route=>{
  else if(path==='/api/turnos/tolerancia')data={tolerancia_min:5};
  else if(path==='/api/chat/estado')data={vinculado:true,empleadoNombre:'Ana'};
  else if(path==='/api/chat/historial')data={mensajes:[{remitente:'sistema',texto:'Hola Ana'}],entrada:'menu',opciones:[]};
+ else if(path==='/api/asistencia')data=u.searchParams.has('page')?paginated([]):[];
+ else if(path==='/api/asistencia/rechazadas')data=paginated([]);
+ else if(path==='/api/horas')data={turnos:[],resumen:[]};
+ else if(path==='/api/turnos/cumplimiento')data=[];
+ else if(path==='/api/org/miembros')data=[];
+ else if(path.endsWith('/resumen'))data={empleadosActivos:1,sucursalesActivas:1,miembros:1};
+ else if(path==='/api/planes')data={planes:[{...plan,precios:[{meses:1,descuento:0,precioTotal:1000}]}]};
+ else if(path==='/api/legajos')data=paginated([{empleado_id:emp.id,nombre:'Ana Pérez',estado:'activo',cantidad_archivos:0,ultimo_archivo_at:null}]);
+ else if(path.startsWith('/api/legajos/'))data={empleado:emp,archivos:[]};
+ else if(path==='/api/vacaciones')data=[];
+ else if(path==='/api/marcar/estado')data={sucursalNombre:'Centro',empleadoNombre:null};
+ else if(path==='/api/admin/organizations')data=paginated([{...org,created_at:'2026-01-01'}]);
+ else if(path.endsWith('/suscripciones'))data={suscripciones:[]};
+ else if(/^\/api\/admin\/organizations\/[^/]+$/.test(path))data={...org,created_at:'2026-01-01'};
+ else if(path.startsWith('/api/admin/organizations/'))data=paginated([]);
  else {data={};console.log('Unhandled fixture',path);}
  await route.fulfill({json:data,headers:{'access-control-allow-origin':base,'access-control-allow-credentials':'true'}});
 });
 await page.goto(base+'/rrhh');
 await page.getByRole('button',{name:'Revisar',exact:true}).waitFor();
-await page.screenshot({path:join(output,'pendientes.png'),fullPage:true});
+await page.screenshot({path:join(output,'pendientes.png'),fullPage:true,animations:"disabled"});
 await page.getByRole('button',{name:'Revisar',exact:true}).click();
 await page.getByRole('button',{name:'Aprobar',exact:true}).click();
 await page.getByLabel('Motivo de la decisión').fill('Certificado revisado');
@@ -88,7 +109,7 @@ await page.getByLabel('Nota de revisión').fill('Período revisado');
 await page.getByLabel('Revisé los importes y las advertencias de todos los empleados.').check();
 await page.getByRole('button',{name:'Guardar cierre',exact:true}).click();
 await page.getByText('Total guardado:').waitFor();
-await page.screenshot({path:join(output,'cierre.png'),fullPage:true});
+await page.screenshot({path:join(output,'cierre.png'),fullPage:true,animations:"disabled"});
 assert.equal(cierre,true);
 await page.goto(base+'/turnos');
 await page.getByRole('heading',{name:'Horarios por empleado'}).waitFor();
@@ -97,7 +118,63 @@ await page.setViewportSize({width:390,height:844});
 await page.goto(base+'/portal/demo');
 await page.getByRole('heading',{name:'Mis horarios'}).waitFor();
 assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
-await page.screenshot({path:join(output,'portal-mobile.png'),fullPage:true});
+await page.screenshot({path:join(output,'portal-mobile.png'),fullPage:true,animations:"disabled"});
+if (process.argv.includes('--all-pages')) {
+ const routes=['/','/empleados',`/empleados/${emp.id}`,'/sucursales','/sucursales/s1','/asistencia','/horas','/turnos','/rrhh','/liquidacion','/legajos',`/legajos/${emp.id}`,'/configuracion','/plan','/admin',`/admin/organizaciones/${org.id}`,'/portal/demo','/chat/demo','/marcar/demo/centro','/login','/bienvenida','/no-existe'];
+ for (const width of [390,768,1440]) {
+  await page.setViewportSize({width,height:900});
+  for (const path of routes) {
+   await page.goto(base+path);
+   await page.waitForTimeout(350);
+   await page.evaluate(()=>document.fonts.ready);
+   const name=path==='/'?'inicio':path.split('/').filter(Boolean).join('-');
+   await page.screenshot({path:join(output,`${width}-${name}.png`),fullPage:true,animations:"disabled"});
+   const overflow=await page.evaluate(()=>({root:document.documentElement.scrollWidth>innerWidth,main:[...document.querySelectorAll('main')].some(e=>e.scrollWidth>e.clientWidth+1)}));
+   console.log('VISUAL',width,path,JSON.stringify(overflow));
+   assert.deepEqual(overflow,{root:false,main:false},`Overflow: ${width} ${path}`);
+   assert.deepEqual(errors,[],`JS: ${width} ${path}`);
+   if(width !== 768) {
+    const tabs=page.getByRole('tab');
+    for(let i=1;i<await tabs.count();i++) {
+     const label=await tabs.nth(i).innerText();
+     await tabs.nth(i).click();
+     await page.waitForTimeout(150);
+     await page.screenshot({path:join(output,`${width}-${name}-tab${i}.png`),fullPage:true,animations:'disabled'});
+     assert.deepEqual(errors,[],`Tab ${path}: ${label}`);
+     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth && [...document.querySelectorAll('main')].every(e=>e.scrollWidth<=e.clientWidth+1)),true,`Tab overflow ${path}: ${label}`);
+    }
+   }
+  }
+ }
+ await page.setViewportSize({width:390,height:667});
+ await page.goto(base+'/empleados');
+ const trigger=page.getByRole('button',{name:'Nuevo empleado',exact:true});
+ await trigger.click();
+ const modal=page.getByRole('dialog',{name:'Nuevo empleado'});
+ await modal.waitFor();
+ assert.equal(await modal.evaluate(e=>e.matches(':modal')),true);
+ for(let i=0;i<12;i++) {
+  await page.keyboard.press('Tab');
+  assert.equal(await modal.evaluate(e=>e.contains(document.activeElement)),true,'Foco contenido en modal');
+ }
+ await modal.getByRole('button',{name:'Agregar',exact:true}).scrollIntoViewIfNeeded();
+ await page.screenshot({path:join(output,'390-modal-empleado.png'),animations:'disabled'});
+ assert.equal(await modal.evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight),true);
+ await page.keyboard.press('Escape');
+ assert.equal(await trigger.evaluate(e=>e===document.activeElement),true,'Restaurar foco al cerrar');
+ await page.route('http://127.0.0.1:3007/api/asistencia?**', async route => {
+  const record={id:'marca1',empleado_id:emp.id,empleado_nombre:'Ana Pérez',sucursal_id:'s1',sucursal_nombre:'Centro',tipo:'entrada',created_at:new Date().toISOString(),lat:-31.4167,lon:-64.1833};
+  await route.fulfill({json:paginated([record]),headers:{'access-control-allow-origin':base,'access-control-allow-credentials':'true'}});
+ });
+ await page.goto(base+'/asistencia');
+ await page.getByRole('button',{name:'Ver detalle de la marca de Ana Pérez',exact:true}).click();
+ const panel=page.getByRole('dialog',{name:'Detalle de marca'});
+ await panel.waitFor();
+ assert.equal(await panel.evaluate(e=>e.matches(':modal') && e.clientWidth<=innerWidth && e.clientHeight<=innerHeight),true);
+ await page.screenshot({path:join(output,'390-side-panel.png'),animations:'disabled'});
+ await page.keyboard.press('Escape');
+ assert.equal(await panel.count(),0);
+}
 assert.deepEqual(errors,[]);
 console.log('UI OK: aprobación, cierre, consulta única de horarios, portal móvil sin overflow; sin errores JS. API/auth son fixtures locales.');
 console.log('Capturas de QA:', output);

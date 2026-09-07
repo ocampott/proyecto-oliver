@@ -175,7 +175,7 @@ export default function AdminPage() {
                   className="text-right"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                  <div className="flex justify-end row-actions transition-opacity">
                     <IconButton onClick={() => abrirEditarOrg(org)} icon={<Pencil className="h-3.5 w-3.5" />} label="Editar organización" />
                   </div>
                 </TableCell>

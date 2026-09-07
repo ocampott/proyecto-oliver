@@ -56,7 +56,7 @@ function Tabs<T extends string>({ value, onChange, items, className }: TabsProps
   }
 
   return (
-    <div role="tablist" className={cn("mb-6 flex items-center gap-5 border-b border-border", className)}>
+    <div role="tablist" className={cn("mb-6 flex overflow-x-auto items-center gap-5 border-b border-border", className)}>
       {items.map((item, index) => {
         const active = item.value === value;
         return (
@@ -74,7 +74,7 @@ function Tabs<T extends string>({ value, onChange, items, className }: TabsProps
             onClick={() => onChange(item.value)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             className={cn(
-              "flex items-center gap-1.5 border-b-2 pb-3 text-[13.5px] font-medium transition-colors",
+              "flex min-h-11 shrink-0 items-center gap-1.5 border-b-2 pb-3 text-[14px] font-medium transition-colors",
               active ? "border-accent text-text" : "border-transparent text-text-tertiary hover:text-text-secondary"
             )}
           >
@@ -82,7 +82,7 @@ function Tabs<T extends string>({ value, onChange, items, className }: TabsProps
             {item.count != null && item.count > 0 && (
               <span
                 className={cn(
-                  "rounded-[6px] px-1.5 py-0.5 text-[11px] font-mono",
+                  "rounded-[6px] px-1.5 py-0.5 text-[12px] font-mono",
                   active ? "bg-accent-100 text-accent-800" : "bg-text/[.06] text-text-tertiary"
                 )}
               >

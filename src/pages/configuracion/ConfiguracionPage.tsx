@@ -138,7 +138,7 @@ export default function ConfiguracionPage() {
                 <CalendarDays className="h-[18px] w-[18px] text-accent-700" />
                 <span className="flex-1">
                   <span className="block text-[14px] font-semibold text-text">Tolerancia de horarios</span>
-                  <span className="block text-[12.5px] text-text-secondary">Se administra desde Turnos</span>
+                  <span className="block text-[13px] text-text-secondary">Se administra desde Turnos</span>
                 </span>
                 <ChevronRight className="h-4 w-4 text-text-tertiary" />
               </Link>
@@ -148,7 +148,7 @@ export default function ConfiguracionPage() {
           {esOwner && (
             <Card className="border-alert/30">
               <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-alert">Zona sensible</h2>
-              <p className="mt-1 text-[13.5px] text-text-secondary">
+              <p className="mt-1 text-[14px] text-text-secondary">
                 ¿Necesitás dar de baja esta organización? Escribinos y nos encargamos del resto.
               </p>
               <Button variant="secondary" className="mt-3" asChild>
@@ -168,7 +168,7 @@ export default function ConfiguracionPage() {
       {tabEfectivo === "equipo" && puedeVerEquipo && (
         <Card {...tabPanelProps("equipo")}>
           <div className="flex items-start justify-between gap-3">
-            <p className="text-[13.5px] text-text-secondary">
+            <p className="text-[14px] text-text-secondary">
               Quién tiene acceso al panel de esta organización. Por ahora todos los miembros invitados
               tienen el mismo acceso, sin importar el rol.
             </p>
@@ -241,7 +241,7 @@ export default function ConfiguracionPage() {
 
       <Dialog open={invitarOpen} onClose={() => setInvitarOpen(false)} title="Invitar a la organización">
         <form onSubmit={handleInvitar} className="flex flex-col gap-3">
-          <p className="-mt-1 text-[13.5px] text-text-secondary">
+          <p className="-mt-1 text-[14px] text-text-secondary">
             Le mandamos un mail para que arme su contraseña y entre directo a esta organización.
           </p>
           <Field

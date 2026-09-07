@@ -23,7 +23,7 @@ function Meter({ value, max, warnBelow, block, className, ...props }: MeterProps
         <div className={cn("h-full rounded-full", warn ? "bg-warning" : "bg-accent")} style={{ width: `${pct}%` }} />
       </div>
       {!block && (
-        <span className={cn("data-number text-[12.5px]", warn ? "text-warning" : "text-text-secondary")}>
+        <span className={cn("data-number text-[13px]", warn ? "text-warning" : "text-text-secondary")}>
           {Math.round(pct)}%
         </span>
       )}

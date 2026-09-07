@@ -242,8 +242,8 @@ export default function SucursalDetallePage() {
                 <Loader2 className="h-6 w-6 animate-spin text-text-tertiary" />
               )}
             </div>
-            {org && <p className="mt-3 break-all font-mono text-[11px] text-text-tertiary">{urlMarcado}</p>}
-            <p className="mt-2 text-[12.5px] leading-relaxed text-text-secondary">
+            {org && <p className="mt-3 break-all font-mono text-[12px] text-text-tertiary">{urlMarcado}</p>}
+            <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">
               Imprimí el QR y pegalo en la entrada. El empleado escanea, se identifica y marca desde su propio teléfono.
             </p>
           </Card>

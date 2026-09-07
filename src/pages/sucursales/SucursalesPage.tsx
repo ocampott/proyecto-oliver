@@ -277,7 +277,7 @@ export default function SucursalesPage() {
                   <Badge tone={suc.activa ? "success" : "neutral"}>{suc.activa ? "Activa" : "Inactiva"}</Badge>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                  <div className="flex justify-end gap-1.5 row-actions transition-opacity">
                     <IconButton
                       onClick={() => abrirEdicion(suc)}
                       disabled={!gestionable}
@@ -422,7 +422,7 @@ export default function SucursalesPage() {
       </Dialog>
 
       <Dialog open={qrSucursal != null} onClose={() => setQrId(null)} title={qrSucursal?.nombre ?? ""}>
-        <p className="m-0 -mt-2 text-[11.5px] font-semibold uppercase tracking-wide text-text-tertiary">Código QR</p>
+        <p className="m-0 -mt-2 text-[12px] font-semibold uppercase tracking-wide text-text-tertiary">Código QR</p>
         {qrUrl ? (
           <img src={qrUrl} alt={`QR de ${qrSucursal?.nombre}`} className="w-full" />
         ) : (

@@ -21,6 +21,20 @@ let nextId = 0;
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<ToastItem[]>([]);
 
+  // Native modal dialogs live above all z-index layers. Keep feedback in
+  // the active modal (and move it back when that modal closes).
+  const [portalTarget, setPortalTarget] = React.useState<Element>(document.body);
+  React.useEffect(() => {
+    const syncTarget = () => {
+      const dialogs = document.querySelectorAll("dialog[open]");
+      setPortalTarget(dialogs.item(dialogs.length - 1) ?? document.body);
+    };
+    const observer = new MutationObserver(syncTarget);
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["open"] });
+    syncTarget();
+    return () => observer.disconnect();
+  }, []);
+
   const dismiss = React.useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
@@ -61,7 +75,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               ) : (
                 <AlertCircle className="mt-0.5 h-[18px] w-[18px] shrink-0 text-alert" />
               )}
-              <p className="flex-1 text-[13.5px] leading-snug text-text">{t.message}</p>
+              <p className="flex-1 text-[14px] leading-snug text-text">{t.message}</p>
               <button
                 onClick={() => dismiss(t.id)}
                 aria-label="Cerrar"
@@ -72,7 +86,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             </div>
           ))}
         </div>,
-        document.body
+        portalTarget
       )}
     </ToastContext.Provider>
   );

@@ -303,10 +303,10 @@ export default function RrhhPage() {
       {avisosUrgentes.length > 0 && (
         <Card className="border-warning/30 bg-warning/[.06]">
           <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">⚠ Avisos recientes</h2>
-          <p className="mt-1 text-[13.5px] text-text-secondary">Urgencias reportadas por empleados desde el chat.</p>
+          <p className="mt-1 text-[14px] text-text-secondary">Urgencias reportadas por empleados desde el chat.</p>
           <ul className="mt-3 flex flex-col gap-2">
             {avisosUrgentes.map((a, i) => (
-              <li key={i} className="text-[13.5px] text-text">
+              <li key={i} className="text-[14px] text-text">
                 <span className="font-medium">{a.empleado_nombre}</span>
                 {" — "}
                 {a.texto.replace(/^⚠️ URGENCIA de [^:]+:\s*/, "")}
@@ -417,7 +417,7 @@ export default function RrhhPage() {
                     <TableCell className="text-right font-mono text-xs">{diasEntre(a.fecha_desde, a.fecha_hasta)}</TableCell>
                     <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                      <div className="flex justify-end row-actions transition-opacity">
                         <IconButton onClick={() => setBorrarTarget(a)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Borrar" />
                       </div>
                     </TableCell>
@@ -440,7 +440,7 @@ export default function RrhhPage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Categorías de motivo</h2>
-              <p className="mt-1 text-[13.5px] text-text-secondary">
+              <p className="mt-1 text-[14px] text-text-secondary">
                 Motivos disponibles al cargar una ausencia.
               </p>
             </div>
@@ -451,7 +451,7 @@ export default function RrhhPage() {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             {categorias.length === 0 && (
-              <p className="text-[13.5px] text-text-tertiary">Todavía no cargaste ninguna categoría.</p>
+              <p className="text-[14px] text-text-tertiary">Todavía no cargaste ninguna categoría.</p>
             )}
             {categorias.map((c) => {
               const quitando = quitandoCategoria === c;

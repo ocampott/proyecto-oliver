@@ -265,7 +265,7 @@ export default function MarcarPage() {
               <LogOut className="h-4 w-4" /> Marcar salida
             </Button>
             {org && (
-              <Link to={`/chat/${org}`} className="block text-center text-[13.5px] text-text-secondary underline hover:text-text">
+              <Link to={`/chat/${org}`} className="block text-center text-[14px] text-text-secondary underline hover:text-text">
                 Hablar con RRHH →
               </Link>
             )}
@@ -288,7 +288,7 @@ export default function MarcarPage() {
         )}
 
         {mensaje && (
-          <div className="mt-4 flex items-center gap-[10px] rounded-[10px] bg-success-100 px-[14px] py-[13px] text-[13.5px] font-semibold text-success-700">
+          <div className="mt-4 flex items-center gap-[10px] rounded-[10px] bg-success-100 px-[14px] py-[13px] text-[14px] font-semibold text-success-700">
             <IconCircle tone="success" size={26} icon={<CheckCircle className="h-3.5 w-3.5 text-white" />} />
             {mensaje}
           </div>

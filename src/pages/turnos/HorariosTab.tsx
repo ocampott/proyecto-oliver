@@ -45,7 +45,7 @@ function DiaToggle({ dias, onToggle }: { dias: number[]; onToggle: (d: number) =
           type="button"
           aria-pressed={dias.includes(d)}
           onClick={() => onToggle(d)}
-          className={`rounded-md border px-3 py-1.5 font-mono text-[11px] font-medium uppercase tracking-[0.04em] transition-colors ${
+          className={`rounded-md border px-3 py-1.5 font-mono text-[12px] font-medium uppercase tracking-[0.04em] transition-colors ${
             dias.includes(d) ? "border-accent bg-accent-100 text-accent-800" : "border-border text-text-secondary hover:bg-text/[.04]"
           }`}
         >
@@ -131,7 +131,7 @@ function HorariosOverview({
                       <span
                         key={d}
                         title={DIAS[d]}
-                        className={`flex h-5 w-5 items-center justify-center rounded-[4px] font-mono text-[9px] uppercase ${
+                        className={`flex h-6 w-6 items-center justify-center rounded-[4px] font-mono text-[12px] uppercase ${
                           f.diasConBloque.has(d) ? "bg-accent-100 text-accent-800" : "bg-text/[.04] text-text-tertiary"
                         }`}
                       >
@@ -390,7 +390,7 @@ export default function HorariosTab() {
           options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
           containerClassName="w-64"
         />
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setAsignOpen(true)}>
             <Users className="h-4 w-4" />
             Asignar a varios empleados
@@ -440,7 +440,7 @@ export default function HorariosTab() {
       </Table>
 
       <Card className="mt-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-[18px] font-semibold tracking-[-0.02em] text-text">Plantillas</h2>
             <p className="mt-0.5 text-[13px] text-text-secondary">
@@ -454,7 +454,7 @@ export default function HorariosTab() {
         </div>
         <ul className="mt-3 flex flex-col gap-2">
           {templates.map((t) => (
-            <li key={t.id} className="flex items-center justify-between rounded-[4px] border border-border-soft px-3 py-2 text-[14px]">
+            <li key={t.id} className="flex flex-wrap items-center justify-between gap-3 rounded-[4px] border border-border-soft px-3 py-2 text-[14px]">
               <span>
                 <strong className="font-semibold">{t.nombre}</strong> — {t.hora_inicio}–{t.hora_fin}
                 {t.dias_semana.length > 0 && ` (${t.dias_semana.map((d) => DIAS[d].slice(0, 3)).join(", ")})`}
@@ -619,7 +619,7 @@ export default function HorariosTab() {
         title="Asignar turno a varios empleados"
         className="max-w-[500px]"
       >
-        <p className="-mt-1 text-[13.5px] text-text-secondary">
+        <p className="-mt-1 text-[14px] text-text-secondary">
           Carga el mismo horario para todos los días y empleados que elijas de una sola vez — la forma
           recomendada de armar franjas generales (por ejemplo, el horario de apertura para todo el equipo).
         </p>

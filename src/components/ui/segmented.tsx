@@ -27,19 +27,28 @@ function Segmented<T extends string>({
       role="radiogroup"
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-[8px] border border-border-strong bg-surface p-0.5 shadow-[inset_0_1px_2px_rgba(13,13,17,0.04)]",
+        "inline-flex max-w-full overflow-x-auto items-center gap-0.5 rounded-[8px] border border-border-strong bg-surface p-0.5 shadow-[inset_0_1px_2px_rgba(13,13,17,0.04)]",
         className
       )}
     >
-      {options.map((opt) => (
+      {options.map((opt, index) => (
         <button
           key={opt.value}
           type="button"
           role="radio"
           aria-checked={opt.value === value}
+          tabIndex={opt.value === value ? 0 : -1}
+          onKeyDown={(e) => {
+            const direction = ["ArrowRight", "ArrowDown"].includes(e.key) ? 1 : ["ArrowLeft", "ArrowUp"].includes(e.key) ? -1 : 0;
+            if (!direction) return;
+            e.preventDefault();
+            const next = (index + direction + options.length) % options.length;
+            onChange(options[next].value);
+            (e.currentTarget.parentElement?.children[next] as HTMLButtonElement)?.focus();
+          }}
           onClick={() => onChange(opt.value)}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[13px] font-medium transition-colors",
+            "inline-flex min-h-8 shrink-0 whitespace-nowrap items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[13px] font-medium transition-colors",
             opt.value === value
               ? "bg-surface-raised text-text shadow-[0_1px_3px_rgba(13,13,17,0.14),0_1px_1px_rgba(13,13,17,0.08)]"
               : "text-text-secondary hover:text-text"
@@ -47,7 +56,7 @@ function Segmented<T extends string>({
         >
           {opt.label}
           {opt.count != null && (
-            <span className={cn("font-mono text-[10.5px]", opt.value === value ? "text-text-tertiary" : "text-text-muted")}>
+            <span className={cn("font-mono text-[12px]", opt.value === value ? "text-text-tertiary" : "text-text-muted")}>
               {opt.count}
             </span>
           )}

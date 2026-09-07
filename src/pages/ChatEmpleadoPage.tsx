@@ -142,7 +142,7 @@ export default function ChatEmpleadoPage() {
     <main className="flex min-h-screen flex-col bg-bg">
       <header className="sticky top-0 border-b border-border bg-surface-raised px-4 py-3.5">
         <h1 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Chat con RRHH</h1>
-        <p className="text-[12.5px] text-text-secondary">{etapa.nombre}</p>
+        <p className="text-[13px] text-text-secondary">{etapa.nombre}</p>
         <Link to={`/portal/${encodeURIComponent(orgSlug ?? "")}`} className="text-sm text-accent underline">Mis horarios, solicitudes y documentos</Link>
       </header>
 

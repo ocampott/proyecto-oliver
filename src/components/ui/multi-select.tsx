@@ -17,7 +17,7 @@ export interface MultiSelectProps {
   containerClassName?: string;
   /**
    * "field" (default): caja con label arriba, igual que Field/Select.
-   * "compact": trigger h-8 para la fila de filtros del Toolbar, con el
+   * "compact": trigger h-9 para la fila de filtros del Toolbar, con el
    * mismo aspecto que <Select compact> — el label pasa a aria-label.
    */
   variant?: "field" | "compact";
@@ -72,20 +72,21 @@ function MultiSelect({
   const isCompact = variant === "compact";
 
   return (
-    <div ref={ref} className={cn(isCompact ? "relative" : "relative flex flex-col gap-[5px]", containerClassName)}>
+    <div ref={ref} className={cn(isCompact ? "relative" : "relative flex flex-col gap-1.5", containerClassName)}>
       {!isCompact && (
-        <label htmlFor={autoId} className="text-[12px] text-text-secondary">
+        <label htmlFor={autoId} className="text-[13px] font-medium text-text-secondary">
           {label}
         </label>
       )}
       <button
         id={autoId}
         type="button"
+        aria-expanded={open}
         aria-label={isCompact ? label : undefined}
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "flex w-full items-center justify-between rounded-[8px] border border-border-strong bg-surface-raised text-left text-text shadow-[0_1px_2px_rgba(13,13,17,0.05)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-          isCompact ? "h-8 px-2.5 text-[13px]" : "h-10 px-3 py-2 text-[15px]"
+          isCompact ? "h-9 px-2.5 text-[13px]" : "h-10 px-3 py-2 text-[14px]"
         )}
       >
         <span className={cn("truncate", value.length === 0 && "text-text-tertiary")}>
@@ -105,10 +106,11 @@ function MultiSelect({
           <div className="border-b border-border p-2">
             <Input
               autoFocus
+              aria-label={`Buscar ${label.toLowerCase()}`}
               placeholder="Buscar..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="h-8 text-[13.5px]"
+              className="h-9 text-[14px]"
             />
           </div>
           <ul className="flex-1 overflow-y-auto p-1">
@@ -118,8 +120,9 @@ function MultiSelect({
                 <li key={o.value}>
                   <button
                     type="button"
+                    aria-pressed={checked}
                     onClick={() => toggle(o.value)}
-                    className="flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-[13.5px] text-text hover:bg-text/[.04]"
+                    className="flex w-full items-center gap-2.5 rounded-[8px] px-2.5 py-2 text-left text-[14px] text-text hover:bg-text/[.04]"
                   >
                     <span
                       className={cn(
@@ -134,7 +137,7 @@ function MultiSelect({
                 </li>
               );
             })}
-            {filtered.length === 0 && <li className="px-2.5 py-2 text-[13.5px] text-text-tertiary">Sin resultados.</li>}
+            {filtered.length === 0 && <li className="px-2.5 py-2 text-[14px] text-text-tertiary">Sin resultados.</li>}
           </ul>
         </div>
       )}

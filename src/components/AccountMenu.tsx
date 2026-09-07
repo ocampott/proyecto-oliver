@@ -56,7 +56,7 @@ export function AccountMenu() {
       {open && (
         <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-[212px] rounded-[10px] border border-border bg-surface-raised p-1.5 shadow-[0_8px_24px_rgba(13,13,17,.1)]">
           <div className="mb-1 border-b border-border px-2.5 pb-2 pt-1">
-            {org && <p className="m-0 text-[13.5px] font-bold text-text">{org.name}</p>}
+            {org && <p className="m-0 text-[14px] font-bold text-text">{org.name}</p>}
             <p className="m-0 text-[12px] text-text-tertiary">{user?.email}</p>
           </div>
           <button
@@ -64,7 +64,7 @@ export function AccountMenu() {
               setOpen(false);
               navigate("/plan");
             }}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text hover:bg-text/[.04]"
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-1.5 text-left text-[14px] font-medium text-text hover:bg-text/[.04]"
           >
             Mi plan
           </button>
@@ -74,14 +74,14 @@ export function AccountMenu() {
                 setOpen(false);
                 navigate("/admin");
               }}
-              className="flex w-full cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-1.5 text-left text-[13.5px] font-medium text-text hover:bg-text/[.04]"
+              className="flex w-full cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-1.5 text-left text-[14px] font-medium text-text hover:bg-text/[.04]"
             >
               Panel admin
             </button>
           )}
           <button
             onClick={handleCerrarSesion}
-            className="flex w-full cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-1.5 text-left text-[13.5px] font-medium text-alert hover:bg-text/[.04]"
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-[8px] px-2.5 py-1.5 text-left text-[14px] font-medium text-alert hover:bg-text/[.04]"
           >
             Cerrar sesión
           </button>

@@ -42,9 +42,10 @@ function FilterChip({ label, value, defaultValue, options, onChange }: FilterChi
     <div ref={ref} className="relative">
       <button
         type="button"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 font-mono text-[11px] font-medium uppercase tracking-[0.04em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-md border px-3 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
           active
             ? "border-accent bg-accent-100 text-accent-800 hover:bg-accent-200"
             : "border-border bg-surface text-text-secondary hover:bg-text/[.04]"
@@ -63,7 +64,7 @@ function FilterChip({ label, value, defaultValue, options, onChange }: FilterChi
                 onChange(o.value);
                 setOpen(false);
               }}
-              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[13.5px] text-text hover:bg-text/[.04]"
+              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[14px] text-text hover:bg-text/[.04]"
             >
               {o.label}
               {o.value === value && <Check className="h-3.5 w-3.5 text-accent" />}

@@ -473,7 +473,7 @@ export default function EmpleadosPage() {
                   </Status>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                  <div className="flex justify-end gap-1.5 row-actions transition-opacity">
                     <IconButton
                       onClick={() => abrirEdicion(emp)}
                       disabled={accionandoId === emp.id || !gestionable}
@@ -749,7 +749,7 @@ export default function EmpleadosPage() {
         <div className="data-number text-center text-4xl font-medium tracking-[0.14em] text-text">
           {codigoDialog ? formatCode(codigoDialog.code) : ""}
         </div>
-        <p className="text-center text-[13.5px] text-text-secondary">
+        <p className="text-center text-[14px] text-text-secondary">
           Vence en 10 minutos. Dictáselo a {codigoDialog?.nombre}, o copialo y compartíselo.
         </p>
         <Button variant="secondary" block onClick={handleCopiarCodigo}>

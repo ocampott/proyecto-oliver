@@ -209,13 +209,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         </div>
         <div className="max-h-[360px] overflow-y-auto p-2">
           {flat.length === 0 && (
-            <p className="px-3 py-6 text-center text-[13.5px] text-text-tertiary">
+            <p className="px-3 py-6 text-center text-[14px] text-text-tertiary">
               {buscando ? "Buscando…" : "Sin resultados."}
             </p>
           )}
           {grupos.map((group) => (
             <div key={group.heading} className="mb-1 last:mb-0">
-              <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary">
+              <p className="px-3 py-1.5 text-[12px] font-semibold uppercase tracking-wide text-text-tertiary">
                 {group.heading}
               </p>
               {group.items.map((item) => {
@@ -230,13 +230,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     onMouseEnter={() => setActiveIndex(renderedIndex)}
                     onClick={item.onSelect}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-left text-[13.5px]",
+                      "flex w-full items-center gap-2.5 rounded-[8px] px-3 py-2 text-left text-[14px]",
                       isActive ? "bg-accent-100 text-accent-800" : "text-text hover:bg-text/[.04]"
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     <span className="flex-1 truncate">{item.label}</span>
-                    {item.meta && <span className="shrink-0 text-[11.5px] text-text-tertiary">{item.meta}</span>}
+                    {item.meta && <span className="shrink-0 text-[12px] text-text-tertiary">{item.meta}</span>}
                     {isActive && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-accent-700" />}
                   </button>
                 );

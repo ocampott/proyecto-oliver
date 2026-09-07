@@ -41,7 +41,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
   return (
     <div
       className={cn(
-        "mt-3 flex flex-wrap items-center justify-between gap-3 font-mono text-[12px] text-text-secondary",
+        "mt-3 flex flex-wrap items-center justify-between gap-3 text-[12px] text-text-secondary",
         className
       )}
     >
@@ -74,9 +74,10 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
+        <span className="px-2 sm:hidden">{page} de {totalPages}</span>
         {pageNumbers(page, totalPages).map((p, i) =>
           p === "…" ? (
-            <span key={`ellipsis-${i}`} className="px-1.5 text-text-tertiary">
+            <span key={`ellipsis-${i}`} className="hidden sm:inline px-1.5 text-text-tertiary">
               …
             </span>
           ) : (
@@ -86,7 +87,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
               onClick={() => onPageChange(p)}
               aria-current={p === page ? "page" : undefined}
               className={cn(
-                "inline-flex h-8 min-w-8 items-center justify-center rounded-[8px] px-2 text-[13px] font-medium",
+                "hidden sm:inline-flex h-8 min-w-8 items-center justify-center rounded-[8px] px-2 text-[13px] font-medium",
                 p === page ? "bg-accent text-white" : "text-text-secondary hover:bg-text/[.04]"
               )}
             >

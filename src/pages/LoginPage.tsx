@@ -48,12 +48,12 @@ export default function LoginPage() {
         <p className="font-mono text-xs text-surface-raised/50">oliver / 2026</p>
       </section>
 
-      <section className="flex items-center justify-center p-6 md:p-12">
-        <Card className="w-full max-w-md border-0 bg-transparent shadow-none">
+      <section className="flex items-center justify-center px-4 py-8 sm:p-8 lg:p-12">
+        <Card className="w-full max-w-md p-4 sm:p-6 border-0 bg-transparent shadow-none">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <div className="mb-4">
               <p className="font-mono text-xs uppercase tracking-[0.18em] text-accent">Bienvenido</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-[-0.02em] text-text">Iniciar sesión</h1>
+              <h1 className="mt-3 text-3xl font-semibold tracking-[-0.02em] text-text">Iniciar sesión</h1>
               <p className="mt-3 text-sm text-text-secondary">Ingresá para ver el estado de tu organización.</p>
             </div>
             <Field

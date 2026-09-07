@@ -7,7 +7,7 @@ export interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
   ({ className, containerClassName, ...props }, ref) => (
-    <div className={cn("overflow-x-auto", containerClassName)}>
+    <div className={cn("min-w-0 overflow-x-auto", containerClassName)}>
       <table ref={ref} className={cn("w-full text-left text-[13px]", className)} {...props} />
     </div>
   )
@@ -36,7 +36,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
     <th
       ref={ref}
       className={cn(
-        "border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-tertiary",
+        "border-b border-border whitespace-nowrap px-4 py-3 text-[12px] font-medium text-text-tertiary",
         className
       )}
       {...props}
@@ -49,7 +49,7 @@ const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<
   ({ className, ...props }, ref) => (
     <td
       ref={ref}
-      className={cn("border-b border-border-soft px-3 py-2 align-middle", className)}
+      className={cn("border-b border-border-soft whitespace-nowrap px-4 py-3 align-middle", className)}
       {...props}
     />
   )

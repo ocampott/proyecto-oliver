@@ -22,7 +22,7 @@ import { cn } from "../../lib/utils";
  * `tone` y se ignora `variant`.
  */
 const badgeVariants = cva(
-  "inline-flex items-center rounded-[6px] px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide",
+  "inline-flex items-center rounded-[6px] px-2 py-0.5 text-[12px] font-medium leading-4",
   {
     variants: {
       variant: {
@@ -59,7 +59,7 @@ function Badge({ className, variant, tone, ...props }: BadgeProps) {
     return (
       <span
         className={cn(
-          "inline-flex items-center gap-1 rounded-[6px] px-1.5 py-0.5 text-[11px] font-medium leading-4",
+          "inline-flex items-center gap-1 rounded-[6px] px-2 py-0.5 text-[12px] font-medium leading-4",
           TONE_CLASSES[tone],
           className
         )}

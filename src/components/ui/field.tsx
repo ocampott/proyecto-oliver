@@ -6,7 +6,7 @@ export interface FieldProps extends InputProps {
   label: string;
   containerClassName?: string;
   icon?: React.ReactNode;
-  /** Control compacto de Toolbar: sin label visible (pasa a aria-label), h-8. */
+  /** Control compacto de Toolbar: sin label visible (pasa a aria-label), h-9. */
   compact?: boolean;
 }
 
@@ -27,7 +27,7 @@ const Field = React.forwardRef<HTMLInputElement, FieldProps>(
             id={inputId}
             ref={ref}
             aria-label={label}
-            className={cn("h-8 text-[13px]", icon && "pl-8", className)}
+            className={cn("h-9 text-[13px]", icon && "pl-8", className)}
             {...props}
           />
         </div>
@@ -35,8 +35,8 @@ const Field = React.forwardRef<HTMLInputElement, FieldProps>(
     }
 
     return (
-      <div className={cn("flex flex-col gap-[5px]", containerClassName)}>
-        <label htmlFor={inputId} className="text-[12px] text-text-secondary">
+      <div className={cn("flex flex-col gap-1.5", containerClassName)}>
+        <label htmlFor={inputId} className="text-[13px] font-medium text-text-secondary">
           {label}
         </label>
         {icon ? (

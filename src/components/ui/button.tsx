@@ -8,7 +8,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-accent text-white hover:bg-accent-600 active:bg-accent-700",
+        primary: "bg-accent text-white shadow-sm hover:bg-accent-700 active:bg-accent-800",
         secondary:
           "border border-border-strong bg-surface-raised text-text shadow-[0_1px_2px_rgba(13,13,17,0.05)] hover:bg-text/[.04] active:bg-text/[.07]",
         ghost: "bg-transparent text-accent-700 hover:bg-accent-100 active:bg-accent-200",
@@ -16,8 +16,8 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-[14px] py-2",
-        lg: "h-14 w-full px-4 text-[16px]",
-        sm: "h-7 px-2.5 text-[12.5px]",
+        lg: "h-11 w-full px-4 text-[16px]",
+        sm: "h-8 px-2.5 text-[12px]",
         icon: "h-9 w-9 p-0",
       },
       block: {
@@ -25,7 +25,7 @@ const buttonVariants = cva(
         false: "",
       },
     },
-    compoundVariants: [{ variant: "ghost", size: "default", class: "px-1" }],
+    compoundVariants: [{ variant: "ghost", size: "default", class: "px-3" }],
     defaultVariants: { variant: "primary", size: "default", block: false },
   }
 );
