@@ -40,12 +40,12 @@ export default function LoginPage() {
           oliver<span className="text-accent-300">.</span>
         </div>
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-accent-200">Control de asistencia</p>
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-white">Control de asistencia</p>
           <p className="mt-4 max-w-xs text-3xl font-semibold leading-tight tracking-[-0.03em]">
             El pulso de tu equipo, sin ruido.
           </p>
         </div>
-        <p className="font-mono text-xs text-surface-raised/50">oliver / 2026</p>
+        <p className="font-mono text-xs text-white">oliver / 2026</p>
       </section>
 
       <section className="flex items-center justify-center px-4 py-8 sm:p-8 lg:p-12">

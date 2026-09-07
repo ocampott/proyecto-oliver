@@ -23,7 +23,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
       <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Topbar onMenuClick={() => setMobileOpen(true)} onOpenSearch={() => setPaletteOpen(true)} />
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto bg-canvas">
           <div className="mx-auto w-full max-w-[1440px] px-4 pb-12 pt-6 sm:px-6 lg:px-8"><Suspense fallback={<p role="status" className="py-8 text-text-secondary">Cargando…</p>}>{children}</Suspense></div>
         </main>
       </div>

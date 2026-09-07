@@ -241,7 +241,7 @@ function FilaLiquidacion({ fila: f, abierto, onToggle }: { fila: LiquidacionEmpl
                 </>
               )}
               {f.total_por_horas !== null && (
-                <p className={Math.abs(f.total - f.total_por_horas) <= 1 ? "" : f.total > f.total_por_horas ? "text-alert" : "text-accent"}>
+                <p className={Math.abs(f.total - f.total_por_horas) <= 1 ? "" : f.total > f.total_por_horas ? "text-alert" : "text-accent-700"}>
                   Según horas trabajadas × valor hora: {formatMoneda(f.total_por_horas)}
                 </p>
               )}

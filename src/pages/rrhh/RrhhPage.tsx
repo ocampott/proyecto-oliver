@@ -597,7 +597,7 @@ export default function RrhhPage() {
           <Button variant="secondary" onClick={() => setBorrarTarget(null)}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleBorrar} disabled={borrar.isPending}>
+          <Button variant="destructive" onClick={handleBorrar} disabled={borrar.isPending}>
             {borrar.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Borrar
           </Button>

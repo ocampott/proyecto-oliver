@@ -213,13 +213,13 @@ function SidebarFooterLink({
           cn(
             "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
             collapsed && "md:justify-center md:px-0",
-            isActive ? "bg-accent text-white" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
+            isActive ? "bg-accent-100 text-accent-800 shadow-[inset_3px_0_0_var(--color-accent)]" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
           )
         }
       >
         {({ isActive }) => (
           <>
-            <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-white")} />
+            <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-accent-700")} />
             <span className={cn("flex-1", collapsed && "md:hidden")}>{label}</span>
           </>
         )}
@@ -335,19 +335,19 @@ function SidebarNavLink({
       <NavLink
         {...normalTooltip.triggerProps}
         to={item.href}
-        end
+        end={item.href === "/"}
         onClick={onClick}
         className={({ isActive }) =>
           cn(
             "flex items-center gap-2.5 rounded-[8px] px-3 py-2.5 text-[14px] font-medium transition-colors duration-200",
             collapsed && "md:justify-center md:px-0",
-            isActive ? "bg-accent text-white" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
+            isActive ? "bg-accent-100 text-accent-800 shadow-[inset_3px_0_0_var(--color-accent)]" : "text-text-secondary hover:bg-text/[.04] hover:text-text"
           )
         }
       >
         {({ isActive }) => (
           <>
-            <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-white")} />
+            <Icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-accent-700")} />
             <span className={cn("flex-1", collapsed && "md:hidden")}>{item.label}</span>
           </>
         )}

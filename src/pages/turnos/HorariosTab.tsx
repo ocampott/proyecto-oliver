@@ -534,7 +534,7 @@ export default function HorariosTab() {
           <Button variant="secondary" onClick={() => setBorrarTarget(null)}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleBorrar} disabled={borrarHorario.isPending}>
+          <Button variant="destructive" onClick={handleBorrar} disabled={borrarHorario.isPending}>
             {borrarHorario.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Borrar
           </Button>
@@ -606,7 +606,7 @@ export default function HorariosTab() {
           <Button variant="secondary" onClick={() => setBorrarPlantillaTarget(null)}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={handleBorrarPlantilla} disabled={borrarPlantilla.isPending}>
+          <Button variant="destructive" onClick={handleBorrarPlantilla} disabled={borrarPlantilla.isPending}>
             {borrarPlantilla.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
             Borrar
           </Button>

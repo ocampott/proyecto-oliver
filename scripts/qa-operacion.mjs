@@ -131,6 +131,16 @@ if (process.argv.includes('--all-pages')) {
    await page.goto(base+path);
    await page.waitForTimeout(350);
    await page.evaluate(()=>document.fonts.ready);
+   if (width === 1440 && (path === '/empleados' || path === `/empleados/${emp.id}`)) {
+    const active = page.locator('a[href="/empleados"][aria-current="page"]');
+    await active.waitFor();
+    assert.equal(await active.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(238, 243, 220)');
+    assert.equal(await page.locator('main').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(247, 248, 250)');
+    if (path === '/empleados') {
+     const primary=page.getByRole('button',{name:'Nuevo empleado',exact:true});
+     assert.equal(await primary.evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(92, 122, 26)');
+    }
+   }
    const name=path==='/'?'inicio':path.split('/').filter(Boolean).join('-');
    await page.screenshot({path:join(output,`${width}-${name}.png`),fullPage:true,animations:"disabled"});
    const overflow=await page.evaluate(()=>({root:document.documentElement.scrollWidth>innerWidth,main:[...document.querySelectorAll('main')].some(e=>e.scrollWidth>e.clientWidth+1)}));

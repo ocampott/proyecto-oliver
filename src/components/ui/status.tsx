@@ -12,7 +12,7 @@ const TEXT_COLOR = {
   success: "text-text",
   warning: "text-text",
   neutral: "text-text-muted",
-  accent: "text-accent",
+  accent: "text-accent-700",
 } as const;
 
 export interface StatusProps extends React.HTMLAttributes<HTMLSpanElement> {

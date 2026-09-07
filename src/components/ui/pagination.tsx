@@ -51,7 +51,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
           aria-label="Filas por página"
-          className="h-8 rounded-[8px] border border-border bg-surface-raised px-2 text-[13px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="h-8 rounded-[8px] border border-border-control bg-surface-raised px-2 text-[13px] text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           {PAGE_SIZE_OPTIONS.map((n) => (
             <option key={n} value={n}>
@@ -88,7 +88,7 @@ function Pagination({ pagination, onPageChange, onPageSizeChange, className }: P
               aria-current={p === page ? "page" : undefined}
               className={cn(
                 "hidden sm:inline-flex h-8 min-w-8 items-center justify-center rounded-[8px] px-2 text-[13px] font-medium",
-                p === page ? "bg-accent text-white" : "text-text-secondary hover:bg-text/[.04]"
+                p === page ? "bg-accent-100 text-accent-800" : "text-text-secondary hover:bg-text/[.04]"
               )}
             >
               {p}

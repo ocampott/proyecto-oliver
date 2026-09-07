@@ -2,12 +2,13 @@
 
 @theme {
   --color-bg: #fcfcfd;
+  --color-canvas: #f7f8fa;
   --color-surface: #f0f0f2;
   --color-surface-raised: #ffffff;
   --color-text: #0d0d11;
   --color-text-secondary: #3f3f47;
-  --color-text-tertiary: #6c6c7a;
-  --color-text-muted: #9797a3;
+  --color-text-tertiary: #5f5f6b;
+  --color-text-muted: #686875;
   --color-accent: #5c7a1a;
   --color-accent-100: #eef3dc;
   --color-accent-200: #dde8b9;
@@ -19,13 +20,17 @@
   --color-accent-800: #3a4f13;
   --color-accent-900: #2b3b0f;
   --color-border: rgba(13, 13, 17, 0.08);
-  --color-border-strong: rgba(13, 13, 17, 0.14);
+  --color-border-strong: rgba(13, 13, 17, 0.18);
+  --color-border-control: #858592;
   --color-border-soft: rgba(13, 13, 17, 0.05);
   --color-success: #047857;
   --color-success-700: #065f46;
   --color-success-100: #d1fae5;
-  --color-warning: #b45309;
-  --color-alert: #dc2626;
+  --color-warning: #92400e;
+  --color-warning-100: #fffbeb;
+  --color-alert: #b91c1c;
+  --color-alert-700: #991b1b;
+  --color-alert-800: #7f1d1d;
   --color-alert-100: #fee2e2;
   --color-divider: color-mix(in srgb, var(--color-text) 22%, transparent);
   --font-sans: "Archivo", sans-serif;
@@ -103,7 +108,7 @@
     border: 1px solid var(--color-border);
     border-radius: 10px;
     background: var(--color-surface-raised);
-    box-shadow: 0 1px 2px rgba(13, 13, 17, 0.04), 0 2px 6px rgba(13, 13, 17, 0.05);
+    box-shadow: 0 1px 2px rgba(13, 13, 17, 0.04);
   }
 
   .row-actions { opacity: 1; }

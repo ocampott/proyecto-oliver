@@ -12,7 +12,7 @@ const buttonVariants = cva(
         secondary:
           "border border-border-strong bg-surface-raised text-text shadow-[0_1px_2px_rgba(13,13,17,0.05)] hover:bg-text/[.04] active:bg-text/[.07]",
         ghost: "bg-transparent text-accent-700 hover:bg-accent-100 active:bg-accent-200",
-        destructive: "bg-alert text-white hover:bg-alert/90 active:bg-alert/80",
+        destructive: "bg-alert text-white hover:bg-alert-700 active:bg-alert-800",
       },
       size: {
         default: "h-9 px-[14px] py-2",
