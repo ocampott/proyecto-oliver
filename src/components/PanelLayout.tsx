@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { Topbar } from "./Topbar";
 import { Sidebar } from "./Sidebar";
 import { CommandPalette } from "./CommandPalette";
@@ -24,7 +24,7 @@ export function PanelLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-0 flex-1 flex-col">
         <Topbar onMenuClick={() => setMobileOpen(true)} onOpenSearch={() => setPaletteOpen(true)} />
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1440px] px-6 pb-12 pt-5 md:px-10 md:pt-6">{children}</div>
+          <div className="mx-auto w-full max-w-[1440px] px-6 pb-12 pt-5 md:px-10 md:pt-6"><Suspense fallback={<p role="status" className="py-8 text-text-secondary">Cargando…</p>}>{children}</Suspense></div>
         </main>
       </div>
       {paletteOpen && <CommandPalette open onClose={() => setPaletteOpen(false)} />}

@@ -35,7 +35,11 @@ export function useBorrarAsistencia() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAsistencia(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["asistencia"] }),
+    onSuccess: () => Promise.all(
+      ["asistencia", "horas", "cumplimiento", "liquidacion", "pendientes"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] })
+      )
+    ),
   });
 }
 
@@ -45,7 +49,11 @@ export function useResolverRechazada() {
     mutationFn: ({ id, accion }: { id: string; accion: "aprobar" | "descartar" }) => resolverRechazada(id, accion),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["asistencia-rechazadas"] });
+      queryClient.invalidateQueries({ queryKey: ["pendientes"] });
       queryClient.invalidateQueries({ queryKey: ["asistencia"] });
+      queryClient.invalidateQueries({ queryKey: ["horas"] });
+      queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacion"] });
     },
   });
 }

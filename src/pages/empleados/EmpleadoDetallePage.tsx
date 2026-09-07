@@ -25,7 +25,7 @@ import { useHorarios, useCumplimiento } from "../turnos/hooks";
 import { useAsistenciaPaginada } from "../asistencia/hooks";
 import { useAusencias } from "../rrhh/hooks";
 import { calcularHorasEsperadas, ESTADO_INFO } from "../turnos/calculos";
-import { useOrgActual, puedeGestionar } from "../../lib/hooks";
+import { useOrgActual, puedeGestionar, tieneModulo } from "../../lib/hooks";
 import { ErrorPlan } from "../../components/ErrorPlan";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
@@ -97,7 +97,7 @@ export default function EmpleadoDetallePage() {
   const { data: cumplimiento30 = [], isError: cumplimientoError, error: cumplimientoErrorObj } = useCumplimiento({ desde: hace30Dias(), hasta, empleadoId: id });
   const cumplimientoHoy = cumplimiento30.find((f) => f.fecha === hasta);
   const { data: ausenciasAnioData, isError: ausenciasError, error: ausenciasErrorObj } = useAusencias({ empleadoId: id, desde: inicioDeAnioAR(), hasta });
-  const ausenciasAnio = ausenciasAnioData?.ausencias ?? [];
+  const ausenciasAnio = (ausenciasAnioData?.ausencias ?? []).filter((a) => a.estado === "aprobada");
   const diasAusenciasAnio = ausenciasAnio.reduce((acc, a) => acc + diasEntre(a.fecha_desde, a.fecha_hasta), 0);
 
   const turnosEmpleado = (horasData?.turnos ?? []).filter((t) => t.empleado_id === id);
@@ -270,6 +270,9 @@ export default function EmpleadoDetallePage() {
               >
                 Reactivar
               </Button>
+            )}
+            {gestionable && tieneModulo(org?.entitlements ?? null, "rrhh") && (
+              <Button variant="secondary" asChild><Link to={`/legajos/${empleado.id}`}>Ver legajo</Link></Button>
             )}
             <Button
               variant="secondary"
@@ -559,7 +562,7 @@ function AusenciasTab({ empleadoId }: { empleadoId: string }) {
           {!isLoading &&
             ausencias.map((a) => (
               <TableRow key={a.id}>
-                <TableCell>{a.motivo}</TableCell>
+                <TableCell>{a.motivo}<p className="text-xs text-text-secondary">{a.estado}</p></TableCell>
                 <TableCell>{fechaLocal(a.fecha_desde)}</TableCell>
                 <TableCell>{fechaLocal(a.fecha_hasta)}</TableCell>
                 <TableCell>{a.certificado_pendiente ? <Status tone="warning">Pendiente</Status> : "—"}</TableCell>

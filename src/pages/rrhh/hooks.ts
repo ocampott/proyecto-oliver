@@ -35,7 +35,11 @@ export function useCrearAusencia() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CrearAusenciaInput) => createAusencia(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["ausencias"] }),
+    onSuccess: () => Promise.all(
+      ["ausencias", "vacaciones", "liquidacion", "cumplimiento", "pendientes"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] })
+      )
+    ),
   });
 }
 
@@ -43,7 +47,11 @@ export function useEditarAusencia() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: EditarAusenciaInput }) => updateAusencia(id, patch),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["ausencias"] }),
+    onSuccess: () => Promise.all(
+      ["ausencias", "vacaciones", "liquidacion", "cumplimiento", "pendientes"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] })
+      )
+    ),
   });
 }
 
@@ -51,7 +59,11 @@ export function useBorrarAusencia() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteAusencia(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["ausencias"] }),
+    onSuccess: () => Promise.all(
+      ["ausencias", "vacaciones", "liquidacion", "cumplimiento", "pendientes"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] })
+      )
+    ),
   });
 }
 

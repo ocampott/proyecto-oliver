@@ -1,109 +1,47 @@
-import * as React from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Bell } from "lucide-react";
-import { cn } from "../lib/utils";
-
-interface NotificacionMock {
-  id: string;
-  titulo: string;
-  detalle: string;
-  hace: string;
-}
-
-// Datos de ejemplo — todavía no hay backend de notificaciones.
-// Cuando se implemente, esto se reemplaza por datos reales (fetch/realtime)
-// y el estado de leídas pasa a persistirse server-side en vez de en memoria.
-const NOTIFICACIONES_MOCK: NotificacionMock[] = [
-  {
-    id: "1",
-    titulo: "Nuevo empleado agregado",
-    detalle: "Juan Pérez fue agregado a Sucursal Centro.",
-    hace: "hace 2 horas",
-  },
-  {
-    id: "2",
-    titulo: "Ausencia pendiente de aprobación",
-    detalle: "María González solicitó una licencia.",
-    hace: "hace 5 horas",
-  },
-  {
-    id: "3",
-    titulo: "Límite de plan cerca",
-    detalle: "Estás usando 4 de 5 empleados en el plan Gratis.",
-    hace: "ayer",
-  },
-];
+import { getPendientesOperacion } from "../lib/api";
+import { puedeGestionar, tieneModulo, useOrgActual } from "../lib/hooks";
 
 export function NotificationBell() {
-  const [open, setOpen] = React.useState(false);
-  const [leidas, setLeidas] = React.useState<Set<string>>(new Set());
-  const ref = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { data: org } = useOrgActual();
+  const habilitado = puedeGestionar(org ?? null) && tieneModulo(org?.entitlements ?? null, "rrhh");
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["pendientes"], queryFn: ({ signal }) => getPendientesOperacion(signal),
+    enabled: habilitado, staleTime: 30_000, refetchInterval: habilitado ? 60_000 : false,
+  });
+  useEffect(() => {
     if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClick);
-    window.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      window.removeEventListener("keydown", handleKey);
-    };
+    function click(e: MouseEvent) { if (!ref.current?.contains(e.target as Node)) setOpen(false); }
+    function key(e: KeyboardEvent) { if (e.key === "Escape") setOpen(false); }
+    document.addEventListener("mousedown", click); window.addEventListener("keydown", key);
+    return () => { document.removeEventListener("mousedown", click); window.removeEventListener("keydown", key); };
   }, [open]);
-
-  const noLeidas = NOTIFICACIONES_MOCK.filter((n) => !leidas.has(n.id));
-
+  if (!habilitado) return null;
+  // Categorías pueden solaparse: no sumar certificados + solicitudes como personas.
+  const hayPendientes = !!data && (data.totalSolicitudes > 0 || data.totalCertificados > 0 || data.marcasRechazadas > 0);
   return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Notificaciones"
-        className="relative inline-flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[8px] text-text-secondary transition-colors hover:bg-text/[.04] hover:text-text"
-      >
-        <Bell className="h-[18px] w-[18px]" />
-        {noLeidas.length > 0 && (
-          <span className="absolute right-1.5 top-1.5 h-[7px] w-[7px] rounded-full bg-alert" aria-hidden="true" />
-        )}
+    <div className="relative" ref={ref}>
+      <button type="button" aria-label={hayPendientes ? "Ver pendientes de RRHH" : "Ver estado de RRHH"} aria-expanded={open}
+        onClick={() => setOpen(!open)} className="relative rounded-lg p-2 text-text-secondary hover:bg-surface">
+        <Bell className="h-5 w-5" />
+        {hayPendientes && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-accent" />}
       </button>
-      {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-[320px] rounded-[10px] border border-border bg-surface-raised p-1.5 shadow-[0_8px_24px_rgba(13,13,17,.1)]">
-          <div className="flex items-center justify-between gap-2 border-b border-border px-2.5 pb-2 pt-1">
-            <p className="m-0 text-[13.5px] font-bold text-text">Notificaciones</p>
-            {noLeidas.length > 0 && (
-              <button
-                onClick={() => setLeidas(new Set(NOTIFICACIONES_MOCK.map((n) => n.id)))}
-                className="cursor-pointer whitespace-nowrap text-[12px] font-medium text-accent-700 hover:underline"
-              >
-                Marcar todas como vistas
-              </button>
-            )}
-          </div>
-          <div className="flex flex-col gap-0.5 pt-1">
-            {NOTIFICACIONES_MOCK.map((n) => {
-              const esNoLeida = !leidas.has(n.id);
-              return (
-                <div key={n.id} className={cn("flex gap-2.5 rounded-[8px] px-2.5 py-2", esNoLeida && "bg-accent-100/50")}>
-                  <span
-                    className={cn(
-                      "mt-1.5 h-[7px] w-[7px] shrink-0 rounded-full",
-                      esNoLeida ? "bg-alert" : "bg-transparent"
-                    )}
-                    aria-hidden="true"
-                  />
-                  <div className="min-w-0">
-                    <p className="m-0 text-[13px] font-semibold text-text">{n.titulo}</p>
-                    <p className="m-0 text-[12.5px] text-text-secondary">{n.detalle}</p>
-                    <p className="m-0 text-[11.5px] text-text-tertiary">{n.hace}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {open && <div className="absolute right-0 z-50 mt-2 w-72 space-y-3 rounded-lg border border-border bg-surface-raised p-4 shadow-lg">
+        <h2 className="font-semibold">Pendientes reales</h2>
+        {isLoading && <p role="status" className="text-sm">Cargando…</p>}
+        {isError && <p role="alert" className="text-sm">No se pudieron consultar los pendientes.</p>}
+        {data && !isError && <ul className="space-y-1 text-sm">
+          <li>{data.totalSolicitudes} solicitudes por revisar</li>
+          <li>{data.totalCertificados} certificados pendientes</li>
+          <li>{data.marcasRechazadas} marcas rechazadas</li>
+        </ul>}
+        <Link to="/rrhh" className="block text-sm text-accent underline" onClick={() => setOpen(false)}>Abrir pendientes</Link>
+      </div>}
     </div>
   );
 }

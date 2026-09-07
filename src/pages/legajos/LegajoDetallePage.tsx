@@ -8,7 +8,8 @@ import { IconButton } from "../../components/ui/icon-button";
 import { Status } from "../../components/ui/status";
 import { useToast } from "../../components/ui/toast";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../components/ui/table";
-import { abrirLegajoArchivo } from "../../lib/api";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { compartirLegajo, abrirLegajoArchivo } from "../../lib/api";
 import { useLegajo, useSubirLegajoArchivo, useEliminarLegajoArchivo } from "./hooks";
 
 function formatFecha(iso: string): string {
@@ -31,6 +32,12 @@ function formatTamanio(bytes: number): string {
 export default function LegajoDetallePage() {
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
+  const queryClient = useQueryClient();
+  const compartir = useMutation({
+    mutationFn: ({ archivoId, visible }: { archivoId: string; visible: boolean }) => compartirLegajo(id!, archivoId, visible),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["legajo", id] }),
+    onError: (e) => toast.error(e.message),
+  });
   const { data, isLoading } = useLegajo(id ?? "");
   const subir = useSubirLegajoArchivo(id ?? "");
   const eliminar = useEliminarLegajoArchivo(id ?? "");
@@ -177,6 +184,11 @@ export default function LegajoDetallePage() {
               <TableCell className="text-text-secondary">{formatFecha(a.created_at)}</TableCell>
               <TableCell className="font-mono text-[12px] text-text-secondary">{formatTamanio(a.tamanio_bytes)}</TableCell>
               <TableCell className="text-right">
+                <label className="mr-3 inline-flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={a.visible_empleado} disabled={compartir.isPending}
+                    onChange={(e) => compartir.mutate({ archivoId: a.id, visible: e.target.checked })} />
+                  Visible para el empleado
+                </label>
                 <IconButton onClick={() => setConfirmDelete(a.id)} icon={<Trash2 className="h-3.5 w-3.5" />} label="Eliminar" />
               </TableCell>
             </TableRow>

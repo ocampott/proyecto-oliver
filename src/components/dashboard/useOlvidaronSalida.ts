@@ -1,9 +1,8 @@
+import { useHoyArgentina } from "../../lib/useHoyArgentina";
 import { useMemo } from "react";
 import { useHoras } from "../../pages/horas/hooks";
 
-function hoyAR(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
-}
+
 
 function fechaAR(iso: string): string {
   return new Date(iso).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
@@ -16,7 +15,7 @@ function hace7Dias(): string {
 }
 
 export function useOlvidaronSalida() {
-  const hoy = hoyAR();
+  const hoy = useHoyArgentina();
   const { data, isLoading, isError } = useHoras(hace7Dias(), hoy);
 
   const turnos = useMemo(() => {

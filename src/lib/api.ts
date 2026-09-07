@@ -562,8 +562,8 @@ export interface HorarioEmpleado {
   tolerancia_min: number | null;
 }
 
-export function getHorarios(empleadoId: string): Promise<HorarioEmpleado[]> {
-  return request(`/api/horarios?empleadoId=${empleadoId}`);
+export function getHorarios(empleadoId?: string, signal?: AbortSignal): Promise<HorarioEmpleado[]> {
+  return request(`/api/horarios${empleadoId ? `?empleadoId=${encodeURIComponent(empleadoId)}` : ""}`, { signal });
 }
 
 export interface CrearHorarioInput {
@@ -697,6 +697,8 @@ export interface Ausencia {
   contacto: string | null;
   certificado_pendiente: boolean;
   origen: "admin" | "empleado";
+  estado: "pendiente" | "aprobada" | "rechazada";
+  revision: number;
   created_at: string;
 }
 
@@ -867,6 +869,7 @@ export interface LiquidacionEmpleado {
 }
 
 export interface LiquidacionResponse {
+  revision: string;
   desde: string;
   hasta: string;
   filas: LiquidacionEmpleado[];
@@ -886,8 +889,8 @@ function paramsLiquidacion(filters: LiquidacionFiltros): URLSearchParams {
   return params;
 }
 
-export function getLiquidacion(filters: LiquidacionFiltros): Promise<LiquidacionResponse> {
-  return request(`/api/liquidacion?${paramsLiquidacion(filters)}`);
+export function getLiquidacion(filters: LiquidacionFiltros, signal?: AbortSignal): Promise<LiquidacionResponse> {
+  return request(`/api/liquidacion?${paramsLiquidacion(filters)}`, { signal });
 }
 
 export function exportarLiquidacion(filters: LiquidacionFiltros): Promise<void> {
@@ -923,10 +926,10 @@ export interface LegajoResumen {
   ultimo_archivo_at: string | null;
 }
 
-export function getLegajos(params: { page: number; pageSize: number; q?: string }): Promise<Paginated<LegajoResumen>> {
+export function getLegajos(params: { page: number; pageSize: number; q?: string }, signal?: AbortSignal): Promise<Paginated<LegajoResumen>> {
   const qs = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
   if (params.q) qs.set("q", params.q);
-  return request(`/api/legajos?${qs}`);
+  return request(`/api/legajos?${qs}`, { signal });
 }
 
 export interface LegajoArchivo {
@@ -935,6 +938,7 @@ export interface LegajoArchivo {
   ausencia_id: string | null;
   nombre_original: string;
   storage_path: string;
+  visible_empleado: boolean;
   mimetype: string;
   tamanio_bytes: number;
   origen: "manual" | "chat_empleado";
@@ -1077,4 +1081,93 @@ export interface AvisoUrgente {
 
 export function getAvisosUrgentes(): Promise<AvisoUrgente[]> {
   return request("/api/rrhh/avisos-urgentes");
+}
+
+
+// ── Operación RRHH ──────────────────────────────────────────────────────
+export interface SolicitudPendiente {
+  detalle: string | null;
+  certificado_pendiente: boolean;
+  id: string;
+  empleado_id: string;
+  motivo: string;
+  fecha_desde: string;
+  fecha_hasta: string;
+  revision: number;
+  estado: "pendiente" | "aprobada" | "rechazada";
+  empleados: { nombre: string; apellido: string | null } | null;
+}
+export interface PendientesOperacion {
+  solicitudes: SolicitudPendiente[];
+  certificados: Pick<SolicitudPendiente, "id" | "empleado_id" | "motivo" | "fecha_desde" | "empleados">[];
+  totalSolicitudes: number;
+  totalCertificados: number;
+  marcasRechazadas: number;
+}
+export interface EventoAusencia {
+  id: string;
+  accion: string;
+  actor_email: string | null;
+  comentario: string | null;
+  anterior: { estado: string; revision: number } | null;
+  actual: { estado: string; revision: number } | null;
+  created_at: string;
+}
+export function getPendientesOperacion(signal?: AbortSignal): Promise<PendientesOperacion> {
+  return request("/api/rrhh/pendientes", { signal });
+}
+export function decidirAusencia(id: string, input: { estado: "aprobada" | "rechazada"; revision: number; comentario: string }): Promise<Ausencia> {
+  return request(`/api/ausencias/${id}/decision`, { method: "POST", body: JSON.stringify(input) });
+}
+export function getHistorialAusencia(id: string, signal?: AbortSignal): Promise<EventoAusencia[]> {
+  return request(`/api/ausencias/${id}/historial`, { signal });
+}
+export interface CierreLiquidacion {
+  id: string;
+  desde: string;
+  hasta: string;
+  nota: string;
+  actor_email: string | null;
+  created_at: string;
+  revision: string;
+}
+export interface DetalleCierre extends CierreLiquidacion {
+  snapshot: LiquidacionResponse;
+  hayCambios: boolean;
+  cambios: { id: string; tabla: string; accion: string; registro_id: string; created_at: string }[];
+}
+export function getCierres(signal?: AbortSignal): Promise<CierreLiquidacion[]> {
+  return request("/api/liquidacion/cierres", { signal });
+}
+export function getCierre(id: string, signal?: AbortSignal): Promise<DetalleCierre> {
+  return request(`/api/liquidacion/cierres/${id}`, { signal });
+}
+export function cerrarLiquidacion(input: { desde: string; hasta: string; revision: string; nota: string }): Promise<{ id: string }> {
+  return request("/api/liquidacion/cierres", { method: "POST", body: JSON.stringify(input) });
+}
+export interface PortalEmpleado {
+  nombre: string;
+  anio: number;
+  horarios: HorarioEmpleado[];
+  vacaciones: SaldoVacaciones;
+  solicitudes: Pick<Ausencia, "id" | "motivo" | "fecha_desde" | "fecha_hasta" | "estado" | "certificado_pendiente">[];
+  archivos: { id: string; nombre_original: string; created_at: string }[];
+}
+export function getPortalEmpleado(org: string, signal?: AbortSignal): Promise<PortalEmpleado> {
+  return chatRequest(`/api/portal/${encodeURIComponent(org)}`, { signal });
+}
+export async function descargarDocumentoPortal(org: string, archivo: { id: string; nombre_original: string }): Promise<void> {
+  const response = await fetch(`${API_URL}/api/portal/${encodeURIComponent(org)}/archivos/${archivo.id}`, { credentials: "include" });
+  if (!response.ok) throw new Error("No se pudo descargar el documento.");
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = archivo.nombre_original;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+export function compartirLegajo(empleadoId: string, archivoId: string, visible: boolean): Promise<{ ok: true }> {
+  return request(`/api/legajos/${empleadoId}/${archivoId}/visibilidad`, {
+    method: "PATCH", body: JSON.stringify({ visible_empleado: visible }),
+  });
 }

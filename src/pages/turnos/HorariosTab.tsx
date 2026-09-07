@@ -13,7 +13,6 @@ import { type HorarioEmpleado, type TurnoTemplate, type Empleado, type Sucursal 
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
 import {
-  useHorarios,
   useCrearHorario,
   useEditarHorario,
   useBorrarHorario,
@@ -22,7 +21,7 @@ import {
   useCrearPlantilla,
   useEditarPlantilla,
   useBorrarPlantilla,
-  useHorariosDeVarios,
+  useTodosLosHorarios,
 } from "./hooks";
 
 const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -66,12 +65,17 @@ function HorariosOverview({
   sucursales: Sucursal[];
   onSelectEmpleado: (id: string) => void;
 }) {
-  const horariosQueries = useHorariosDeVarios(empleados.map((e) => e.id));
-  const cargando = horariosQueries.some((q) => q.isLoading);
+  const { data: todos = [], isLoading: cargando, isError, refetch } = useTodosLosHorarios();
+  const porEmpleado = new Map<string, HorarioEmpleado[]>();
+  for (const horario of todos) {
+    const grupo = porEmpleado.get(horario.empleado_id) ?? [];
+    grupo.push(horario);
+    porEmpleado.set(horario.empleado_id, grupo);
+  }
   const sucursalNombre = new Map(sucursales.map((s) => [s.id, s.nombre]));
 
-  const filas = empleados.map((e, i) => {
-    const horarios = horariosQueries[i]?.data ?? [];
+  const filas = empleados.map((e) => {
+    const horarios = porEmpleado.get(e.id) ?? [];
     return {
       empleado: e,
       horarios,
@@ -85,7 +89,8 @@ function HorariosOverview({
   return (
     <Card className="mb-6">
       <h2 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Horarios por empleado</h2>
-      {activosSinHorario.length > 0 && (
+      {isError && <p role="alert" className="text-alert">No se pudieron cargar los horarios. <button onClick={() => refetch()} className="underline">Reintentar</button></p>}
+      {!cargando && !isError && activosSinHorario.length > 0 && (
         <p className="mt-1 text-[13px] text-warning">
           {activosSinHorario.length} empleado{activosSinHorario.length === 1 ? "" : "s"} activo
           {activosSinHorario.length === 1 ? "" : "s"} sin horario cargado.
@@ -102,7 +107,7 @@ function HorariosOverview({
         </TableHeader>
         <TableBody>
           {cargando && <TableSkeleton cols={4} />}
-          {!cargando &&
+          {!cargando && !isError &&
             filas.map((f) => (
               <TableRow
                 key={f.empleado.id}
@@ -159,7 +164,8 @@ export default function HorariosTab() {
   const [empleadoIdManual, setEmpleadoIdManual] = useState("");
   const empleadoId = empleadoIdManual || empleados[0]?.id || "";
 
-  const { data: horarios = [], isLoading } = useHorarios(empleadoId);
+  const { data: todosLosHorarios = [], isLoading } = useTodosLosHorarios();
+  const horarios = todosLosHorarios.filter((h) => h.empleado_id === empleadoId);
   const crearHorario = useCrearHorario();
   const editarHorario = useEditarHorario();
   const borrarHorario = useBorrarHorario();

@@ -19,7 +19,7 @@ import { PageHeader } from "../../components/PageHeader";
 import { ErrorPlan } from "../../components/ErrorPlan";
 import { useToast } from "../../components/ui/toast";
 import { useHoras } from "./hooks";
-import { useHorariosDeVarios } from "../turnos/hooks";
+import { useTodosLosHorarios } from "../turnos/hooks";
 import { useEmpleados } from "../empleados/hooks";
 import { useSucursales } from "../sucursales/hooks";
 import { exportarHoras, type Turno } from "../../lib/api";
@@ -158,11 +158,10 @@ export default function HorasPage() {
   );
 
   const empleadoIdsConTurnos = [...new Set(turnos.map((t) => t.empleado_id))];
-  const horariosQueries = useHorariosDeVarios(empleadoIdsConTurnos);
-  const esperadasCargando = horariosQueries.some((q) => q.isLoading);
+  const { data: horarios = [], isLoading: esperadasCargando } = useTodosLosHorarios();
   const esperadasPorEmpleado = new Map<string, number>();
-  empleadoIdsConTurnos.forEach((id, i) => {
-    esperadasPorEmpleado.set(id, calcularHorasEsperadas(horariosQueries[i]?.data ?? [], desde, hasta));
+  empleadoIdsConTurnos.forEach((id) => {
+    esperadasPorEmpleado.set(id, calcularHorasEsperadas(horarios.filter((h) => h.empleado_id === id), desde, hasta));
   });
 
   const resumen = construirResumen(turnos, esperadasPorEmpleado);

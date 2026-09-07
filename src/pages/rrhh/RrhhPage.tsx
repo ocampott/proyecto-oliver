@@ -1,3 +1,4 @@
+import { PendientesPanel, RevisionSolicitud } from "../operacion/PendientesPanel";
 import { useState, type FormEvent } from "react";
 import { Plus, Trash2, Download, X, Loader2 } from "lucide-react";
 import { Button } from "../../components/ui/button";
@@ -70,11 +71,11 @@ function motivoFinal(f: FormState): string {
   return f.motivoSeleccionado === OTRO ? f.motivoLibre.trim() : f.motivoSeleccionado;
 }
 
-type Vista = "registros" | "categorias";
+type Vista = "registros" | "categorias" | "pendientes";
 
 export default function RrhhPage() {
   const toast = useToast();
-  const [vista, setVista] = useState<Vista>("registros");
+  const [vista, setVista] = useState<Vista>("pendientes");
   const { data: empleados = [] } = useEmpleados();
   const { data: sucursalesData } = useSucursales();
   const sucursales = sucursalesData?.data ?? [];
@@ -176,7 +177,7 @@ export default function RrhhPage() {
     sucursalId: sucursalFiltro || undefined,
     motivo: motivoFiltro || undefined,
   });
-  const statsAusencias = statsData?.ausencias ?? [];
+  const statsAusencias = (statsData?.ausencias ?? []).filter((a) => a.estado === "aprobada");
   const hoy = hoyAR();
   const enCursoCount = statsAusencias.filter((a) => a.fecha_desde <= hoy && a.fecha_hasta >= hoy).length;
   const programadasCount = statsAusencias.filter((a) => a.fecha_desde > hoy).length;
@@ -327,11 +328,14 @@ export default function RrhhPage() {
           value={vista}
           onChange={setVista}
           items={[
+            { value: "pendientes", label: "Pendientes" },
             { value: "registros", label: "Registros", count: resumen?.total },
             { value: "categorias", label: "Categorías", count: categorias.length },
           ]}
         />
       </div>
+
+      {vista === "pendientes" && <section {...tabPanelProps("pendientes")}><PendientesPanel /></section>}
 
       {vista === "registros" && (
         <section {...tabPanelProps("registros")}>
@@ -405,7 +409,7 @@ export default function RrhhPage() {
                         aria-label={`Ver detalle de la ausencia de ${a.empleado_nombre}`}
                       />
                     </TableCell>
-                    <TableCell>{a.motivo}</TableCell>
+                    <TableCell>{a.motivo}<p className="text-xs text-text-secondary">{a.estado}</p></TableCell>
                     <TableCell>{a.sucursal_nombre ?? "—"}</TableCell>
                     <TableCell className="font-mono text-xs text-text-tertiary">
                       {a.fecha_desde === a.fecha_hasta ? a.fecha_desde : `${a.fecha_desde} → ${a.fecha_hasta}`}
@@ -525,6 +529,10 @@ export default function RrhhPage() {
         onClose={() => { setEditando(null); setErrorEdit(null); }}
         title={`Ausencia de ${editando?.empleado_nombre ?? ""}`}
       >
+        {editando && <div className="mb-4 border-b border-border pb-4">
+          <RevisionSolicitud key={editando.id} {...(ausencias.find((a) => a.id === editando.id) ?? editando)} />
+          <p className="mt-3 text-xs text-text-secondary">Si cambiás fechas, motivo o detalle, la ausencia vuelve a quedar pendiente de revisión.</p>
+        </div>}
         <form onSubmit={handleGuardarEdicion} className="flex flex-col gap-3">
           <Select
             label="Sucursal (opcional)"

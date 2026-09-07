@@ -35,7 +35,11 @@ export function useCrearEmpleado() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CrearEmpleadoInput) => createEmpleado(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: () => Promise.all(
+      ["empleados", "legajos", "legajo", "vacaciones", "liquidacion"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] })
+      )
+    ),
   });
 }
 
@@ -43,7 +47,11 @@ export function useEditarEmpleado() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: EditarEmpleadoInput }) => updateEmpleado(id, patch),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: () => Promise.all(
+      ["empleados", "legajos", "legajo", "vacaciones", "liquidacion"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] })
+      )
+    ),
   });
 }
 
@@ -51,7 +59,11 @@ export function useEliminarEmpleado() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => eliminarEmpleado(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: () => Promise.all(
+      ["empleados", "legajos", "legajo", "vacaciones", "liquidacion"].map((key) =>
+        queryClient.invalidateQueries({ queryKey: [key] })
+      )
+    ),
   });
 }
 

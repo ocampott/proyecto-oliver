@@ -4,7 +4,7 @@ import { getLegajos, getLegajo, subirLegajoArchivo, eliminarLegajoArchivo } from
 export function useLegajos(params: { page: number; pageSize: number; q?: string }) {
   return useQuery({
     queryKey: ["legajos", params],
-    queryFn: () => getLegajos(params),
+    queryFn: ({ signal }) => getLegajos(params, signal),
     placeholderData: keepPreviousData,
   });
 }

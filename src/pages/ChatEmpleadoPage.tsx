@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Loader2, Send, Paperclip } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -18,7 +18,7 @@ interface Burbuja {
   texto: string;
 }
 
-type Etapa = { tipo: "cargando" } | { tipo: "sin_vincular" } | { tipo: "chat"; nombre: string };
+type Etapa = { tipo: "cargando" } | { tipo: "error" } | { tipo: "sin_vincular" } | { tipo: "chat"; nombre: string };
 
 export default function ChatEmpleadoPage() {
   const { orgSlug } = useParams<{ orgSlug: string }>();
@@ -35,20 +35,30 @@ export default function ChatEmpleadoPage() {
 
   useEffect(() => {
     if (!orgSlug) return;
+    let active = true;
+    setEtapa({ tipo: "cargando" });
+    setMensajes([]);
+    setTexto("");
+    setFecha("");
+    setError(null);
     getChatEstado(orgSlug)
-      .then((estado) => {
+      .then(async (estado) => {
+        if (!active) return;
         if (!estado.vinculado) {
           setEtapa({ tipo: "sin_vincular" });
           return;
         }
+        const h = await getChatHistorial();
+        if (!active) return;
+        setMensajes(h.mensajes.map((m) => ({ remitente: m.remitente, texto: m.texto })));
+        setEntrada(h.entrada);
+        setOpciones(h.opciones);
         setEtapa({ tipo: "chat", nombre: estado.empleadoNombre ?? "" });
-        return getChatHistorial().then((h) => {
-          setMensajes(h.mensajes.map((m) => ({ remitente: m.remitente, texto: m.texto })));
-          setEntrada(h.entrada);
-          setOpciones(h.opciones);
-        });
       })
-      .catch(() => setEtapa({ tipo: "sin_vincular" }));
+      .catch(() => {
+        if (active) setEtapa({ tipo: "error" });
+      });
+    return () => { active = false; };
   }, [orgSlug]);
 
   useEffect(() => {
@@ -90,6 +100,7 @@ export default function ChatEmpleadoPage() {
     } catch {
       setError("No se pudo subir el archivo. Probá de nuevo.");
     } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
       setEnviando(false);
     }
   }
@@ -98,6 +109,17 @@ export default function ChatEmpleadoPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-bg p-4 sm:p-8">
         <Loader2 className="h-6 w-6 animate-spin text-text-tertiary" role="status" aria-label="Cargando" />
+      </main>
+    );
+  }
+
+  if (etapa.tipo === "error") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-bg p-4">
+        <Card className="w-full max-w-sm text-center">
+          <p role="alert" className="mb-4 text-alert">No se pudo cargar el chat. Revisá tu conexión y probá de nuevo.</p>
+          <Button onClick={() => window.location.reload()}>Reintentar</Button>
+        </Card>
       </main>
     );
   }
@@ -121,6 +143,7 @@ export default function ChatEmpleadoPage() {
       <header className="sticky top-0 border-b border-border bg-surface-raised px-4 py-3.5">
         <h1 className="text-[16px] font-semibold tracking-[-0.02em] text-text">Chat con RRHH</h1>
         <p className="text-[12.5px] text-text-secondary">{etapa.nombre}</p>
+        <Link to={`/portal/${encodeURIComponent(orgSlug ?? "")}`} className="text-sm text-accent underline">Mis horarios, solicitudes y documentos</Link>
       </header>
 
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-5">

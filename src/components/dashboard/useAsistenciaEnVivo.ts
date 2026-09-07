@@ -1,12 +1,10 @@
+import { useHoyArgentina } from "../../lib/useHoyArgentina";
 import { useEffect, useId, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAsistencia } from "../../pages/asistencia/hooks";
 import { supabase } from "../../lib/supabase";
 import type { AsistenciaRegistro, TipoMarca } from "../../lib/api";
 
-function hoyAR(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
-}
 
 interface EmpleadoAdentro {
   empleadoId: string;
@@ -69,25 +67,42 @@ function derivarAdentro(registros: AsistenciaRegistro[]): SucursalGrupo[] {
 }
 
 export function useAsistenciaEnVivo(orgId: string) {
-  const hoy = hoyAR();
+  const hoy = useHoyArgentina();
   const { data, isLoading, isError } = useAsistencia(hoy, hoy);
   const queryClient = useQueryClient();
   const [conectado, setConectado] = useState(false);
   const instanceId = useId();
 
   useEffect(() => {
+    if (!orgId) return;
+    setConectado(false);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const actualizar = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        for (const key of ["asistencia", "horas", "cumplimiento", "liquidacion", "pendientes"])
+          void queryClient.invalidateQueries({ queryKey: [key] });
+      }, 250);
+    };
     const channel = supabase
       .channel(`asistencia-org-${orgId}-${instanceId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "asistencia", filter: `org_id=eq.${orgId}` },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["asistencia", hoy, hoy] });
-        }
+        { event: "*", schema: "public", table: "asistencia", filter: `org_id=eq.${orgId}` },
+        actualizar
       )
-      .subscribe((status) => setConectado(status === "SUBSCRIBED"));
+      .subscribe((status) => {
+        setConectado(status === "SUBSCRIBED");
+        if (status === "SUBSCRIBED") actualizar();
+      });
+    const refrescarAlVolver = () => { if (document.visibilityState === "visible") actualizar(); };
+    document.addEventListener("visibilitychange", refrescarAlVolver);
+    const respaldo = window.setInterval(refrescarAlVolver, 60_000);
 
     return () => {
+      if (timer) clearTimeout(timer);
+      window.clearInterval(respaldo);
+      document.removeEventListener("visibilitychange", refrescarAlVolver);
       supabase.removeChannel(channel);
     };
   }, [orgId, hoy, queryClient, instanceId]);

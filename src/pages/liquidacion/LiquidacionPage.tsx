@@ -1,3 +1,4 @@
+import { CierresPanel } from "../operacion/CierresPanel";
 import { useState } from "react";
 import { Download, RefreshCw } from "lucide-react";
 import { Button } from "../../components/ui/button";
@@ -24,8 +25,9 @@ function inicioDeMesAR(): string {
 }
 
 function formatHoras(h: number): string {
-  const horas = Math.floor(h);
-  const minutos = Math.round((h - horas) * 60);
+  const totalMinutos = Math.round(h * 60);
+  const horas = Math.floor(totalMinutos / 60);
+  const minutos = totalMinutos % 60;
   return `${horas}h ${minutos.toString().padStart(2, "0")}m`;
 }
 
@@ -38,7 +40,8 @@ export default function LiquidacionPage() {
   const [expandido, setExpandido] = useState<string | null>(null);
   const [descargando, setDescargando] = useState(false);
 
-  const { data, isLoading, refetch } = useLiquidacion({ desde, hasta, empleadoIds });
+  const rangoValido = !!desde && !!hasta && desde <= hasta;
+  const { data, isLoading, isFetching, isError, refetch } = useLiquidacion({ desde, hasta, empleadoIds });
   const filas = data?.filas ?? [];
   const totalPeriodo = filas.reduce((acc, f) => acc + f.total, 0);
   const conAlertas = filas.filter((f) => f.advertencias.length > 0).length;
@@ -67,7 +70,7 @@ export default function LiquidacionPage() {
         title="Liquidación"
         description="Cálculo interno aproximado a partir de asistencia y horarios — no reemplaza el recibo de sueldo."
         actions={
-          <Button variant="secondary" onClick={handleDescargar} disabled={descargando || filas.length === 0}>
+          <Button variant="secondary" onClick={handleDescargar} disabled={descargando || isFetching || isError || !rangoValido || filas.length === 0}>
             <Download className="h-4 w-4" />
             {descargando ? "Generando…" : "Exportar Excel"}
           </Button>
@@ -90,11 +93,14 @@ export default function LiquidacionPage() {
           placeholder="Todos los empleados"
           containerClassName="w-52"
         />
-        <Button variant="secondary" onClick={() => refetch()} className="ml-auto">
+        <Button variant="secondary" onClick={() => refetch()} disabled={!rangoValido || isFetching} className="ml-auto">
           <RefreshCw className="h-4 w-4" />
           Actualizar
         </Button>
       </Toolbar>
+
+      {!rangoValido && <p role="alert" className="mt-4 text-alert">Seleccioná un rango de fechas válido: desde no puede ser posterior a hasta.</p>}
+      {isError && <p role="alert" className="mt-4 text-alert">No se pudo cargar la liquidación. Probá actualizar.</p>}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -118,7 +124,7 @@ export default function LiquidacionPage() {
                 onToggle={() => setExpandido(expandido === f.empleado_id ? null : f.empleado_id)}
               />
             ))}
-          {!isLoading && filas.length === 0 && (
+          {!isLoading && !isError && rangoValido && filas.length === 0 && (
             <TableRow>
               <TableCell colSpan={6} className="py-8 text-center text-text-tertiary">
                 Ningún empleado activo en el rango seleccionado.
@@ -127,6 +133,7 @@ export default function LiquidacionPage() {
           )}
         </TableBody>
       </Table>
+      <CierresPanel actual={data} bloqueado={isFetching || isError || !rangoValido || empleadoIds.length > 0} />
     </>
   );
 }

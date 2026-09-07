@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./lib/auth";
 import { ToastProvider } from "./components/ui/toast";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import { PanelLayout } from "./components/PanelLayout";
+const PanelLayout = lazy(() => import("./components/PanelLayout").then((m) => ({ default: m.PanelLayout })));
 
 // Cada página es su propio chunk: /marcar (empleados marcando desde el
 // celular, sin login) no tiene por qué descargar el bundle entero del
@@ -30,6 +30,7 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const LiquidacionPage = lazy(() => import("./pages/liquidacion/LiquidacionPage"));
 const LegajosPage = lazy(() => import("./pages/legajos/LegajosPage"));
 const LegajoDetallePage = lazy(() => import("./pages/legajos/LegajoDetallePage"));
+const PortalEmpleadoPage = lazy(() => import("./pages/PortalEmpleadoPage"));
 const ChatEmpleadoPage = lazy(() => import("./pages/ChatEmpleadoPage"));
 
 function PageFallback() {
@@ -221,6 +222,7 @@ export default function App() {
               }
             />
             <Route path="/marcar/:org/:sucursal" element={<MarcarPage />} />
+            <Route path="/portal/:orgSlug" element={<PortalEmpleadoPage />} />
             <Route path="/chat/:orgSlug" element={<ChatEmpleadoPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

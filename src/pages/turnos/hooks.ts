@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, useQueries } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getHorarios,
   createHorario,
@@ -34,6 +34,7 @@ export function useCrearHorario() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["horarios"] });
       queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacion"] });
     },
   });
 }
@@ -45,6 +46,7 @@ export function useEditarHorario() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["horarios"] });
       queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacion"] });
     },
   });
 }
@@ -56,6 +58,7 @@ export function useBorrarHorario() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["horarios"] });
       queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacion"] });
     },
   });
 }
@@ -67,6 +70,7 @@ export function useAsignarHorarios() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["horarios"] });
       queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacion"] });
     },
   });
 }
@@ -110,6 +114,7 @@ export function useGuardarTolerancia() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tolerancia"] });
       queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacion"] });
     },
   });
 }
@@ -121,11 +126,10 @@ export function useCumplimiento(filters: { desde: string; hasta: string; sucursa
   });
 }
 
-// ponytail: un pedido por empleado (sin endpoint bulk en el backend) — sirve
-// a escala PyME; si una organización crece mucho, evaluar un endpoint que
-// traiga los horarios de todos los empleados en un solo pedido.
-export function useHorariosDeVarios(empleadoIds: string[]) {
-  return useQueries({
-    queries: empleadoIds.map((id) => ({ queryKey: ["horarios", id], queryFn: () => getHorarios(id) })),
+/** Una consulta por organización, no una por empleado. */
+export function useTodosLosHorarios() {
+  return useQuery({
+    queryKey: ["horarios", "todos"],
+    queryFn: ({ signal }) => getHorarios(undefined, signal),
   });
 }

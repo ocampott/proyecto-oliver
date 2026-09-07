@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Field } from "../../components/ui/field";
@@ -18,7 +18,16 @@ export default function LegajosPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data, isLoading } = useLegajos({ page, pageSize, q: busqueda || undefined });
+  const [consulta, setConsulta] = useState("");
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setConsulta(busqueda.trim());
+      setPage(1);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [busqueda]);
+
+  const { data, isLoading, isError, refetch } = useLegajos({ page, pageSize, q: consulta || undefined });
   const legajos = data?.data ?? [];
 
   return (
@@ -33,7 +42,6 @@ export default function LegajosPage() {
           value={busqueda}
           onChange={(e) => {
             setBusqueda(e.target.value);
-            setPage(1);
           }}
           containerClassName="w-60"
           icon={<Search className="h-[15px] w-[15px]" />}
@@ -51,6 +59,12 @@ export default function LegajosPage() {
           <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
         </div>
       </Toolbar>
+
+      {isError && (
+        <p role="alert" className="mt-4 text-alert">
+          No se pudieron cargar los legajos. <button type="button" className="underline" onClick={() => refetch()}>Reintentar</button>
+        </p>
+      )}
 
       <Table containerClassName="mt-4">
         <TableHeader>
@@ -85,7 +99,7 @@ export default function LegajosPage() {
                 <TableCell className="text-text-secondary">{l.ultimo_archivo_at ? fechaLocal(l.ultimo_archivo_at) : "—"}</TableCell>
               </TableRow>
             ))}
-          {!isLoading && legajos.length === 0 && (
+          {!isLoading && !isError && legajos.length === 0 && (
             <TableRow>
               <TableCell colSpan={3} className="py-8 text-center text-text-tertiary">
                 No hay empleados que coincidan.
