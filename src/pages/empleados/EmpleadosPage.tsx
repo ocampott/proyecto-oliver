@@ -1,3 +1,6 @@
+import { MobileRecords } from "../../components/ui/mobile-records";
+import { EmptyState } from "../../components/ui/empty-state";
+import { MoreFilters } from "../../components/ui/more-filters";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, Loader2, Copy, Pencil, Power, Unlink, KeyRound, Trash2 } from "lucide-react";
@@ -125,7 +128,7 @@ export default function EmpleadosPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data, isLoading } = useEmpleadosPaginado({
+  const { data, isLoading, isError, refetch } = useEmpleadosPaginado({
     page,
     pageSize,
     q: busqueda || undefined,
@@ -299,6 +302,67 @@ export default function EmpleadosPage() {
     }
   }
 
+  const renderActions = (emp: Empleado) => (
+<div className="flex justify-end gap-1.5 row-actions transition-opacity">
+                    <IconButton
+                      onClick={() => abrirEdicion(emp)}
+                      disabled={accionandoId === emp.id || !gestionable}
+                      title={!gestionable ? "Tu rol no tiene acceso a editar empleados." : undefined}
+                      icon={<Pencil className="h-3.5 w-3.5" />}
+                      label="Editar"
+                    />
+                    <IconButton
+                      onClick={() => handleCambiarEstado(emp, emp.estado === "baja" ? "activo" : "baja")}
+                      disabled={accionandoId === emp.id || !gestionable}
+                      title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
+                      icon={
+                        accionandoId === emp.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Power className="h-3.5 w-3.5" />
+                        )
+                      }
+                      label={emp.estado === "baja" ? "Activar" : "Dar de baja"}
+                    />
+                    {gestionable && emp.device_token && (
+                      <IconButton
+                        onClick={() => setDesvincularTarget(emp)}
+                        disabled={accionandoId === emp.id}
+                        icon={
+                          accionandoId === emp.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Unlink className="h-3.5 w-3.5" />
+                          )
+                        }
+                        label="Desvincular"
+                      />
+                    )}
+                    {gestionable && !emp.device_token && (
+                      <IconButton
+                        onClick={() => handleGenerarCodigo(emp)}
+                        disabled={accionandoId === emp.id}
+                        icon={
+                          accionandoId === emp.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <KeyRound className="h-3.5 w-3.5" />
+                          )
+                        }
+                        label={emp.otp ? "Código nuevo" : "Generar código"}
+                      />
+                    )}
+                    {gestionable && emp.estado === "baja" && !emp.tiene_asistencia && (
+                      <IconButton
+                        onClick={() => setEliminarTarget(emp)}
+                        disabled={loading}
+                        icon={<Trash2 className="h-3.5 w-3.5" />}
+                        label="Eliminar"
+                      />
+                    )}
+                  </div>
+  );
+
   return (
     <>
       <PageHeader
@@ -343,44 +407,46 @@ export default function EmpleadosPage() {
           options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
           containerClassName="w-44"
         />
-        <Select
-          label="Estado"
-          compact
-          value={estadoFiltro}
-          onChange={(e) => { setEstadoFiltro(e.target.value as EstadoFiltro); setPage(1); }}
-          options={[
-            { value: "todos", label: "Todos los estados" },
-            { value: "activo", label: "Activo" },
-            { value: "de_licencia", label: "De licencia" },
-            { value: "suspendido", label: "Suspendido" },
-            { value: "baja", label: "Baja" },
-          ]}
-          containerClassName="w-40"
-        />
-        <Select
-          label="Dispositivo"
-          compact
-          value={dispositivoFiltro}
-          onChange={(e) => { setDispositivoFiltro(e.target.value as DispositivoFiltro); setPage(1); }}
-          options={[
-            { value: "todos", label: "Cualquier dispositivo" },
-            { value: "vinculado", label: "Vinculado" },
-            { value: "no_vinculado", label: "Sin vincular" },
-          ]}
-          containerClassName="w-40"
-        />
-        <Select
-          label="CUIL"
-          compact
-          value={cuilFiltro}
-          onChange={(e) => { setCuilFiltro(e.target.value as CuilFiltro); setPage(1); }}
-          options={[
-            { value: "todos", label: "Todos" },
-            { value: "con", label: "Con CUIL" },
-            { value: "sin", label: "Sin CUIL" },
-          ]}
-          containerClassName="w-36"
-        />
+        <MoreFilters activeCount={[estadoFiltro !== "todos", dispositivoFiltro !== "todos", cuilFiltro !== "todos"].filter(Boolean).length}>
+          <Select
+            label="Estado"
+            compact
+            value={estadoFiltro}
+            onChange={(e) => { setEstadoFiltro(e.target.value as EstadoFiltro); setPage(1); }}
+            options={[
+              { value: "todos", label: "Todos los estados" },
+              { value: "activo", label: "Activo" },
+              { value: "de_licencia", label: "De licencia" },
+              { value: "suspendido", label: "Suspendido" },
+              { value: "baja", label: "Baja" },
+            ]}
+            containerClassName="w-40"
+          />
+          <Select
+            label="Dispositivo"
+            compact
+            value={dispositivoFiltro}
+            onChange={(e) => { setDispositivoFiltro(e.target.value as DispositivoFiltro); setPage(1); }}
+            options={[
+              { value: "todos", label: "Cualquier dispositivo" },
+              { value: "vinculado", label: "Vinculado" },
+              { value: "no_vinculado", label: "Sin vincular" },
+            ]}
+            containerClassName="w-40"
+          />
+          <Select
+            label="CUIL"
+            compact
+            value={cuilFiltro}
+            onChange={(e) => { setCuilFiltro(e.target.value as CuilFiltro); setPage(1); }}
+            options={[
+              { value: "todos", label: "Todos" },
+              { value: "con", label: "Con CUIL" },
+              { value: "sin", label: "Sin CUIL" },
+            ]}
+            containerClassName="w-36"
+          />
+        </MoreFilters>
         {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
         <div className="ml-auto">
           <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
@@ -393,7 +459,17 @@ export default function EmpleadosPage() {
         </ErrorPlan>
       )}
 
-      <Table containerClassName="mt-4">
+      {isError && <p role="alert" className="mt-4 text-alert">No pudimos cargar empleados. <button type="button" className="underline" onClick={() => refetch()}>Reintentar</button></p>}
+      {(isLoading || empleados.length > 0) && <MobileRecords loading={isLoading} items={empleados.map(emp => ({
+        id: emp.id, title: nombreCompleto(emp), description: `${sucursales.find(s => s.id === emp.sucursal_id)?.nombre ?? "Sin sucursal"} · ${ESTADO_LABELS[emp.estado]}`, meta: emp.device_token ? "Dispositivo vinculado" : "Sin dispositivo vinculado",
+        actionLabel: `Ver detalle de ${nombreCompleto(emp)}`, onOpen: () => navigate(`/empleados/${emp.id}`), actions: renderActions(emp),
+      }))} />}
+      {!isLoading && !isError && empleados.length === 0 && <EmptyState
+        title={filtrosActivos ? "No encontramos resultados" : "Todavía no tenés empleados"}
+        description={filtrosActivos ? "Probá con otra búsqueda o quitá los filtros." : "Agregá a tu primer empleado para empezar a gestionar el equipo."}
+        action={filtrosActivos ? <Button variant="secondary" onClick={limpiarFiltros}>Limpiar filtros</Button> : gestionable && <Button disabled={alTope} onClick={() => { setError(null); setAltaOpen(true); }}>Agregar primer empleado</Button>}
+      />}
+      <Table containerClassName={isLoading || empleados.length > 0 ? "mt-4 hidden md:block" : "hidden"}>
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
@@ -473,64 +549,7 @@ export default function EmpleadosPage() {
                   </Status>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end gap-1.5 row-actions transition-opacity">
-                    <IconButton
-                      onClick={() => abrirEdicion(emp)}
-                      disabled={accionandoId === emp.id || !gestionable}
-                      title={!gestionable ? "Tu rol no tiene acceso a editar empleados." : undefined}
-                      icon={<Pencil className="h-3.5 w-3.5" />}
-                      label="Editar"
-                    />
-                    <IconButton
-                      onClick={() => handleCambiarEstado(emp, emp.estado === "baja" ? "activo" : "baja")}
-                      disabled={accionandoId === emp.id || !gestionable}
-                      title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
-                      icon={
-                        accionandoId === emp.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Power className="h-3.5 w-3.5" />
-                        )
-                      }
-                      label={emp.estado === "baja" ? "Activar" : "Dar de baja"}
-                    />
-                    {gestionable && emp.device_token && (
-                      <IconButton
-                        onClick={() => setDesvincularTarget(emp)}
-                        disabled={accionandoId === emp.id}
-                        icon={
-                          accionandoId === emp.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Unlink className="h-3.5 w-3.5" />
-                          )
-                        }
-                        label="Desvincular"
-                      />
-                    )}
-                    {gestionable && !emp.device_token && (
-                      <IconButton
-                        onClick={() => handleGenerarCodigo(emp)}
-                        disabled={accionandoId === emp.id}
-                        icon={
-                          accionandoId === emp.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <KeyRound className="h-3.5 w-3.5" />
-                          )
-                        }
-                        label={emp.otp ? "Código nuevo" : "Generar código"}
-                      />
-                    )}
-                    {gestionable && emp.estado === "baja" && !emp.tiene_asistencia && (
-                      <IconButton
-                        onClick={() => setEliminarTarget(emp)}
-                        disabled={loading}
-                        icon={<Trash2 className="h-3.5 w-3.5" />}
-                        label="Eliminar"
-                      />
-                    )}
-                  </div>
+{renderActions(emp)}
                 </TableCell>
               </TableRow>
             ))}
@@ -617,7 +636,7 @@ export default function EmpleadosPage() {
       </Dialog>
 
       <Dialog
-        open={editando != null}
+        open={editando !== null}
         onClose={() => {
           setEditando(null);
           setError(null);
@@ -742,7 +761,7 @@ export default function EmpleadosPage() {
         </form>
       </Dialog>
 
-      <Dialog open={codigoDialog != null} onClose={() => setCodigoDialog(null)} title="Código de vinculación">
+      <Dialog open={codigoDialog !== null} onClose={() => setCodigoDialog(null)} title="Código de vinculación">
         <div className="mx-auto -mt-1 flex h-[52px] w-[52px] items-center justify-center rounded-[6px] bg-accent-100">
           <KeyRound className="h-[26px] w-[26px] text-accent" strokeWidth={1.8} />
         </div>
@@ -762,7 +781,7 @@ export default function EmpleadosPage() {
       </Dialog>
 
       <Dialog
-        open={desvincularTarget != null}
+        open={desvincularTarget !== null}
         onClose={() => setDesvincularTarget(null)}
         title="Desvincular dispositivo"
       >
@@ -783,7 +802,7 @@ export default function EmpleadosPage() {
       </Dialog>
 
       <Dialog
-        open={eliminarTarget != null}
+        open={eliminarTarget !== null}
         onClose={() => {
           setEliminarTarget(null);
           setError(null);

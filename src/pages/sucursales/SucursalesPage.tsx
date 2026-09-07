@@ -1,3 +1,5 @@
+import { MobileRecords } from "../../components/ui/mobile-records";
+import { EmptyState } from "../../components/ui/empty-state";
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -63,7 +65,7 @@ export default function SucursalesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const { data, isLoading } = useSucursales({
+  const { data, isLoading, isError, refetch } = useSucursales({
     page,
     pageSize,
     q: busqueda || undefined,
@@ -177,6 +179,44 @@ export default function SucursalesPage() {
     }
   }
 
+  const renderActions = (suc: Sucursal) => (
+<div className="flex justify-end gap-1.5 row-actions transition-opacity">
+                    <IconButton
+                      onClick={() => abrirEdicion(suc)}
+                      disabled={!gestionable}
+                      title={!gestionable ? "Tu rol no tiene acceso a editar sucursales." : undefined}
+                      icon={<Pencil className="h-3.5 w-3.5" />}
+                      label="Editar"
+                    />
+                    <IconButton
+                      onClick={() => handleToggleActiva(suc)}
+                      disabled={loading || !gestionable}
+                      title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
+                      icon={
+                        accionandoId === suc.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Power className="h-3.5 w-3.5" />
+                        )
+                      }
+                      label={suc.activa ? "Desactivar" : "Activar"}
+                    />
+                    <IconButton
+                      onClick={() => setQrId(suc.id)}
+                      icon={<QrCode className="h-3.5 w-3.5" />}
+                      label="Ver QR"
+                    />
+                    {gestionable && !suc.activa && !suc.tiene_asistencia && (
+                      <IconButton
+                        onClick={() => setEliminarTarget(suc)}
+                        disabled={loading}
+                        icon={<Trash2 className="h-3.5 w-3.5" />}
+                        label="Eliminar"
+                      />
+                    )}
+                  </div>
+  );
+
   return (
     <>
       <PageHeader
@@ -235,7 +275,17 @@ export default function SucursalesPage() {
         </ErrorPlan>
       )}
 
-      <Table containerClassName="mt-4">
+      {isError && <p role="alert" className="mt-4 text-alert">No pudimos cargar sucursales. <button type="button" className="underline" onClick={() => refetch()}>Reintentar</button></p>}
+      {(isLoading || sucursales.length > 0) && <MobileRecords loading={isLoading} items={sucursales.map(suc => ({
+        id: suc.id, title: suc.nombre, description: `${suc.direccion ?? "Sin dirección"} · ${suc.activa ? "Activa" : "Inactiva"}`, meta: `${empleados.filter(e => e.sucursal_id === suc.id && e.estado !== "baja").length} empleados · Radio ${suc.radio_metros} m`,
+        actionLabel: `Ver detalle de ${suc.nombre}`, onOpen: () => navigate(`/sucursales/${suc.id}`), actions: renderActions(suc),
+      }))} />}
+      {!isLoading && !isError && sucursales.length === 0 && <EmptyState
+        title={filtrosActivos ? "No encontramos resultados" : "Todavía no tenés sucursales"}
+        description={filtrosActivos ? "Probá con otra búsqueda o quitá los filtros." : "Agregá tu primera sucursal para organizar al equipo por ubicación."}
+        action={filtrosActivos ? <Button variant="secondary" onClick={limpiarFiltros}>Limpiar filtros</Button> : gestionable && <Button disabled={alTope} onClick={() => { setError(null); setAltaOpen(true); }}>Agregar primera sucursal</Button>}
+      />}
+      <Table containerClassName={isLoading || sucursales.length > 0 ? "mt-4 hidden md:block" : "hidden"}>
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
@@ -277,41 +327,7 @@ export default function SucursalesPage() {
                   <Badge tone={suc.activa ? "success" : "neutral"}>{suc.activa ? "Activa" : "Inactiva"}</Badge>
                 </TableCell>
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex justify-end gap-1.5 row-actions transition-opacity">
-                    <IconButton
-                      onClick={() => abrirEdicion(suc)}
-                      disabled={!gestionable}
-                      title={!gestionable ? "Tu rol no tiene acceso a editar sucursales." : undefined}
-                      icon={<Pencil className="h-3.5 w-3.5" />}
-                      label="Editar"
-                    />
-                    <IconButton
-                      onClick={() => handleToggleActiva(suc)}
-                      disabled={loading || !gestionable}
-                      title={!gestionable ? "Tu rol no tiene acceso a esta acción." : undefined}
-                      icon={
-                        accionandoId === suc.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Power className="h-3.5 w-3.5" />
-                        )
-                      }
-                      label={suc.activa ? "Desactivar" : "Activar"}
-                    />
-                    <IconButton
-                      onClick={() => setQrId(suc.id)}
-                      icon={<QrCode className="h-3.5 w-3.5" />}
-                      label="Ver QR"
-                    />
-                    {gestionable && !suc.activa && !suc.tiene_asistencia && (
-                      <IconButton
-                        onClick={() => setEliminarTarget(suc)}
-                        disabled={loading}
-                        icon={<Trash2 className="h-3.5 w-3.5" />}
-                        label="Eliminar"
-                      />
-                    )}
-                  </div>
+{renderActions(suc)}
                 </TableCell>
               </TableRow>
               );

@@ -89,6 +89,10 @@ await page.route('http://127.0.0.1:3007/**',async route=>{
  else {data={};console.log('Unhandled fixture',path);}
  await route.fulfill({json:data,headers:{'access-control-allow-origin':base,'access-control-allow-credentials':'true'}});
 });
+await page.goto(base+'/');
+await page.getByRole('heading',{name:'Tu próximo paso'}).waitFor();
+await page.getByRole('link',{name:/Solicitudes por revisar/}).waitFor();
+await page.screenshot({path:join(output,'inicio-pendiente.png'),animations:'disabled'});
 await page.goto(base+'/rrhh');
 await page.getByRole('button',{name:'Revisar',exact:true}).waitFor();
 await page.screenshot({path:join(output,'pendientes.png'),fullPage:true,animations:"disabled"});
@@ -164,7 +168,7 @@ if (process.argv.includes('--all-pages')) {
  assert.equal(await trigger.evaluate(e=>e===document.activeElement),true,'Restaurar foco al cerrar');
  await page.route('http://127.0.0.1:3007/api/asistencia?**', async route => {
   const record={id:'marca1',empleado_id:emp.id,empleado_nombre:'Ana Pérez',sucursal_id:'s1',sucursal_nombre:'Centro',tipo:'entrada',created_at:new Date().toISOString(),lat:-31.4167,lon:-64.1833};
-  await route.fulfill({json:paginated([record]),headers:{'access-control-allow-origin':base,'access-control-allow-credentials':'true'}});
+  await route.fulfill({json:new URL(route.request().url()).searchParams.has('page')?paginated([record]):[record],headers:{'access-control-allow-origin':base,'access-control-allow-credentials':'true'}});
  });
  await page.goto(base+'/asistencia');
  await page.getByRole('button',{name:'Ver detalle de la marca de Ana Pérez',exact:true}).click();
@@ -174,6 +178,47 @@ if (process.argv.includes('--all-pages')) {
  await page.screenshot({path:join(output,'390-side-panel.png'),animations:'disabled'});
  await page.keyboard.press('Escape');
  assert.equal(await panel.count(),0);
+ // UX: secondary filters retain their value and disclose active counts.
+ await page.goto(base+'/empleados');
+ await page.getByRole('button',{name:'Ver detalle de Pérez, Ana',exact:true}).waitFor();
+ const secondary=page.locator('.more-filters');
+ assert.equal(await page.getByLabel('Estado',{exact:true}).isVisible(),false);
+ await secondary.locator('summary').press('Enter');
+ await Promise.all([
+  page.waitForRequest(r=>r.url().includes('/api/empleados?') && new URL(r.url()).searchParams.get('estado')==='activo'),
+  page.getByLabel('Estado',{exact:true}).selectOption('activo'),
+ ]);
+ await secondary.locator('summary').click();
+ await secondary.getByLabel('1 filtro activo').waitFor();
+ assert.equal(await page.getByLabel('Estado',{exact:true}).inputValue(),'activo');
+ await page.screenshot({path:join(output,'390-filtros-activos.png'),animations:'disabled'});
+ await page.getByRole('button',{name:'Limpiar filtros',exact:true}).click();
+ assert.equal(await page.getByLabel('Estado',{exact:true}).inputValue(),'todos');
+ await page.getByRole('button',{name:'Ver detalle de Pérez, Ana',exact:true}).click();
+ await page.waitForURL(`**/empleados/${emp.id}`);
+ await page.goto(base+'/empleados');
+ await page.locator('summary').filter({hasText:/^Acciones$/}).click();
+ await page.getByRole('button',{name:'Editar',exact:true}).click();
+ await page.getByRole('dialog').waitFor();
+ await page.keyboard.press('Escape');
+ // True empty data and failed data must never look the same.
+ await page.route('http://127.0.0.1:3007/api/empleados?**',r=>r.fulfill({json:paginated([]),headers:{'access-control-allow-origin':base,'access-control-allow-credentials':'true'}}));
+ await page.goto(base+'/empleados');
+ await page.getByRole('heading',{name:'Todavía no tenés empleados'}).waitFor();
+ await page.getByRole('button',{name:'Agregar primer empleado'}).click();
+ await page.getByRole('dialog',{name:'Nuevo empleado'}).waitFor();
+ await page.keyboard.press('Escape');
+ await page.screenshot({path:join(output,'390-vacio-empleados.png'),animations:'disabled'});
+ await page.route('http://127.0.0.1:3007/api/empleados?**',r=>r.fulfill({status:500,json:{error:'Error simulado'},headers:{'access-control-allow-origin':base,'access-control-allow-credentials':'true'}}));
+ await page.goto(base+'/empleados');
+ await page.getByRole('alert').filter({hasText:'No pudimos cargar empleados'}).waitFor();
+ assert.equal(await page.getByRole('heading',{name:'Todavía no tenés empleados'}).count(),0);
+ await page.route('http://127.0.0.1:3007/api/rrhh/pendientes',r=>r.fulfill({status:500,json:{error:'Error simulado'},headers:{'access-control-allow-origin':base,'access-control-allow-credentials':'true'}}));
+ await page.goto(base+'/');
+ await page.getByRole('alert').filter({hasText:'No pudimos verificar todas las categorías'}).waitFor();
+ assert.equal(await page.getByText('No hay pendientes en las categorías consultadas.').count(),0);
+ console.log('UX OK: filtros persistentes, detalle y edición móvil, vacío accionable y errores diferenciados.');
+
 }
 assert.deepEqual(errors,[]);
 console.log('UI OK: aprobación, cierre, consulta única de horarios, portal móvil sin overflow; sin errores JS. API/auth son fixtures locales.');

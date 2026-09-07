@@ -1,3 +1,4 @@
+import { ContextHelp } from "../../components/ui/context-help";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cerrarLiquidacion, getCierre, getCierres, type LiquidacionResponse } from "../../lib/api";
@@ -48,7 +49,8 @@ export function CierresPanel({ actual, bloqueado }: { actual?: LiquidacionRespon
         <div><h2 className="font-semibold">Cierres de período</h2><p className="text-sm text-text-secondary">Copias inmutables de toda la organización. Hasta 50 cierres recientes.</p></div>
         <Button variant="secondary" disabled={!puedeCerrar} onClick={() => { setRevisado(false); setParaCerrar(actual!); setOpen(true); }}>Cerrar período</Button>
       </div>
-      <p className="mt-2 text-sm text-text-secondary">Para cerrar: quitá el filtro de empleados, elegí un período anterior a hoy y resolvé marcas abiertas y solicitudes pendientes. Podés seguir corrigiendo datos; un nuevo cierre conserva otra versión.</p>
+      {!puedeCerrar && <p className="mt-2 text-sm text-text-secondary">El cierre requiere un período completo anterior a hoy, sin filtro de empleados ni turnos abiertos.</p>}
+      <ContextHelp label="¿Qué guarda un cierre y qué tengo que revisar?">Quitá el filtro de empleados y resolvé las marcas abiertas y solicitudes pendientes antes de cerrar. Se conserva una copia de los importes: podés seguir corrigiendo datos y generar otra versión. No es un recibo de sueldo.</ContextHelp>
       {cierres.isLoading && <p role="status">Cargando cierres…</p>}
       {cierres.isError && <p role="alert">No se pudieron cargar los cierres. <button className="underline" onClick={() => cierres.refetch()}>Reintentar</button></p>}
       <ul className="mt-3 divide-y divide-border">

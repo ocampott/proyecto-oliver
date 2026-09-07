@@ -1,3 +1,4 @@
+import { ContextHelp } from "../../components/ui/context-help";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -83,7 +84,7 @@ export function PendientesPanel() {
     <div className="space-y-4">
       <Card>
         <h2 className="font-semibold">Solicitudes por revisar ({data?.totalSolicitudes ?? 0})</h2>
-        <p className="text-sm text-text-secondary">Primero las más antiguas. Hasta 50 por vez; al resolverlas aparecen las siguientes.</p>
+        <ContextHelp label="¿Cómo se ordenan las solicitudes?">Primero las más antiguas. Mostramos hasta 50 por vez; al resolverlas aparecen las siguientes.</ContextHelp>
         {data?.solicitudes.length === 0 && <p className="mt-3 text-sm">No hay solicitudes pendientes.</p>}
         <ul className="divide-y divide-border">
           {data?.solicitudes.map((s) => (
@@ -96,7 +97,7 @@ export function PendientesPanel() {
       </Card>
       <Card>
         <h2 className="font-semibold">Certificados pendientes ({data?.totalCertificados ?? 0})</h2>
-        <p className="text-sm text-text-secondary">El empleado puede entregarlos desde el chat. Para una entrega presencial, cargá el archivo y actualizá la ausencia en Registros.</p>
+        <ContextHelp label="¿Cómo recibo un certificado?">El empleado puede entregarlo desde el chat. Si lo entrega presencialmente, cargá el archivo en su legajo y actualizá la ausencia en Registros.</ContextHelp>
         {data?.certificados.length === 0 && <p className="mt-3 text-sm">No hay certificados pendientes.</p>}
         <ul className="divide-y divide-border">
           {data?.certificados.map((s) => <li key={s.id} className="flex justify-between gap-3 py-3 text-sm">
@@ -107,7 +108,7 @@ export function PendientesPanel() {
       </Card>
       <Card>
         <h2 className="font-semibold">Marcas rechazadas ({data?.marcasRechazadas ?? 0})</h2>
-        <Link to="/asistencia" className="text-sm text-accent underline">Revisar en Asistencia → Rechazadas</Link>
+        <Link to="/asistencia" state={{ vista: "rechazadas" }} className="text-sm text-accent underline">Revisar en Asistencia → Rechazadas</Link>
         <p className="mt-2 text-sm text-text-secondary">Para entradas sin salida, revisá los turnos abiertos en Horas.</p>
         <Link to="/horas" className="text-sm text-accent underline">Revisar turnos abiertos</Link>
       </Card>

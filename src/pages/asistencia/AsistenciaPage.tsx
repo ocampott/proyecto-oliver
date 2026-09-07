@@ -1,3 +1,6 @@
+import { MobileRecords } from "../../components/ui/mobile-records";
+import { EmptyState } from "../../components/ui/empty-state";
+import { MoreFilters } from "../../components/ui/more-filters";
 import { useState, Fragment } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
@@ -175,26 +178,6 @@ export default function AsistenciaPage() {
               options={[{ value: "todos", label: "Todos" }, ...empleados.map((emp) => ({ value: emp.id, label: emp.nombre }))]}
               containerClassName="w-40"
             />
-            <Select
-              label="Sucursal"
-              compact
-              value={sucursalFiltro}
-              onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
-              options={[{ value: "todos", label: "Todos" }, ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre }))]}
-              containerClassName="w-40"
-            />
-            <Select
-              label="Tipo"
-              compact
-              value={tipoFiltro}
-              onChange={(e) => { setTipoFiltro(e.target.value as TipoFiltro); setPage(1); }}
-              options={[
-                { value: "todos", label: "Entradas y salidas" },
-                { value: "entrada", label: "Solo entradas" },
-                { value: "salida", label: "Solo salidas" },
-              ]}
-              containerClassName="w-36"
-            />
             <div className="flex items-center gap-1.5">
               <Field
                 label="Desde"
@@ -214,6 +197,28 @@ export default function AsistenciaPage() {
                 containerClassName="w-[136px]"
               />
             </div>
+            <MoreFilters activeCount={[sucursalFiltro !== "todos", tipoFiltro !== "todos"].filter(Boolean).length}>
+              <Select
+                label="Sucursal"
+                compact
+                value={sucursalFiltro}
+                onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
+                options={[{ value: "todos", label: "Todos" }, ...sucursales.map((suc) => ({ value: suc.id, label: suc.nombre }))]}
+                containerClassName="w-40"
+              />
+              <Select
+                label="Tipo"
+                compact
+                value={tipoFiltro}
+                onChange={(e) => { setTipoFiltro(e.target.value as TipoFiltro); setPage(1); }}
+                options={[
+                  { value: "todos", label: "Entradas y salidas" },
+                  { value: "entrada", label: "Solo entradas" },
+                  { value: "salida", label: "Solo salidas" },
+                ]}
+                containerClassName="w-36"
+              />
+            </MoreFilters>
             {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
             <div className="ml-auto">
               <span className="font-mono text-xs text-text-tertiary">{data?.pagination.total ?? 0} resultados</span>
@@ -222,7 +227,16 @@ export default function AsistenciaPage() {
 
           {isError && <p className="mt-2 text-[15px] text-alert">No se pudieron cargar los registros. Probá de nuevo.</p>}
 
-          <Table containerClassName="mt-4">
+          {(isLoading || registros.length > 0) && <MobileRecords loading={isLoading} items={registros.map(r => ({
+            id: r.id, title: r.empleado_nombre ?? "Empleado", description: `${r.tipo === "entrada" ? "Entrada" : "Salida"} · ${r.sucursal_nombre ?? "Sin sucursal"}`,
+            meta: horaLocal(r.created_at), actionLabel: `Ver detalle de la marca de ${r.empleado_nombre ?? "—"}`, onOpen: () => setDetalle(r),
+          }))} />}
+          {!isLoading && !isError && registros.length === 0 && <EmptyState title="No hay marcas en este período" description="Elegí otras fechas o quitá los filtros para consultar más registros." action={filtrosActivos ? <Button variant="secondary" onClick={limpiarFiltros}>Limpiar filtros</Button> : <Button variant="secondary" onClick={() => {
+            const inicio = new Date(`${hoyAR()}T12:00:00Z`);
+            inicio.setUTCDate(inicio.getUTCDate() - 6);
+            setDesde(inicio.toISOString().slice(0, 10)); setHasta(hoyAR()); setPage(1);
+          }}>Ver últimos 7 días</Button>} />}
+          <Table containerClassName={isLoading || registros.length > 0 ? "mt-4 hidden md:block" : "hidden"}>
             <TableHeader>
               <TableRow>
                 <TableHead>Empleado</TableHead>

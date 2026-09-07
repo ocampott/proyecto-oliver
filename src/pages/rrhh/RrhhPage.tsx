@@ -1,3 +1,6 @@
+import { MobileRecords } from "../../components/ui/mobile-records";
+import { EmptyState } from "../../components/ui/empty-state";
+import { MoreFilters } from "../../components/ui/more-filters";
 import { PendientesPanel, RevisionSolicitud } from "../operacion/PendientesPanel";
 import { useState, type FormEvent } from "react";
 import { Plus, Trash2, Download, X, Loader2 } from "lucide-react";
@@ -156,7 +159,7 @@ export default function RrhhPage() {
     }
   }
 
-  const { data, isLoading } = useAusencias({
+  const { data, isLoading, isError, refetch } = useAusencias({
     desde,
     hasta,
     sucursalId: sucursalFiltro || undefined,
@@ -353,29 +356,38 @@ export default function RrhhPage() {
               <span className="text-xs text-text-tertiary">→</span>
               <Field label="Hasta" compact type="date" value={hasta} onChange={(e) => { setHasta(e.target.value); setPage(1); }} containerClassName="w-[136px]" />
             </div>
-            <Select
-              label="Motivo"
-              compact
-              value={motivoFiltro}
-              onChange={(e) => { setMotivoFiltro(e.target.value); setPage(1); }}
-              options={[{ value: "", label: "Todos los motivos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
-              containerClassName="w-40"
-            />
-            <Select
-              label="Sucursal"
-              compact
-              value={sucursalFiltro}
-              onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
-              options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-              containerClassName="w-44"
-            />
+            <MoreFilters activeCount={[motivoFiltro !== "", sucursalFiltro !== ""].filter(Boolean).length}>
+              <Select
+                label="Motivo"
+                compact
+                value={motivoFiltro}
+                onChange={(e) => { setMotivoFiltro(e.target.value); setPage(1); }}
+                options={[{ value: "", label: "Todos los motivos" }, ...categorias.map((c) => ({ value: c, label: c }))]}
+                containerClassName="w-40"
+              />
+              <Select
+                label="Sucursal"
+                compact
+                value={sucursalFiltro}
+                onChange={(e) => { setSucursalFiltro(e.target.value); setPage(1); }}
+                options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+                containerClassName="w-44"
+              />
+            </MoreFilters>
             {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
             <div className="ml-auto">
               <span className="font-mono text-xs text-text-tertiary">{resumen?.total ?? 0} resultados</span>
             </div>
           </Toolbar>
 
-          <Table containerClassName="mt-4">
+          {isError && <p role="alert" className="text-alert">No pudimos cargar las ausencias. <button className="underline" onClick={() => refetch()}>Reintentar</button></p>}
+          {(isLoading || ausencias.length > 0) && <MobileRecords loading={isLoading} items={ausencias.map(a => ({
+            id: a.id, title: a.empleado_nombre ?? "Empleado", description: `${a.motivo} · ${a.sucursal_nombre ?? "Sin sucursal"}`,
+            meta: `${a.fecha_desde} al ${a.fecha_hasta}${a.certificado_pendiente ? " · Certificado pendiente" : ""}`,
+            actionLabel: `Ver ausencia de ${a.empleado_nombre ?? "Empleado"}`, onOpen: () => abrirDetalle(a),
+          }))} />}
+          {!isLoading && !isError && ausencias.length === 0 && <EmptyState title="Sin ausencias en este período" description="Cargá una ausencia o cambiá los filtros para consultar otros registros." action={<Button variant="secondary" onClick={() => setAltaOpen(true)}>Nueva ausencia</Button>} />}
+          <Table containerClassName={isLoading || ausencias.length > 0 ? "mt-4 hidden md:block" : "hidden"}>
             <TableHeader>
               <TableRow>
                 <TableHead>Empleado</TableHead>
@@ -525,7 +537,7 @@ export default function RrhhPage() {
       </Dialog>
 
       <SidePanel
-        open={editando != null}
+        open={editando !== null}
         onClose={() => { setEditando(null); setErrorEdit(null); }}
         title={`Ausencia de ${editando?.empleado_nombre ?? ""}`}
       >
@@ -574,7 +586,7 @@ export default function RrhhPage() {
         </form>
       </SidePanel>
 
-      <Dialog open={borrarTarget != null} onClose={() => setBorrarTarget(null)} title="Borrar ausencia">
+      <Dialog open={borrarTarget !== null} onClose={() => setBorrarTarget(null)} title="Borrar ausencia">
         <p className="text-[15px] text-text-secondary">
           ¿Borrar la ausencia de <strong>{borrarTarget?.empleado_nombre}</strong>{" "}
           ({borrarTarget?.fecha_desde === borrarTarget?.fecha_hasta

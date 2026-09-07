@@ -1,3 +1,4 @@
+import { MoreFilters } from "../../components/ui/more-filters";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Download } from "lucide-react";
@@ -232,26 +233,28 @@ export default function HorasPage() {
           placeholder="Todos"
           containerClassName="w-52"
         />
-        <Select
-          label="Sucursal"
-          compact
-          value={sucursalSel}
-          onChange={(e) => setSucursalSel(e.target.value)}
-          options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
-          containerClassName="w-44"
-        />
-        <Select
-          label="Orden"
-          compact
-          value={orden}
-          onChange={(e) => setOrden(e.target.value as Orden)}
-          options={[
-            { value: "horas", label: "Más horas primero" },
-            { value: "extras", label: "Más extras primero" },
-            { value: "nombre", label: "Por nombre" },
-          ]}
-          containerClassName="w-44"
-        />
+        <MoreFilters activeCount={[sucursalSel !== "", orden !== "horas"].filter(Boolean).length}>
+          <Select
+            label="Sucursal"
+            compact
+            value={sucursalSel}
+            onChange={(e) => setSucursalSel(e.target.value)}
+            options={[{ value: "", label: "Todas las sucursales" }, ...sucursales.map((s) => ({ value: s.id, label: s.nombre }))]}
+            containerClassName="w-44"
+          />
+          <Select
+            label="Orden"
+            compact
+            value={orden}
+            onChange={(e) => setOrden(e.target.value as Orden)}
+            options={[
+              { value: "horas", label: "Más horas primero" },
+              { value: "extras", label: "Más extras primero" },
+              { value: "nombre", label: "Por nombre" },
+            ]}
+            containerClassName="w-44"
+          />
+        </MoreFilters>
         {filtrosActivos && <ClearFiltersButton onClick={limpiarFiltros} className="ml-0" />}
         <div className="ml-auto">
           <span className="font-mono text-xs text-text-tertiary">{resumen.length} resultados</span>

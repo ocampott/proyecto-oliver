@@ -1,3 +1,6 @@
+import { MobileRecords } from "../../components/ui/mobile-records";
+import { EmptyState } from "../../components/ui/empty-state";
+import { Button } from "../../components/ui/button";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
@@ -66,7 +69,17 @@ export default function LegajosPage() {
         </p>
       )}
 
-      <Table containerClassName="mt-4">
+      {(isLoading || legajos.length > 0) && <MobileRecords loading={isLoading} items={legajos.map(l => ({
+        id: l.empleado_id, title: l.nombre, description: `${l.cantidad_archivos} archivos`,
+        meta: l.ultimo_archivo_at ? `Actualizado ${fechaLocal(l.ultimo_archivo_at)}` : "Sin archivos todavía",
+        actionLabel: `Ver legajo de ${l.nombre}`, onOpen: () => navigate(`/legajos/${l.empleado_id}`),
+      }))} />}
+      {!isLoading && !isError && legajos.length === 0 && <EmptyState
+        title={consulta ? "No encontramos ese legajo" : "Los legajos empiezan con tu equipo"}
+        description={consulta ? "Probá con otro nombre o limpiá la búsqueda." : "Cada empleado tiene su legajo. Cargá tu equipo y después adjuntá sus archivos."}
+        action={<Button variant="secondary" onClick={() => consulta ? setBusqueda("") : navigate("/empleados")}>{consulta ? "Limpiar búsqueda" : "Ir a empleados"}</Button>}
+      />}
+      <Table containerClassName={isLoading || legajos.length > 0 ? "mt-4 hidden md:block" : "hidden"}>
         <TableHeader>
           <TableRow>
             <TableHead>Empleado</TableHead>

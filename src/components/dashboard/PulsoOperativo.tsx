@@ -1,3 +1,5 @@
+import { useQuery } from "@tanstack/react-query";
+import { getPendientesOperacion } from "../../lib/api";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "../ui/card";
@@ -36,7 +38,7 @@ function AhoraMismo({ enVivo }: { enVivo: EnVivo }) {
       {!enVivo.isError && !enVivo.isLoading && (
         <div className="mt-4 flex max-h-[280px] flex-col gap-4 overflow-y-auto">
           {enVivo.porSucursal.length === 0 && (
-            <p className="text-sm text-text-tertiary">Nadie marcó entrada todavía.</p>
+            <div><p className="text-sm text-text-tertiary">Nadie marcó entrada todavía.</p><Link to="/asistencia" className="mt-2 inline-block text-sm font-medium text-accent-700 hover:underline">Consultar registros</Link></div>
           )}
           {enVivo.porSucursal.map((g) => (
             <div key={g.sucursalId}>
@@ -61,6 +63,7 @@ function AhoraMismo({ enVivo }: { enVivo: EnVivo }) {
 }
 
 function UltimosMovimientos({ enVivo }: { enVivo: EnVivo }) {
+  if (!enVivo.isLoading && !enVivo.isError && enVivo.ultimosMarcados.length === 0) return null;
   return (
     <Card>
       <h3 className="text-[14px] font-semibold">Últimos movimientos</h3>
@@ -166,6 +169,7 @@ function PendientesRevision() {
 
 function AusenciasHoy() {
   const query = useAusenciasHoy();
+  if (!query.isLoading && !query.isError && query.ausencias.length === 0) return null;
   return (
     <Card>
       <div className="flex items-center justify-between">
@@ -203,6 +207,7 @@ function AusenciasHoy() {
 
 function PendingHours() {
   const query = useOlvidaronSalida();
+  if (!query.isLoading && !query.isError && query.turnos.length === 0) return null;
   return (
     <Card>
       <h3 className="text-[14px] font-semibold">Olvidaron salida</h3>
@@ -230,34 +235,41 @@ export function PulsoOperativo({ orgId }: { orgId: string }) {
   const olvidaronQuery = useOlvidaronSalida();
   const { data: rechazadasData, isLoading: rechazadasLoading, isError: rechazadasError } = useRechazadas({ page: 1, pageSize: 5 });
 
-  const totalAdentro = live.porSucursal.reduce((acc, g) => acc + g.empleados.length, 0);
-  const rechazadasCount = rechazadasData?.pagination.total ?? 0;
-
-  const stats: StatRowItem[] = [{ label: "Adentro ahora", value: live.isLoading ? "—" : totalAdentro }];
-  if (tieneModulo(ent, "rrhh")) {
-    stats.push({
-      label: "Ausencias hoy",
-      value: ausenciasQuery.isLoading ? "—" : ausenciasQuery.ausencias.length,
-      tone: ausenciasQuery.ausencias.length > 0 ? "warning" : "default",
-    });
-  }
-  stats.push({
-    label: "Marcas rechazadas",
-    value: rechazadasLoading || rechazadasError ? "—" : rechazadasCount,
-    tone: rechazadasError ? "alert" : rechazadasCount > 0 ? "warning" : "default",
+  const rrhhHabilitado = tieneModulo(ent, "rrhh");
+  const horasHabilitado = tieneModulo(ent, "horas");
+  const pendientes = useQuery({
+    queryKey: ["pendientes"], queryFn: ({ signal }) => getPendientesOperacion(signal),
+    enabled: rrhhHabilitado, staleTime: 30_000, refetchInterval: 60_000,
   });
-  if (tieneModulo(ent, "horas")) {
-    stats.push({
-      label: "Olvidaron salida",
-      value: olvidaronQuery.isLoading ? "—" : olvidaronQuery.turnos.length,
-      tone: olvidaronQuery.turnos.length > 0 ? "alert" : "default",
-    });
-  }
+  const revisando = rechazadasLoading || (rrhhHabilitado && pendientes.isLoading) || (horasHabilitado && olvidaronQuery.isLoading);
+  const errorPrioridades = rechazadasError || (rrhhHabilitado && pendientes.isError) || (horasHabilitado && olvidaronQuery.isError);
+  const prioridades = [
+    ...(rrhhHabilitado && !pendientes.isError ? [
+      { label: "Solicitudes por revisar", count: pendientes.data?.totalSolicitudes ?? 0, href: "/rrhh", state: undefined },
+      { label: "Certificados pendientes", count: pendientes.data?.totalCertificados ?? 0, href: "/rrhh", state: undefined },
+    ] : []),
+    { label: "Marcas rechazadas", count: rechazadasError ? 0 : rechazadasData?.pagination.total ?? 0, href: "/asistencia", state: { vista: "rechazadas" } },
+    ...(horasHabilitado ? [{ label: "Turnos sin salida de días anteriores", count: olvidaronQuery.isError ? 0 : olvidaronQuery.turnos.length, href: "/horas", state: undefined }] : []),
+  ].filter(p => p.count > 0);
+
+  const totalAdentro = live.porSucursal.reduce((acc, g) => acc + g.empleados.length, 0);
+
+  const stats: StatRowItem[] = [{ label: "Adentro ahora", value: live.isLoading || live.isError ? "—" : totalAdentro }];
+  if (rrhhHabilitado) stats.push({ label: "Ausencias hoy", value: ausenciasQuery.isLoading || ausenciasQuery.isError ? "—" : ausenciasQuery.ausencias.length });
 
   return (
     <div className="flex flex-col gap-4">
+      <section aria-labelledby="prioridades-title" className="rounded-xl border border-border bg-surface-raised p-4 sm:p-5">
+        <h3 id="prioridades-title" className="text-base font-semibold">Tu próximo paso</h3>
+        {revisando && <p role="status" className="mt-2 text-text-secondary">Revisando pendientes…</p>}
+        {errorPrioridades && <p role="alert" className="mt-2 text-alert">No pudimos verificar todas las categorías. Revisá los módulos antes de dar todo por resuelto.</p>}
+        {!revisando && !errorPrioridades && prioridades.length === 0 && <p className="mt-2 text-text-secondary">No hay pendientes en las categorías consultadas.</p>}
+        <ul className="mt-2 divide-y divide-border">
+          {prioridades.map(p => <li key={p.label}><Link to={p.href} state={p.state} className="flex items-center justify-between gap-3 py-3 text-sm hover:text-accent-700"><span>{p.label}</span><span className="shrink-0 font-semibold text-accent-700">{p.count} · Revisar →</span></Link></li>)}
+        </ul>
+      </section>
       <StatRow stats={stats} />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <AhoraMismo enVivo={live} />
         {tieneModulo(ent, "rrhh") && <AusenciasHoy />}
         <PendientesRevision />
