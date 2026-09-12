@@ -374,6 +374,7 @@ export function generarOtp(id: string): Promise<GenerarOtpResponse> {
 }
 
 export type TipoMarca = "entrada" | "salida";
+export type OrigenMarca = "empleado" | "manual";
 
 export interface AsistenciaRegistro {
   id: string;
@@ -381,8 +382,9 @@ export interface AsistenciaRegistro {
   empleado_id: string;
   sucursal_id: string;
   tipo: TipoMarca;
-  lat: number;
-  lon: number;
+  lat: number | null;
+  lon: number | null;
+  origen: OrigenMarca;
   created_at: string;
   empleado_nombre: string | null;
   sucursal_nombre: string | null;
@@ -416,6 +418,28 @@ export function deleteAsistencia(id: string): Promise<{ ok: true }> {
   return request(`/api/asistencia/${id}`, { method: "DELETE" });
 }
 
+export interface MarcaManualInput {
+  empleadoId: string;
+  sucursalId: string;
+  tipo: TipoMarca;
+  fechaHora: string;
+}
+
+export function crearAsistenciaManual(input: MarcaManualInput): Promise<AsistenciaRegistro> {
+  return request(`/api/asistencia`, { method: "POST", body: JSON.stringify(input) });
+}
+
+export interface EditarAsistenciaInput {
+  empleadoId?: string;
+  sucursalId?: string;
+  tipo?: TipoMarca;
+  fechaHora?: string;
+}
+
+export function editarAsistencia(id: string, input: EditarAsistenciaInput): Promise<AsistenciaRegistro> {
+  return request(`/api/asistencia/${id}`, { method: "PATCH", body: JSON.stringify(input) });
+}
+
 export type MotivoRechazo =
   | "fuera_de_rango"
   | "sucursal_sin_gps"
@@ -441,6 +465,19 @@ export interface Rechazada {
 export function listRechazadas(params: { page: number; pageSize: number }): Promise<Paginated<Rechazada>> {
   const qs = new URLSearchParams({ page: String(params.page), pageSize: String(params.pageSize) });
   return request(`/api/asistencia/rechazadas?${qs}`);
+}
+
+export interface SalidaHuerfana {
+  id: string;
+  empleado_id: string;
+  sucursal_id: string;
+  created_at: string;
+  empleado_nombre: string;
+  sucursal_nombre: string;
+}
+
+export function listHuerfanas(desde: string, hasta: string): Promise<SalidaHuerfana[]> {
+  return request(`/api/asistencia/huerfanas?desde=${desde}&hasta=${hasta}`);
 }
 
 export function resolverRechazada(id: string, accion: "aprobar" | "descartar"): Promise<{ ok: true }> {
@@ -662,9 +699,11 @@ export interface CumplimientoRow {
   sucursal_nombre: string;
   fecha: string;
   entrada_real: string;
+  entrada_id: string;
   entrada_esperada: string | null;
   diff_entrada_min: number | null;
   salida_real: string | null;
+  salida_id: string | null;
   salida_esperada: string | null;
   diff_salida_min: number | null;
   en_curso: boolean;
@@ -682,6 +721,60 @@ export function getCumplimiento(filters: {
   if (filters.sucursalId) params.set("sucursalId", filters.sucursalId);
   if (filters.empleadoId) params.set("empleadoId", filters.empleadoId);
   return request(`/api/turnos/cumplimiento?${params}`);
+}
+
+export interface AusenciaInferida {
+  empleado_id: string;
+  fecha: string;
+  hora_inicio: string;
+  hora_fin: string;
+  horas: number;
+  justificada: boolean;
+}
+
+export function getInasistencias(filters: { desde: string; hasta: string; empleadoId?: string }): Promise<AusenciaInferida[]> {
+  const params = new URLSearchParams({ desde: filters.desde, hasta: filters.hasta });
+  if (filters.empleadoId) params.set("empleadoId", filters.empleadoId);
+  return request(`/api/turnos/ausencias?${params}`);
+}
+
+export interface TurnoPuntual {
+  id: string;
+  empleado_id: string;
+  sucursal_id: string | null;
+  sucursal_nombre: string | null;
+  fecha: string;
+  hora_inicio: string;
+  hora_fin: string;
+  tolerancia_min: number | null;
+  nota: string | null;
+}
+
+export function getTurnosPuntuales(filters: { empleadoId?: string; desde?: string; hasta?: string } = {}): Promise<TurnoPuntual[]> {
+  const params = new URLSearchParams();
+  if (filters.empleadoId) params.set("empleadoId", filters.empleadoId);
+  if (filters.desde) params.set("desde", filters.desde);
+  if (filters.hasta) params.set("hasta", filters.hasta);
+  const qs = params.toString();
+  return request(`/api/turnos-puntuales${qs ? `?${qs}` : ""}`);
+}
+
+export interface CrearTurnoPuntualInput {
+  empleado_id: string;
+  sucursal_id?: string | null;
+  fecha: string;
+  hora_inicio: string;
+  hora_fin: string;
+  tolerancia_min?: number | null;
+  nota?: string | null;
+}
+
+export function createTurnoPuntual(input: CrearTurnoPuntualInput): Promise<{ ok: true }> {
+  return request("/api/turnos-puntuales", { method: "POST", body: JSON.stringify(input) });
+}
+
+export function deleteTurnoPuntual(id: string): Promise<{ ok: true }> {
+  return request(`/api/turnos-puntuales/${id}`, { method: "DELETE" });
 }
 
 export interface Ausencia {
@@ -864,6 +957,8 @@ export interface LiquidacionEmpleado {
   dias_trabajados: number | null;
   horas_extra: number | null;
   total_por_horas: number | null;
+  /** Suma de adelantos del período — ya restados de `total`. */
+  adelantos: number;
   total: number;
   advertencias: string[];
 }
@@ -873,6 +968,77 @@ export interface LiquidacionResponse {
   desde: string;
   hasta: string;
   filas: LiquidacionEmpleado[];
+}
+
+// ── Adelantos ────────────────────────────────────────────────────────────
+
+export interface Adelanto {
+  id: string;
+  org_id: string;
+  empleado_id: string;
+  empleado_nombre: string;
+  fecha: string;
+  monto: number;
+  nota: string | null;
+  created_at: string;
+}
+
+export type TipoTopeAdelanto = "porcentaje" | "monto_fijo" | "sin_tope";
+
+export interface TopeAdelantoConfig {
+  tipo: TipoTopeAdelanto;
+  /** Porcentaje (0-100) si tipo="porcentaje", pesos si tipo="monto_fijo". Ignorado si "sin_tope". */
+  valor: number;
+}
+
+export interface TopeAdelanto {
+  tipo: TipoTopeAdelanto;
+  limite: number | null;
+  usado: number;
+  disponible: number | null;
+  excedido: boolean;
+}
+
+export interface ListAdelantosFilters {
+  desde?: string;
+  hasta?: string;
+  empleadoId?: string;
+}
+
+export function listAdelantos(filters: ListAdelantosFilters = {}): Promise<Adelanto[]> {
+  const qs = new URLSearchParams();
+  if (filters.desde) qs.set("desde", filters.desde);
+  if (filters.hasta) qs.set("hasta", filters.hasta);
+  if (filters.empleadoId) qs.set("empleadoId", filters.empleadoId);
+  const query = qs.toString();
+  return request(`/api/adelantos${query ? `?${query}` : ""}`);
+}
+
+export function getTopeAdelanto(empleadoId: string, fecha: string): Promise<TopeAdelanto> {
+  return request(`/api/adelantos/tope?empleadoId=${empleadoId}&fecha=${fecha}`);
+}
+
+export interface CrearAdelantoInput {
+  empleadoId: string;
+  fecha: string;
+  monto: number;
+  nota?: string | null;
+}
+
+export function crearAdelanto(input: CrearAdelantoInput): Promise<Adelanto & { advertencia: string | null }> {
+  return request(`/api/adelantos`, { method: "POST", body: JSON.stringify(input) });
+}
+
+export function deleteAdelanto(id: string): Promise<{ ok: true }> {
+  return request(`/api/adelantos/${id}`, { method: "DELETE" });
+}
+
+export function getTopeAdelantoConfig(): Promise<TopeAdelantoConfig> {
+  return request(`/api/adelantos/config`);
+}
+
+export function setTopeAdelantoConfig(input: TopeAdelantoConfig): Promise<{ ok: true }> {
+  return request(`/api/adelantos/config`, { method: "PATCH", body: JSON.stringify(input) });
 }
 
 export interface LiquidacionFiltros {
