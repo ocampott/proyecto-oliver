@@ -8,11 +8,16 @@ import { MultiSelect } from "../../components/ui/multi-select";
 import { StatRow, type StatRowItem } from "../../components/ui/stat-row";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableSkeleton } from "../../components/ui/table";
 import { PageHeader } from "../../components/PageHeader";
+import { Tabs, tabPanelProps } from "../../components/ui/tabs";
 import { useToast } from "../../components/ui/toast";
 import { exportarLiquidacion, type LiquidacionEmpleado } from "../../lib/api";
 import { formatMoneda } from "../../lib/format";
 import { useEmpleados } from "../empleados/hooks";
+import { useOrgActual, puedeGestionar } from "../../lib/hooks";
 import { useLiquidacion } from "./hooks";
+import { AdelantosTab } from "./AdelantosTab";
+
+type Vista = "liquidacion" | "adelantos";
 
 const AR_TZ = "America/Argentina/Buenos_Aires";
 
@@ -34,6 +39,9 @@ function formatHoras(h: number): string {
 export default function LiquidacionPage() {
   const toast = useToast();
   const { data: empleados = [] } = useEmpleados();
+  const { data: org } = useOrgActual();
+  const gestionable = puedeGestionar(org ?? null);
+  const [vista, setVista] = useState<Vista>("liquidacion");
   const [desde, setDesde] = useState(inicioDeMesAR());
   const [hasta, setHasta] = useState(hoyAR());
   const [empleadoIds, setEmpleadoIds] = useState<string[]>([]);
@@ -70,76 +78,99 @@ export default function LiquidacionPage() {
         title="Liquidación"
         description="Cálculo interno aproximado a partir de asistencia y horarios — no reemplaza el recibo de sueldo."
         actions={
-          <Button variant="secondary" onClick={handleDescargar} disabled={descargando || isFetching || isError || !rangoValido || filas.length === 0}>
-            <Download className="h-4 w-4" />
-            {descargando ? "Generando…" : "Exportar Excel"}
-          </Button>
+          vista === "liquidacion" ? (
+            <Button variant="secondary" onClick={handleDescargar} disabled={descargando || isFetching || isError || !rangoValido || filas.length === 0}>
+              <Download className="h-4 w-4" />
+              {descargando ? "Generando…" : "Exportar Excel"}
+            </Button>
+          ) : undefined
         }
       />
 
       <div>
-        <StatRow stats={stats} />
+        <Tabs
+          value={vista}
+          onChange={setVista}
+          items={[
+            { value: "liquidacion", label: "Liquidación" },
+            { value: "adelantos", label: "Adelantos" },
+          ]}
+        />
       </div>
 
-      <Toolbar>
-        <Field label="Desde" compact type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-[136px]" />
-        <Field label="Hasta" compact type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-[136px]" />
-        <MultiSelect
-          label="Empleados"
-          variant="compact"
-          value={empleadoIds}
-          onChange={setEmpleadoIds}
-          options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
-          placeholder="Todos los empleados"
-          containerClassName="w-52"
-        />
-        <Button variant="secondary" onClick={() => refetch()} disabled={!rangoValido || isFetching} className="ml-auto">
-          <RefreshCw className="h-4 w-4" />
-          Actualizar
-        </Button>
-      </Toolbar>
+      {vista === "liquidacion" && (
+        <section {...tabPanelProps("liquidacion")}>
+          <div>
+            <StatRow stats={stats} />
+          </div>
 
-      {!rangoValido && <p role="alert" className="mt-4 text-alert">Seleccioná un rango de fechas válido: desde no puede ser posterior a hasta.</p>}
-      {isError && <p role="alert" className="mt-4 text-alert">No se pudo cargar la liquidación. Probá actualizar.</p>}
+          <Toolbar>
+            <Field label="Desde" compact type="date" value={desde} onChange={(e) => setDesde(e.target.value)} containerClassName="w-[136px]" />
+            <Field label="Hasta" compact type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} containerClassName="w-[136px]" />
+            <MultiSelect
+              label="Empleados"
+              variant="compact"
+              value={empleadoIds}
+              onChange={setEmpleadoIds}
+              options={empleados.map((e) => ({ value: e.id, label: e.nombre }))}
+              placeholder="Todos los empleados"
+              containerClassName="w-52"
+            />
+            <Button variant="secondary" onClick={() => refetch()} disabled={!rangoValido || isFetching} className="ml-auto">
+              <RefreshCw className="h-4 w-4" />
+              Actualizar
+            </Button>
+          </Toolbar>
 
-      <Table containerClassName="mt-4">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Empleado</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Base</TableHead>
-            <TableHead>Descuentos</TableHead>
-            <TableHead className="text-right">Total</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading && <TableSkeleton cols={6} />}
-          {!isLoading &&
-            filas.map((f) => (
-              <FilaLiquidacion
-                key={f.empleado_id}
-                fila={f}
-                abierto={expandido === f.empleado_id}
-                onToggle={() => setExpandido(expandido === f.empleado_id ? null : f.empleado_id)}
-              />
-            ))}
-          {!isLoading && !isError && rangoValido && filas.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={6} className="py-8 text-center text-text-tertiary">
-                Ningún empleado activo en el rango seleccionado.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-      <CierresPanel actual={data} bloqueado={isFetching || isError || !rangoValido || empleadoIds.length > 0} />
+          {!rangoValido && <p role="alert" className="mt-4 text-alert">Seleccioná un rango de fechas válido: desde no puede ser posterior a hasta.</p>}
+          {isError && <p role="alert" className="mt-4 text-alert">No se pudo cargar la liquidación. Probá actualizar.</p>}
+
+          <Table containerClassName="mt-4">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Empleado</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Base</TableHead>
+                <TableHead>Descuentos</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && <TableSkeleton cols={6} />}
+              {!isLoading &&
+                filas.map((f) => (
+                  <FilaLiquidacion
+                    key={f.empleado_id}
+                    fila={f}
+                    abierto={expandido === f.empleado_id}
+                    onToggle={() => setExpandido(expandido === f.empleado_id ? null : f.empleado_id)}
+                  />
+                ))}
+              {!isLoading && !isError && rangoValido && filas.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8 text-center text-text-tertiary">
+                    Ningún empleado activo en el rango seleccionado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          <CierresPanel actual={data} bloqueado={isFetching || isError || !rangoValido || empleadoIds.length > 0} />
+        </section>
+      )}
+
+      {vista === "adelantos" && (
+        <section {...tabPanelProps("adelantos")}>
+          <AdelantosTab gestionable={gestionable} />
+        </section>
+      )}
     </>
   );
 }
 
 function FilaLiquidacion({ fila: f, abierto, onToggle }: { fila: LiquidacionEmpleado; abierto: boolean; onToggle: () => void }) {
-  const descuentos = f.descuento_tardanza + f.descuento_ausencia;
+  const descuentos = f.descuento_tardanza + f.descuento_ausencia + f.adelantos;
   return (
     <>
       <TableRow className="cursor-pointer" onClick={onToggle}>
@@ -239,6 +270,9 @@ function FilaLiquidacion({ fila: f, abierto, onToggle }: { fila: LiquidacionEmpl
                     </p>
                   )}
                 </>
+              )}
+              {f.adelantos > 0 && (
+                <p>Adelantos del período: <span className="text-alert">- {formatMoneda(f.adelantos)}</span></p>
               )}
               {f.total_por_horas !== null && (
                 <p className={Math.abs(f.total - f.total_por_horas) <= 1 ? "" : f.total > f.total_por_horas ? "text-alert" : "text-accent-700"}>

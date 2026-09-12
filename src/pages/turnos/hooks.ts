@@ -12,11 +12,16 @@ import {
   getTolerancia,
   setTolerancia,
   getCumplimiento,
+  getInasistencias,
+  getTurnosPuntuales,
+  createTurnoPuntual,
+  deleteTurnoPuntual,
   type CrearHorarioInput,
   type EditarHorarioInput,
   type AsignarHorariosInput,
   type CrearTurnoTemplateInput,
   type EditarTurnoTemplateInput,
+  type CrearTurnoPuntualInput,
 } from "../../lib/api";
 
 export function useHorarios(empleadoId: string) {
@@ -131,5 +136,45 @@ export function useTodosLosHorarios() {
   return useQuery({
     queryKey: ["horarios", "todos"],
     queryFn: ({ signal }) => getHorarios(undefined, signal),
+  });
+}
+
+export function useInasistencias(filters: { desde: string; hasta: string; empleadoId?: string }) {
+  return useQuery({
+    queryKey: ["inasistencias", filters],
+    queryFn: () => getInasistencias(filters),
+  });
+}
+
+export function useTurnosPuntuales(filters: { empleadoId?: string; desde?: string; hasta?: string } = {}) {
+  return useQuery({
+    queryKey: ["turnos-puntuales", filters],
+    queryFn: () => getTurnosPuntuales(filters),
+  });
+}
+
+export function useCrearTurnoPuntual() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CrearTurnoPuntualInput) => createTurnoPuntual(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["turnos-puntuales"] });
+      queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+      queryClient.invalidateQueries({ queryKey: ["inasistencias"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacion"] });
+    },
+  });
+}
+
+export function useBorrarTurnoPuntual() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteTurnoPuntual(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["turnos-puntuales"] });
+      queryClient.invalidateQueries({ queryKey: ["cumplimiento"] });
+      queryClient.invalidateQueries({ queryKey: ["inasistencias"] });
+      queryClient.invalidateQueries({ queryKey: ["liquidacion"] });
+    },
   });
 }
